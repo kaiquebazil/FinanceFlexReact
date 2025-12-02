@@ -1,0 +1,11 @@
+{
+  "name": "financeflexreact",
+  "version": "1.0.0",
+  "description": "Recriando meu projeto Finance Flex com React",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT"
+}
