@@ -4,6 +4,7 @@ import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { theme } from '../../constants/theme';
 import { useData } from '../../hooks/useData';
+import { validateAccount } from '../../utils/validators';
 import type { AccountType, Currency } from '../../types';
 
 interface AccountFormProps {
@@ -15,7 +16,7 @@ const accountTypes: AccountType[] = ['Dinheiro', 'Banco', 'Crédito', 'Investime
 const currencies: Currency[] = ['BRL', 'USD', 'EUR', 'GBP', 'JPY'];
 
 export const AccountForm = ({ onSave, onCancel }: AccountFormProps) => {
-  const { accounts, setAccounts } = useData();
+  const { addAccount } = useData();
   const [name, setName] = useState('');
   const [type, setType] = useState<AccountType>('Banco');
   const [currency, setCurrency] = useState<Currency>('BRL');
@@ -23,27 +24,21 @@ export const AccountForm = ({ onSave, onCancel }: AccountFormProps) => {
   const [errors, setErrors] = useState<{ name?: string; balance?: string }>({});
 
   const handleSave = () => {
-    const newErrors: { name?: string; balance?: string } = {};
-    if (!name?.trim()) newErrors.name = 'Nome é obrigatório';
-    
     const balanceNum = parseFloat(balance?.replace(',', '.') ?? '0');
-    if (isNaN(balanceNum)) newErrors.balance = 'Saldo inválido';
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+    const validation = validateAccount(name, balanceNum);
+    
+    if (!validation.isValid) {
+      setErrors(validation.errors);
       return;
     }
 
-    const newAccount = {
-      id: Date.now().toString(),
+    addAccount({
       name: name.trim(),
       type,
       currency,
       balance: balanceNum,
-      createdAt: new Date().toISOString(),
-    };
-
-    setAccounts([...accounts, newAccount]);
+    });
+    
     onSave();
   };
 
@@ -53,7 +48,7 @@ export const AccountForm = ({ onSave, onCancel }: AccountFormProps) => {
         label="Nome da Conta"
         value={name}
         onChangeText={setName}
-        error={errors?.name}
+        error={errors.name}
         placeholder="Ex: Nubank, Itaú, Carteira"
       />
 
@@ -89,7 +84,7 @@ export const AccountForm = ({ onSave, onCancel }: AccountFormProps) => {
         onChangeText={setBalance}
         keyboardType="numeric"
         placeholder="0,00"
-        error={errors?.balance}
+        error={errors.balance}
       />
 
       <View style={styles.buttons}>

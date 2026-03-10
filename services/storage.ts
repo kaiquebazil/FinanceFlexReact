@@ -1,16 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type {
-  Account,
-  Transaction,
-  PiggyBank,
-  CreditCard,
-  CreditCardTransaction,
-  RecurringBill,
-  Category,
-  MonthlySummary,
-} from '../types';
 
-const KEYS = {
+export const KEYS = {
   ACCOUNTS: 'financeAccounts',
   TRANSACTIONS: 'financeTransactions',
   PIGGY_BANKS: 'piggyBanks',
@@ -20,9 +10,11 @@ const KEYS = {
   CATEGORIES: 'financeCategories',
   MONTHLY_SUMMARY: 'monthlySummary',
   VALUES_HIDDEN: 'valuesHidden',
+  INVOICES: 'invoices',
+  INVOICE_PAYMENTS: 'invoicePayments',
 };
 
-class StorageService {
+export const storage = new class {
   async getItem<T>(key: string): Promise<T | null> {
     try {
       const value = await AsyncStorage.getItem(key);
@@ -33,7 +25,7 @@ class StorageService {
     }
   }
 
-  async setItem<T>(key: string, value: T): Promise<void> {
+  async setItem(key: string, value: any): Promise<void> {
     try {
       await AsyncStorage.setItem(key, JSON.stringify(value));
     } catch (error) {
@@ -50,25 +42,20 @@ class StorageService {
   }
 
   async getAllData() {
-    const accounts = await this.getItem<Account[]>(KEYS.ACCOUNTS) ?? [];
-    const transactions = await this.getItem<Transaction[]>(KEYS.TRANSACTIONS) ?? [];
-    const piggyBanks = await this.getItem<PiggyBank[]>(KEYS.PIGGY_BANKS) ?? [];
-    const creditCards = await this.getItem<CreditCard[]>(KEYS.CREDIT_CARDS) ?? [];
-    const creditCardTransactions = await this.getItem<CreditCardTransaction[]>(KEYS.CREDIT_CARD_TRANSACTIONS) ?? [];
-    const recurringBills = await this.getItem<RecurringBill[]>(KEYS.RECURRING_BILLS) ?? [];
-    const categories = await this.getItem<Category[]>(KEYS.CATEGORIES) ?? [];
     return {
-      accounts,
-      transactions,
-      piggyBanks,
-      creditCards,
-      creditCardTransactions,
-      recurringBills,
-      categories,
+      accounts: await this.getItem(KEYS.ACCOUNTS) ?? [],
+      transactions: await this.getItem(KEYS.TRANSACTIONS) ?? [],
+      piggyBanks: await this.getItem(KEYS.PIGGY_BANKS) ?? [],
+      creditCards: await this.getItem(KEYS.CREDIT_CARDS) ?? [],
+      creditCardTransactions: await this.getItem(KEYS.CREDIT_CARD_TRANSACTIONS) ?? [],
+      recurringBills: await this.getItem(KEYS.RECURRING_BILLS) ?? [],
+      categories: await this.getItem(KEYS.CATEGORIES) ?? [],
+      invoices: await this.getItem(KEYS.INVOICES) ?? [],
+      invoicePayments: await this.getItem(KEYS.INVOICE_PAYMENTS) ?? [],
     };
   }
 
-  async importData(data: any): Promise<void> {
+  async importData(data: any) {
     if (data?.accounts) await this.setItem(KEYS.ACCOUNTS, data.accounts);
     if (data?.transactions) await this.setItem(KEYS.TRANSACTIONS, data.transactions);
     if (data?.piggyBanks) await this.setItem(KEYS.PIGGY_BANKS, data.piggyBanks);
@@ -76,12 +63,11 @@ class StorageService {
     if (data?.creditCardTransactions) await this.setItem(KEYS.CREDIT_CARD_TRANSACTIONS, data.creditCardTransactions);
     if (data?.recurringBills) await this.setItem(KEYS.RECURRING_BILLS, data.recurringBills);
     if (data?.categories) await this.setItem(KEYS.CATEGORIES, data.categories);
+    if (data?.invoices) await this.setItem(KEYS.INVOICES, data.invoices);
+    if (data?.invoicePayments) await this.setItem(KEYS.INVOICE_PAYMENTS, data.invoicePayments);
   }
 
-  async clearAll(): Promise<void> {
+  async clearAll() {
     await AsyncStorage.clear();
   }
-}
-
-export const storage = new StorageService();
-export { KEYS };
+}();

@@ -11,7 +11,6 @@ interface DrawerProps {
 
 export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
   const menuItems = [
-    { id: 'accounts', icon: 'credit-card', label: 'Contas' },
     { id: 'transactions', icon: 'exchange-alt', label: 'Transações' },
     { id: 'categories', icon: 'list-ul', label: 'Categorias' },
     { id: 'recurring', icon: 'redo', label: 'Contas Recorrentes' },

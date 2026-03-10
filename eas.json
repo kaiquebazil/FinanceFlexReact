@@ -3,18 +3,18 @@
     "version": ">= 3.0.0"
   },
   "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
     "preview": {
       "android": {
         "buildType": "apk"
-      },
-      "env": {
-        "SKIP_PREINSTALL_SCRIPT": "1"
       }
     },
-    "production": {
-      "android": {
-        "buildType": "apk"
-      }
-    }
+    "production": {}
+  },
+  "submit": {
+    "production": {}
   }
 }

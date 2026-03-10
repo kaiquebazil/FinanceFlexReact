@@ -4,10 +4,10 @@
     "slug": "finance-flex",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/icon.png",
+      "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#0a0a0a"
     },
@@ -19,6 +19,9 @@
       "eas": {
         "projectId": "82a866df-fc13-442a-9272-c0607158b96e"
       }
+    },
+    "ios": {
+      "bundleIdentifier": "com.kaiquebazil.financeflex"
     }
   }
 }
