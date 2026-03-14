@@ -1,11 +1,10 @@
-// components/ui/Card.tsx
 import React, { ReactNode } from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { theme } from '../../constants/theme';
 
 interface CardProps {
   children: ReactNode;
-  style?: ViewStyle; // IMPORTANTE: é ViewStyle, não any
+  style?: ViewStyle;
 }
 
 export const Card = ({ children, style }: CardProps) => {

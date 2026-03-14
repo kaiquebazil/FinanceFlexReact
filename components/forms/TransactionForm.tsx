@@ -62,7 +62,6 @@ export function TransactionForm({ visible, onClose, onSave }: TransactionFormPro
   useEffect(() => {
     if (visible) {
       const now = new Date();
-      setSelectedType('income'); // Começa com Receita por padrão
       setSelectedDay(now.getDate().toString());
       setSelectedMonth(now.getMonth());
       setSelectedYear(now.getFullYear().toString());
