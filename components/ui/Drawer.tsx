@@ -15,7 +15,7 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
     { id: 'categories', icon: 'list-ul', label: 'Categorias' },
     { id: 'recurring', icon: 'redo', label: 'Contas Recorrentes' },
     { id: 'creditCards', icon: 'credit-card', label: 'Cartões de Crédito' },
-    { id: 'piggyBanks', icon: 'piggy-bank', label: 'Cofrinhos' },
+    // { id: 'piggyBanks', icon: 'piggy-bank', label: 'Cofrinhos' },
   ];
 
   const actionItems = [
