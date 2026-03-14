@@ -29,7 +29,7 @@ export interface PiggyBank {
   targetAmount: number;
   currentAmount: number;
   color: string;
-  accountId?: string;        // ← ADICIONADO (opcional)
+  accountId?: string;        
   targetDate?: string;
   createdAt: string;
 }
@@ -38,7 +38,7 @@ export interface CreditCard {
   id: string;
   name: string;
   limit: number;
-  used: number;           // ← ADICIONAR: valor já utilizado
+  used: number;           
   closingDay: number;
   dueDay: number;
   color?: string;

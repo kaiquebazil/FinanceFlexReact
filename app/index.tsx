@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { BackupRestore } from "../components/features/BackupRestore";
 import { CategoryManager } from "../components/features/CategoryManager";
+import { TransferForm } from "../components/forms/TransferForm";
 import { CreditCardManager } from "../components/features/CreditCardManager";
 import { RecurringBillsManager } from "../components/features/RecurringBillsManager";
 import { TransactionsModal } from "../components/features/TransactionsModal";
@@ -37,8 +38,8 @@ import { useData } from "../hooks/useData";
 import { formatCurrency } from "../utils/currency";
 
 // Tipos para os callbacks
-type ToastType = 'success' | 'error' | 'info' | 'warning';
-type ConfirmType = 'info' | 'success' | 'warning' | 'danger';
+type ToastType = "success" | "error" | "info" | "warning";
+type ConfirmType = "info" | "success" | "warning" | "danger";
 
 interface ConfirmOptions {
   title: string;
@@ -79,6 +80,7 @@ export default function HomeScreen() {
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showAccountEditModal, setShowAccountEditModal] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<any>(null);
+  const [showTransferModal, setShowTransferModal] = useState(false);
 
   // Estados para transação
   const [showTransactionModal, setShowTransactionModal] = useState(false);
@@ -97,9 +99,9 @@ export default function HomeScreen() {
   // Estados para modais de confirmação e toast
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmConfig, setConfirmConfig] = useState<ConfirmOptions>({
-    title: '',
-    message: '',
-    type: 'info',
+    title: "",
+    message: "",
+    type: "info",
     onConfirm: () => {},
     onCancel: () => {},
   });
@@ -110,8 +112,8 @@ export default function HomeScreen() {
     type: ToastType;
   }>({
     visible: false,
-    message: '',
-    type: 'info',
+    message: "",
+    type: "info",
   });
 
   // Funções auxiliares para UI
@@ -119,14 +121,14 @@ export default function HomeScreen() {
     setConfirmConfig({
       title: options.title,
       message: options.message,
-      type: options.type || 'info',
+      type: options.type || "info",
       onConfirm: options.onConfirm,
       onCancel: options.onCancel || (() => setShowConfirmModal(false)),
     });
     setShowConfirmModal(true);
   };
 
-  const showToast = (message: string, type: ToastType = 'info') => {
+  const showToast = (message: string, type: ToastType = "info") => {
     setToast({ visible: true, message, type });
   };
 
@@ -137,13 +139,13 @@ export default function HomeScreen() {
         setConfirmConfig({
           title: options.title,
           message: options.message,
-          type: options.type || 'info',
+          type: options.type || "info",
           onConfirm: options.onConfirm,
         });
         setShowConfirmModal(true);
       },
       showToast: (message: string, type?: ToastType) => {
-        setToast({ visible: true, message, type: type || 'info' });
+        setToast({ visible: true, message, type: type || "info" });
       },
     });
   }, []);
@@ -214,6 +216,38 @@ export default function HomeScreen() {
     return formatCurrency(value, "BRL");
   };
 
+  const handleOpenTransfer = () => {
+    setShowTransferModal(true);
+    setShowFABMenu(false);
+  };
+
+ const handleSaveTransfer = (data: any) => {
+  // Criar nova transação de transferência
+  const newTransaction = {
+    id: Date.now().toString(),
+    type: "transfer" as const, // <-- ADICIONE "as const" AQUI
+    amount: data.amount,
+    description: data.description,
+    category: "Transferência",
+    accountId: data.fromAccountId,
+    toAccountId: data.toAccountId,
+    date: data.date,
+    createdAt: new Date().toISOString(),
+  };
+
+  // Adicionar transação
+  addTransaction(newTransaction);
+
+  // Mostrar toast de sucesso
+  showToast(
+    `Transferência de ${formatCurrency(data.amount, "BRL")} realizada com sucesso!`,
+    "success",
+  );
+
+  // Fechar o modal
+  setShowTransferModal(false);
+};
+
   // ==================== HANDLES DE TRANSAÇÃO ====================
   const handleOpenTransaction = (type: "income" | "expense") => {
     setTransactionType(type);
@@ -240,7 +274,7 @@ export default function HomeScreen() {
     // Mostrar toast de sucesso
     showToast(
       `${data.type === "income" ? "Receita" : "Despesa"} adicionada com sucesso!`,
-      "success"
+      "success",
     );
 
     // Fechar o modal
@@ -558,9 +592,10 @@ export default function HomeScreen() {
                     </View>
                     <View style={styles.transactionInfo}>
                       <Text style={styles.transactionName}>
-                        {transaction.description || (
-                          transaction.type === "income" ? "Receita" : "Despesa"
-                        )}
+                        {transaction.description ||
+                          (transaction.type === "income"
+                            ? "Receita"
+                            : "Despesa")}
                       </Text>
                       <Text style={styles.transactionCategory}>
                         {transaction.category} •{" "}
@@ -671,22 +706,21 @@ export default function HomeScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
-
       {/* Modais */}
       <TransactionsModal
         visible={showTransactionsModal}
         onClose={() => setShowTransactionsModal(false)}
       />
-
       {/* FAB - Floating Action Button */}
+      // app/index.tsx - Substitua o componente FAB existente
       <FAB
         visible={!showDrawer}
         onPressMain={() => setShowFABMenu(!showFABMenu)}
         showMenu={showFABMenu}
         onPressIncome={() => handleOpenTransaction("income")}
         onPressExpense={() => handleOpenTransaction("expense")}
+        onPressTransfer={handleOpenTransfer}
       />
-
       {/* Drawer Menu */}
       <Drawer
         visible={showDrawer}
@@ -715,7 +749,6 @@ export default function HomeScreen() {
           }
         }}
       />
-
       {/* Modal de Conta */}
       <Modal
         visible={showAccountModal}
@@ -727,7 +760,12 @@ export default function HomeScreen() {
           onCancel={() => setShowAccountModal(false)}
         />
       </Modal>
-
+      {/* Modal de Transferência */}
+      <TransferForm
+        visible={showTransferModal}
+        onClose={() => setShowTransferModal(false)}
+        onSave={handleSaveTransfer}
+      />
       {/* Modal de Editar Conta */}
       <Modal
         visible={showAccountEditModal}
@@ -748,7 +786,6 @@ export default function HomeScreen() {
           />
         )}
       </Modal>
-
       {/* Modal de Transação */}
       <TransactionForm
         visible={showTransactionModal}
@@ -756,7 +793,6 @@ export default function HomeScreen() {
         type={transactionType}
         onSave={handleSaveTransaction}
       />
-
       {/* Modal de Cofrinho */}
       <Modal
         visible={showPiggyBankModal}
@@ -767,17 +803,31 @@ export default function HomeScreen() {
           {piggyBanks.map((piggy) => (
             <View key={piggy.id} style={styles.modalPiggyItem}>
               <View style={styles.modalPiggyHeader}>
-                <View style={[styles.modalPiggyIcon, { backgroundColor: piggy.color + '20' }]}>
-                  <FontAwesome5 name="piggy-bank" size={20} color={piggy.color} />
+                <View
+                  style={[
+                    styles.modalPiggyIcon,
+                    { backgroundColor: piggy.color + "20" },
+                  ]}
+                >
+                  <FontAwesome5
+                    name="piggy-bank"
+                    size={20}
+                    color={piggy.color}
+                  />
                 </View>
                 <View style={styles.modalPiggyInfo}>
                   <Text style={styles.modalPiggyName}>{piggy.name}</Text>
                   <Text style={styles.modalPiggyProgress}>
-                    {formatValue(piggy.currentAmount)} / {formatValue(piggy.targetAmount)}
+                    {formatValue(piggy.currentAmount)} /{" "}
+                    {formatValue(piggy.targetAmount)}
                   </Text>
                 </View>
                 <TouchableOpacity onPress={() => handleEditPiggyBank(piggy)}>
-                  <FontAwesome5 name="edit" size={16} color={theme.colors.primary} />
+                  <FontAwesome5
+                    name="edit"
+                    size={16}
+                    color={theme.colors.primary}
+                  />
                 </TouchableOpacity>
               </View>
             </View>
@@ -793,7 +843,6 @@ export default function HomeScreen() {
           />
         </ScrollView>
       </Modal>
-
       {/* Modal de Editar Cofrinho */}
       <Modal
         visible={showPiggyBankEditModal}
@@ -818,7 +867,6 @@ export default function HomeScreen() {
           />
         )}
       </Modal>
-
       {/* Modal de Categorias */}
       <Modal
         visible={showCategoriesModal}
@@ -827,7 +875,6 @@ export default function HomeScreen() {
       >
         <CategoryManager onClose={() => setShowCategoriesModal(false)} />
       </Modal>
-
       {/* Modal de Contas Recorrentes */}
       <Modal
         visible={showRecurringBillsModal}
@@ -838,7 +885,6 @@ export default function HomeScreen() {
           onClose={() => setShowRecurringBillsModal(false)}
         />
       </Modal>
-
       {/* Modal de Cartões de Crédito */}
       <Modal
         visible={showCreditCardsModal}
@@ -847,7 +893,6 @@ export default function HomeScreen() {
       >
         <CreditCardManager onClose={() => setShowCreditCardsModal(false)} />
       </Modal>
-
       {/* Modal de Backup e Restauração */}
       <Modal
         visible={showBackupModal}
@@ -856,7 +901,6 @@ export default function HomeScreen() {
       >
         <BackupRestore onClose={() => setShowBackupModal(false)} />
       </Modal>
-
       {/* Modal de Confirmação Global */}
       <ConfirmModal
         visible={showConfirmModal}
@@ -876,13 +920,12 @@ export default function HomeScreen() {
           setShowConfirmModal(false);
         }}
       />
-
       {/* Toast Global */}
       <Toast
         visible={toast.visible}
         message={toast.message}
         type={toast.type}
-        onHide={() => setToast(prev => ({ ...prev, visible: false }))}
+        onHide={() => setToast((prev) => ({ ...prev, visible: false }))}
       />
     </SafeAreaView>
   );
@@ -972,7 +1015,7 @@ const styles = StyleSheet.create({
   },
   card: {
     padding: 0,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   emptyState: {
     alignItems: "center",
