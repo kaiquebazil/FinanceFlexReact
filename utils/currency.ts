@@ -1,3 +1,4 @@
+// utils/currency.ts
 import type { Currency } from '../types';
 
 const currencySymbols: Record<Currency, string> = {
@@ -10,7 +11,15 @@ const currencySymbols: Record<Currency, string> = {
 
 export const formatCurrency = (amount: number, currency: Currency = 'BRL'): string => {
   const symbol = currencySymbols[currency] ?? 'R$';
-  const formatted = Math.abs(amount).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  
+  // Se for negativo, formata com o sinal de menos
+  if (amount < 0) {
+    const formatted = Math.abs(amount).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return `-${symbol} ${formatted}`;
+  }
+  
+  // Se for positivo, formata normal
+  const formatted = amount.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   return `${symbol} ${formatted}`;
 };
 

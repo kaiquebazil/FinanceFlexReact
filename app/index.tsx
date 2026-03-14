@@ -1,8 +1,8 @@
+// app/index.tsx
 import { FontAwesome5 } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Alert,
   Animated,
   Platform,
   SafeAreaView,
@@ -27,12 +27,34 @@ import { AccountItem } from "../components/ui/AccountItem";
 import { Button } from "../components/ui/Button";
 import { Calendar } from "../components/ui/Calendar";
 import { Card } from "../components/ui/Card";
+import { ConfirmModal } from "../components/ui/ConfirmModal";
 import { Drawer } from "../components/ui/Drawer";
 import { FAB } from "../components/ui/FAB";
 import { Modal } from "../components/ui/Modal";
+import { Toast } from "../components/ui/Toast";
 import { theme } from "../constants/theme";
 import { useData } from "../hooks/useData";
 import { formatCurrency } from "../utils/currency";
+
+// Tipos para os callbacks
+type ToastType = 'success' | 'error' | 'info' | 'warning';
+type ConfirmType = 'info' | 'success' | 'warning' | 'danger';
+
+interface ConfirmOptions {
+  title: string;
+  message: string;
+  type?: ConfirmType;
+  onConfirm: () => void;
+  onCancel?: () => void;
+}
+
+interface ConfirmCallbackOptions {
+  title: string;
+  message: string;
+  type?: ConfirmType;
+  onConfirm: () => void;
+  onCancel?: () => void;
+}
 
 export default function HomeScreen() {
   const {
@@ -44,11 +66,11 @@ export default function HomeScreen() {
     recurringBills,
     addTransaction,
     deleteAccount,
-    updateAccountBalance,
     getTotalBalance,
     getMonthlySummary,
     valuesHidden,
     setValuesHidden,
+    setUICallbacks,
   } = useData();
 
   // Estados para modais
@@ -71,6 +93,60 @@ export default function HomeScreen() {
   const [showRecurringBillsModal, setShowRecurringBillsModal] = useState(false);
   const [showCreditCardsModal, setShowCreditCardsModal] = useState(false);
   const [showBackupModal, setShowBackupModal] = useState(false);
+
+  // Estados para modais de confirmação e toast
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState<ConfirmOptions>({
+    title: '',
+    message: '',
+    type: 'info',
+    onConfirm: () => {},
+    onCancel: () => {},
+  });
+
+  const [toast, setToast] = useState<{
+    visible: boolean;
+    message: string;
+    type: ToastType;
+  }>({
+    visible: false,
+    message: '',
+    type: 'info',
+  });
+
+  // Funções auxiliares para UI
+  const showConfirm = (options: ConfirmOptions) => {
+    setConfirmConfig({
+      title: options.title,
+      message: options.message,
+      type: options.type || 'info',
+      onConfirm: options.onConfirm,
+      onCancel: options.onCancel || (() => setShowConfirmModal(false)),
+    });
+    setShowConfirmModal(true);
+  };
+
+  const showToast = (message: string, type: ToastType = 'info') => {
+    setToast({ visible: true, message, type });
+  };
+
+  // Configurar callbacks da UI
+  useEffect(() => {
+    setUICallbacks({
+      showConfirm: (options: ConfirmCallbackOptions) => {
+        setConfirmConfig({
+          title: options.title,
+          message: options.message,
+          type: options.type || 'info',
+          onConfirm: options.onConfirm,
+        });
+        setShowConfirmModal(true);
+      },
+      showToast: (message: string, type?: ToastType) => {
+        setToast({ visible: true, message, type: type || 'info' });
+      },
+    });
+  }, []);
 
   // Estados de filtro
   const [selectedPeriod, setSelectedPeriod] = useState<
@@ -146,7 +222,7 @@ export default function HomeScreen() {
   };
 
   const handleSaveTransaction = (data: any) => {
-    // Criar nova transação
+    // Criar nova transação com a data selecionada no formulário
     const newTransaction = {
       id: Date.now().toString(),
       type: data.type,
@@ -154,19 +230,21 @@ export default function HomeScreen() {
       description: data.description,
       category: data.category,
       accountId: data.accountId,
-      date: new Date().toISOString(),
+      date: data.date,
       createdAt: new Date().toISOString(),
     };
 
     // Adicionar transação
     addTransaction(newTransaction);
 
-    // Mostrar mensagem de sucesso
-    Alert.alert(
-      "✅ Sucesso",
+    // Mostrar toast de sucesso
+    showToast(
       `${data.type === "income" ? "Receita" : "Despesa"} adicionada com sucesso!`,
-      [{ text: "OK" }],
+      "success"
     );
+
+    // Fechar o modal
+    setShowTransactionModal(false);
   };
 
   // ==================== HANDLES DE CONTA ====================
@@ -179,6 +257,12 @@ export default function HomeScreen() {
     deleteAccount(accountId);
   };
 
+  // ==================== HANDLES DE COFRINHO ====================
+  const handleEditPiggyBank = (piggy: any) => {
+    setSelectedPiggyBank(piggy);
+    setShowPiggyBankEditModal(true);
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar
@@ -188,6 +272,7 @@ export default function HomeScreen() {
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
       >
         {/* Header */}
         <LinearGradient
@@ -341,16 +426,6 @@ export default function HomeScreen() {
               >
                 {valuesHidden ? "• •%" : `${summary.savingsRate.toFixed(0)}%`}
               </Text>
-              {summary.savingsRate === 0 &&
-                summary.income > 0 &&
-                !valuesHidden && (
-                  <FontAwesome5
-                    name="exclamation-triangle"
-                    size={14}
-                    color={theme.colors.warning}
-                    style={styles.warningIcon}
-                  />
-                )}
             </Card>
           </View>
         </View>
@@ -370,11 +445,11 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Transações Recentes</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => setShowTransactionsModal(true)}>
               <FontAwesome5
-                name="sync-alt"
+                name="external-link-alt"
                 size={16}
-                color={theme.colors.textDim}
+                color={theme.colors.primary}
               />
             </TouchableOpacity>
           </View>
@@ -441,7 +516,7 @@ export default function HomeScreen() {
                     selectedPeriod === "upcoming" && styles.tabTextActive,
                   ]}
                 >
-                  Próximos
+                  Futuras
                 </Text>
               </TouchableOpacity>
             </View>
@@ -457,7 +532,7 @@ export default function HomeScreen() {
                 </Text>
               </View>
             ) : (
-              filteredTransactions.map((transaction) => {
+              filteredTransactions.slice(0, 5).map((transaction) => {
                 const icon =
                   transaction.type === "income"
                     ? "arrow-down"
@@ -483,7 +558,9 @@ export default function HomeScreen() {
                     </View>
                     <View style={styles.transactionInfo}>
                       <Text style={styles.transactionName}>
-                        {transaction.description}
+                        {transaction.description || (
+                          transaction.type === "income" ? "Receita" : "Despesa"
+                        )}
                       </Text>
                       <Text style={styles.transactionCategory}>
                         {transaction.category} •{" "}
@@ -498,15 +575,37 @@ export default function HomeScreen() {
                 );
               })
             )}
+            {filteredTransactions.length > 5 && (
+              <TouchableOpacity
+                style={styles.viewAllButton}
+                onPress={() => setShowTransactionsModal(true)}
+              >
+                <Text style={styles.viewAllText}>Ver todas</Text>
+                <FontAwesome5
+                  name="arrow-right"
+                  size={12}
+                  color={theme.colors.primary}
+                />
+              </TouchableOpacity>
+            )}
           </Card>
         </View>
 
         {/* Cofrinhos */}
         {piggyBanks.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Cofrinhos</Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Cofrinhos</Text>
+              <TouchableOpacity onPress={() => setShowPiggyBankModal(true)}>
+                <FontAwesome5
+                  name="plus-circle"
+                  size={20}
+                  color={theme.colors.primary}
+                />
+              </TouchableOpacity>
+            </View>
             <Card style={styles.card}>
-              {piggyBanks.map((piggy) => {
+              {piggyBanks.slice(0, 3).map((piggy) => {
                 const progress =
                   (piggy.currentAmount / piggy.targetAmount) * 100;
                 return (
@@ -531,10 +630,7 @@ export default function HomeScreen() {
                           {progress.toFixed(0)}%
                         </Text>
                         <TouchableOpacity
-                          onPress={() => {
-                            setSelectedPiggyBank(piggy);
-                            setShowPiggyBankEditModal(true);
-                          }}
+                          onPress={() => handleEditPiggyBank(piggy)}
                           style={styles.editButton}
                         >
                           <FontAwesome5
@@ -559,17 +655,30 @@ export default function HomeScreen() {
                   </View>
                 );
               })}
+              {piggyBanks.length > 3 && (
+                <TouchableOpacity
+                  style={styles.viewAllButton}
+                  onPress={() => setShowPiggyBankModal(true)}
+                >
+                  <Text style={styles.viewAllText}>
+                    Ver todos ({piggyBanks.length})
+                  </Text>
+                </TouchableOpacity>
+              )}
             </Card>
           </View>
         )}
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Modais */}
       <TransactionsModal
         visible={showTransactionsModal}
         onClose={() => setShowTransactionsModal(false)}
       />
-      ;{/* FAB - Floating Action Button */}
+
+      {/* FAB - Floating Action Button */}
       <FAB
         visible={!showDrawer}
         onPressMain={() => setShowFABMenu(!showFABMenu)}
@@ -577,6 +686,7 @@ export default function HomeScreen() {
         onPressIncome={() => handleOpenTransaction("income")}
         onPressExpense={() => handleOpenTransaction("expense")}
       />
+
       {/* Drawer Menu */}
       <Drawer
         visible={showDrawer}
@@ -605,7 +715,8 @@ export default function HomeScreen() {
           }
         }}
       />
-      {/* Modals */}
+
+      {/* Modal de Conta */}
       <Modal
         visible={showAccountModal}
         onClose={() => setShowAccountModal(false)}
@@ -616,6 +727,8 @@ export default function HomeScreen() {
           onCancel={() => setShowAccountModal(false)}
         />
       </Modal>
+
+      {/* Modal de Editar Conta */}
       <Modal
         visible={showAccountEditModal}
         onClose={() => setShowAccountEditModal(false)}
@@ -635,23 +748,53 @@ export default function HomeScreen() {
           />
         )}
       </Modal>
-      {/* Modal de Transação - NOVO */}
+
+      {/* Modal de Transação */}
       <TransactionForm
         visible={showTransactionModal}
         onClose={() => setShowTransactionModal(false)}
         type={transactionType}
         onSave={handleSaveTransaction}
       />
+
+      {/* Modal de Cofrinho */}
       <Modal
         visible={showPiggyBankModal}
         onClose={() => setShowPiggyBankModal(false)}
-        title="Novo Cofrinho"
+        title="Cofrinhos"
       >
-        <PiggyBankForm
-          onSave={() => setShowPiggyBankModal(false)}
-          onCancel={() => setShowPiggyBankModal(false)}
-        />
+        <ScrollView>
+          {piggyBanks.map((piggy) => (
+            <View key={piggy.id} style={styles.modalPiggyItem}>
+              <View style={styles.modalPiggyHeader}>
+                <View style={[styles.modalPiggyIcon, { backgroundColor: piggy.color + '20' }]}>
+                  <FontAwesome5 name="piggy-bank" size={20} color={piggy.color} />
+                </View>
+                <View style={styles.modalPiggyInfo}>
+                  <Text style={styles.modalPiggyName}>{piggy.name}</Text>
+                  <Text style={styles.modalPiggyProgress}>
+                    {formatValue(piggy.currentAmount)} / {formatValue(piggy.targetAmount)}
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={() => handleEditPiggyBank(piggy)}>
+                  <FontAwesome5 name="edit" size={16} color={theme.colors.primary} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
+          <Button
+            title="Novo Cofrinho"
+            icon="plus"
+            onPress={() => {
+              setShowPiggyBankModal(false);
+              showToast("Funcionalidade em desenvolvimento", "info");
+            }}
+            style={styles.modalAddButton}
+          />
+        </ScrollView>
       </Modal>
+
+      {/* Modal de Editar Cofrinho */}
       <Modal
         visible={showPiggyBankEditModal}
         onClose={() => {
@@ -666,6 +809,7 @@ export default function HomeScreen() {
             onSave={() => {
               setShowPiggyBankEditModal(false);
               setSelectedPiggyBank(null);
+              showToast("Cofrinho atualizado com sucesso!", "success");
             }}
             onCancel={() => {
               setShowPiggyBankEditModal(false);
@@ -674,6 +818,8 @@ export default function HomeScreen() {
           />
         )}
       </Modal>
+
+      {/* Modal de Categorias */}
       <Modal
         visible={showCategoriesModal}
         onClose={() => setShowCategoriesModal(false)}
@@ -681,6 +827,8 @@ export default function HomeScreen() {
       >
         <CategoryManager onClose={() => setShowCategoriesModal(false)} />
       </Modal>
+
+      {/* Modal de Contas Recorrentes */}
       <Modal
         visible={showRecurringBillsModal}
         onClose={() => setShowRecurringBillsModal(false)}
@@ -690,6 +838,8 @@ export default function HomeScreen() {
           onClose={() => setShowRecurringBillsModal(false)}
         />
       </Modal>
+
+      {/* Modal de Cartões de Crédito */}
       <Modal
         visible={showCreditCardsModal}
         onClose={() => setShowCreditCardsModal(false)}
@@ -697,6 +847,8 @@ export default function HomeScreen() {
       >
         <CreditCardManager onClose={() => setShowCreditCardsModal(false)} />
       </Modal>
+
+      {/* Modal de Backup e Restauração */}
       <Modal
         visible={showBackupModal}
         onClose={() => setShowBackupModal(false)}
@@ -704,6 +856,34 @@ export default function HomeScreen() {
       >
         <BackupRestore onClose={() => setShowBackupModal(false)} />
       </Modal>
+
+      {/* Modal de Confirmação Global */}
+      <ConfirmModal
+        visible={showConfirmModal}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        type={confirmConfig.type}
+        confirmText="Confirmar"
+        cancelText="Cancelar"
+        onConfirm={() => {
+          confirmConfig.onConfirm();
+          setShowConfirmModal(false);
+        }}
+        onCancel={() => {
+          if (confirmConfig.onCancel) {
+            confirmConfig.onCancel();
+          }
+          setShowConfirmModal(false);
+        }}
+      />
+
+      {/* Toast Global */}
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={() => setToast(prev => ({ ...prev, visible: false }))}
+      />
     </SafeAreaView>
   );
 }
@@ -760,7 +940,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: "Inter-SemiBold",
     color: theme.colors.text,
-    marginBottom: 12,
   },
   sectionSubtitle: {
     fontSize: 14,
@@ -791,11 +970,9 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontFamily: "Inter-Bold",
   },
-  warningIcon: {
-    marginTop: 4,
-  },
   card: {
     padding: 0,
+    overflow: 'hidden',
   },
   emptyState: {
     alignItems: "center",
@@ -844,6 +1021,20 @@ const styles = StyleSheet.create({
   transactionAmount: {
     fontSize: 16,
     fontFamily: "Inter-SemiBold",
+  },
+  viewAllButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 255, 255, 0.05)",
+  },
+  viewAllText: {
+    fontSize: 14,
+    fontFamily: "Inter-Medium",
+    color: theme.colors.primary,
   },
   piggyItem: {
     paddingVertical: 16,
@@ -925,5 +1116,39 @@ const styles = StyleSheet.create({
   },
   tabTextActive: {
     color: theme.colors.primary,
+  },
+  modalPiggyItem: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  modalPiggyHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  modalPiggyIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  modalPiggyInfo: {
+    flex: 1,
+  },
+  modalPiggyName: {
+    fontSize: 16,
+    fontFamily: "Inter-Medium",
+    color: theme.colors.text,
+    marginBottom: 4,
+  },
+  modalPiggyProgress: {
+    fontSize: 13,
+    fontFamily: "Inter-Regular",
+    color: theme.colors.textDim,
+  },
+  modalAddButton: {
+    marginTop: 20,
   },
 });

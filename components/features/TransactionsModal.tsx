@@ -1,3 +1,4 @@
+// components/features/TransactionsModal.tsx
 import React, { useState } from 'react';
 import {
   View,
@@ -6,13 +7,17 @@ import {
   Modal,
   TouchableOpacity,
   ScrollView,
-  TextInput
+  TextInput,
+  Alert
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
 import { useData } from '../../hooks/useData';
 import { formatCurrency } from '../../utils/currency';
 import { Button } from '../ui/Button';
+import { ConfirmModal } from '../ui/ConfirmModal';
+import { Toast } from '../ui/Toast';
+import { useToast } from '../../hooks/useToast';
 
 interface TransactionsModalProps {
   visible: boolean;
@@ -23,13 +28,18 @@ type FilterType = 'all' | 'income' | 'expense' | 'transfer';
 type PeriodType = 'today' | 'week' | 'month' | 'year';
 
 export function TransactionsModal({ visible, onClose }: TransactionsModalProps) {
-  const { transactions, accounts, categories } = useData();
+  const { transactions, accounts, categories, deleteTransaction } = useData();
+  const { toast, showToast, hideToast } = useToast();
   
   // Estados de filtro
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('month');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+
+  // Estados para confirmação de deleção
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState<any>(null);
 
   // Filtrar transações
   const getFilteredTransactions = () => {
@@ -110,198 +120,246 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
 
   const uniqueCategories = [...new Set(transactions.map(t => t.category))].filter(Boolean);
 
+  // Handler para deletar transação
+  const handleDeletePress = (transaction: any) => {
+    setTransactionToDelete(transaction);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = () => {
+    if (transactionToDelete) {
+      deleteTransaction(transactionToDelete.id);
+      showToast('Transferência excluída com sucesso!', 'success');
+      setShowDeleteConfirm(false);
+      setTransactionToDelete(null);
+    }
+  };
+
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          {/* Cabeçalho */}
-          <View style={styles.header}>
-            <Text style={styles.title}>Transferências</Text>
-            <TouchableOpacity onPress={onClose}>
-              <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {/* Filtros */}
-            <View style={styles.filtersContainer}>
-              {/* Filtro por tipo */}
-              <Text style={styles.filterLabel}>Filtrar por:</Text>
-              <View style={styles.filterRow}>
-                {(['all', 'income', 'expense', 'transfer'] as const).map((filter) => (
-                  <TouchableOpacity
-                    key={filter}
-                    style={[
-                      styles.filterChip,
-                      selectedFilter === filter && styles.filterChipActive
-                    ]}
-                    onPress={() => setSelectedFilter(filter)}
-                  >
-                    <Text style={[
-                      styles.filterChipText,
-                      selectedFilter === filter && styles.filterChipTextActive
-                    ]}>
-                      {filter === 'all' ? 'Todas' :
-                       filter === 'income' ? 'Receitas' :
-                       filter === 'expense' ? 'Despesas' : 'Transferências'}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {/* Filtro por período */}
-              <Text style={styles.filterLabel}>Período:</Text>
-              <View style={styles.filterRow}>
-                {(['today', 'week', 'month', 'year'] as const).map((period) => (
-                  <TouchableOpacity
-                    key={period}
-                    style={[
-                      styles.filterChip,
-                      selectedPeriod === period && styles.filterChipActive
-                    ]}
-                    onPress={() => setSelectedPeriod(period)}
-                  >
-                    <Text style={[
-                      styles.filterChipText,
-                      selectedPeriod === period && styles.filterChipTextActive
-                    ]}>
-                      {period === 'today' ? 'Hoje' :
-                       period === 'week' ? 'Semana' :
-                       period === 'month' ? 'Mês' : 'Ano'}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {/* Filtro por categoria */}
-              <Text style={styles.filterLabel}>Categoria:</Text>
-              <TouchableOpacity
-                style={styles.categorySelector}
-                onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}
-              >
-                <Text style={styles.categorySelectorText}>
-                  {selectedCategory === 'all' ? 'Todas' : selectedCategory}
-                </Text>
-                <FontAwesome5 
-                  name={showCategoryDropdown ? 'chevron-up' : 'chevron-down'} 
-                  size={14} 
-                  color={theme.colors.textDim} 
-                />
+    <>
+      <Modal
+        visible={visible}
+        transparent
+        animationType="slide"
+        onRequestClose={onClose}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {/* Cabeçalho */}
+            <View style={styles.header}>
+              <Text style={styles.title}>Todas as Transações</Text>
+              <TouchableOpacity onPress={onClose}>
+                <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
               </TouchableOpacity>
+            </View>
 
-              {showCategoryDropdown && (
-                <View style={styles.dropdown}>
-                  <TouchableOpacity
-                    style={styles.dropdownItem}
-                    onPress={() => {
-                      setSelectedCategory('all');
-                      setShowCategoryDropdown(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownItemText}>Todas</Text>
-                  </TouchableOpacity>
-                  {uniqueCategories.map(cat => (
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {/* Filtros */}
+              <View style={styles.filtersContainer}>
+                {/* Filtro por tipo */}
+                <Text style={styles.filterLabel}>Filtrar por:</Text>
+                <View style={styles.filterRow}>
+                  {(['all', 'income', 'expense', 'transfer'] as const).map((filter) => (
                     <TouchableOpacity
-                      key={cat}
-                      style={styles.dropdownItem}
-                      onPress={() => {
-                        setSelectedCategory(cat);
-                        setShowCategoryDropdown(false);
-                      }}
+                      key={filter}
+                      style={[
+                        styles.filterChip,
+                        selectedFilter === filter && styles.filterChipActive
+                      ]}
+                      onPress={() => setSelectedFilter(filter)}
                     >
-                      <Text style={styles.dropdownItemText}>{cat}</Text>
+                      <Text style={[
+                        styles.filterChipText,
+                        selectedFilter === filter && styles.filterChipTextActive
+                      ]}>
+                        {filter === 'all' ? 'Todas' :
+                         filter === 'income' ? 'Receitas' :
+                         filter === 'expense' ? 'Despesas' : 'Transferências'}
+                      </Text>
                     </TouchableOpacity>
                   ))}
                 </View>
-              )}
-            </View>
 
-            {/* Resumo dos totais */}
-            <View style={styles.summaryContainer}>
-              <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>Receitas</Text>
-                <Text style={[styles.summaryValue, { color: theme.colors.success }]}>
-                  {formatCurrency(totals.income, 'BRL')}
-                </Text>
-              </View>
-              <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>Despesas</Text>
-                <Text style={[styles.summaryValue, { color: theme.colors.danger }]}>
-                  {formatCurrency(totals.expense, 'BRL')}
-                </Text>
-              </View>
-              <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>Saldo</Text>
-                <Text style={[styles.summaryValue, { color: theme.colors.info }]}>
-                  {formatCurrency(totals.income - totals.expense, 'BRL')}
-                </Text>
-              </View>
-            </View>
-
-            {/* Lista de transações */}
-            <View style={styles.transactionsList}>
-              {Object.keys(groupedTransactions).length === 0 ? (
-                <View style={styles.emptyState}>
-                  <FontAwesome5 name="exchange-alt" size={40} color={theme.colors.textDim} />
-                  <Text style={styles.emptyText}>Nenhuma transação encontrada</Text>
+                {/* Filtro por período */}
+                <Text style={styles.filterLabel}>Período:</Text>
+                <View style={styles.filterRow}>
+                  {(['today', 'week', 'month', 'year'] as const).map((period) => (
+                    <TouchableOpacity
+                      key={period}
+                      style={[
+                        styles.filterChip,
+                        selectedPeriod === period && styles.filterChipActive
+                      ]}
+                      onPress={() => setSelectedPeriod(period)}
+                    >
+                      <Text style={[
+                        styles.filterChipText,
+                        selectedPeriod === period && styles.filterChipTextActive
+                      ]}>
+                        {period === 'today' ? 'Hoje' :
+                         period === 'week' ? 'Semana' :
+                         period === 'month' ? 'Mês' : 'Ano'}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
-              ) : (
-                Object.entries(groupedTransactions).map(([date, dateTransactions]) => (
-                  <View key={date}>
-                    <Text style={styles.dateHeader}>{date}</Text>
-                    {dateTransactions.map(t => {
-                      const icon = getIconForType(t.type);
-                      const color = getColorForType(t.type);
-                      
-                      return (
-                        <View key={t.id} style={styles.transactionItem}>
-                          <View style={[styles.transactionIcon, { backgroundColor: `${color}20` }]}>
-                            <FontAwesome5 name={icon} size={16} color={color} />
-                          </View>
-                          
-                          <View style={styles.transactionContent}>
-                            <View style={styles.transactionHeader}>
-                              <Text style={styles.transactionDescription}>
-                                {t.description || (t.type === 'income' ? 'Receita' : 
-                                 t.type === 'expense' ? 'Despesa' : 'Transferência')}
-                              </Text>
-                              <Text style={[styles.transactionAmount, { color }]}>
-                                {t.type === 'expense' ? '- ' : '+ '}
-                                {formatCurrency(t.amount, 'BRL')}
-                              </Text>
+
+                {/* Filtro por categoria */}
+                <Text style={styles.filterLabel}>Categoria:</Text>
+                <TouchableOpacity
+                  style={styles.categorySelector}
+                  onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                >
+                  <Text style={styles.categorySelectorText}>
+                    {selectedCategory === 'all' ? 'Todas' : selectedCategory}
+                  </Text>
+                  <FontAwesome5 
+                    name={showCategoryDropdown ? 'chevron-up' : 'chevron-down'} 
+                    size={14} 
+                    color={theme.colors.textDim} 
+                  />
+                </TouchableOpacity>
+
+                {showCategoryDropdown && (
+                  <View style={styles.dropdown}>
+                    <TouchableOpacity
+                      style={styles.dropdownItem}
+                      onPress={() => {
+                        setSelectedCategory('all');
+                        setShowCategoryDropdown(false);
+                      }}
+                    >
+                      <Text style={styles.dropdownItemText}>Todas</Text>
+                    </TouchableOpacity>
+                    {uniqueCategories.map(cat => (
+                      <TouchableOpacity
+                        key={cat}
+                        style={styles.dropdownItem}
+                        onPress={() => {
+                          setSelectedCategory(cat);
+                          setShowCategoryDropdown(false);
+                        }}
+                      >
+                        <Text style={styles.dropdownItemText}>{cat}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </View>
+
+              {/* Resumo dos totais */}
+              <View style={styles.summaryContainer}>
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Receitas</Text>
+                  <Text style={[styles.summaryValue, { color: theme.colors.success }]}>
+                    {formatCurrency(totals.income, 'BRL')}
+                  </Text>
+                </View>
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Despesas</Text>
+                  <Text style={[styles.summaryValue, { color: theme.colors.danger }]}>
+                    {formatCurrency(totals.expense, 'BRL')}
+                  </Text>
+                </View>
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Saldo</Text>
+                  <Text style={[styles.summaryValue, { color: theme.colors.info }]}>
+                    {formatCurrency(totals.income - totals.expense, 'BRL')}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Lista de transações */}
+              <View style={styles.transactionsList}>
+                {Object.keys(groupedTransactions).length === 0 ? (
+                  <View style={styles.emptyState}>
+                    <FontAwesome5 name="exchange-alt" size={40} color={theme.colors.textDim} />
+                    <Text style={styles.emptyText}>Nenhuma transação encontrada</Text>
+                  </View>
+                ) : (
+                  Object.entries(groupedTransactions).map(([date, dateTransactions]) => (
+                    <View key={date}>
+                      <Text style={styles.dateHeader}>{date}</Text>
+                      {dateTransactions.map(t => {
+                        const icon = getIconForType(t.type);
+                        const color = getColorForType(t.type);
+                        
+                        return (
+                          <View key={t.id} style={styles.transactionItem}>
+                            <View style={[styles.transactionIcon, { backgroundColor: `${color}20` }]}>
+                              <FontAwesome5 name={icon} size={16} color={color} />
                             </View>
                             
-                            <View style={styles.transactionDetails}>
-                              <Text style={styles.transactionCategory}>{t.category}</Text>
-                              <Text style={styles.transactionAccount}>
-                                {getAccountName(t.accountId)}
-                                {t.toAccountId && ` → ${getAccountName(t.toAccountId)}`}
-                              </Text>
+                            <View style={styles.transactionContent}>
+                              <View style={styles.transactionHeader}>
+                                <Text style={styles.transactionDescription}>
+                                  {t.description || (t.type === 'income' ? 'Receita' : 
+                                   t.type === 'expense' ? 'Despesa' : 'Transferência')}
+                                </Text>
+                                <Text style={[styles.transactionAmount, { color }]}>
+                                  {t.type === 'expense' ? '- ' : '+ '}
+                                  {formatCurrency(t.amount, 'BRL')}
+                                </Text>
+                              </View>
+                              
+                              <View style={styles.transactionDetails}>
+                                <Text style={styles.transactionCategory}>{t.category}</Text>
+                                <Text style={styles.transactionAccount}>
+                                  {getAccountName(t.accountId)}
+                                  {t.toAccountId && ` → ${getAccountName(t.toAccountId)}`}
+                                </Text>
+                              </View>
                             </View>
-                          </View>
-                        </View>
-                      );
-                    })}
-                  </View>
-                ))
-              )}
-            </View>
-          </ScrollView>
 
-          {/* Botão Fechar */}
-          <Button
-            title="Fechar"
-            onPress={onClose}
-            style={styles.closeButton}
-          />
+                            {/* Botão de deletar */}
+                            <TouchableOpacity
+                              style={styles.deleteButton}
+                              onPress={() => handleDeletePress(t)}
+                            >
+                              <FontAwesome5 name="trash" size={16} color={theme.colors.danger} />
+                            </TouchableOpacity>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  ))
+                )}
+              </View>
+            </ScrollView>
+
+            {/* Botão Fechar */}
+            <Button
+              title="Fechar"
+              onPress={onClose}
+              style={styles.closeButton}
+            />
+          </View>
         </View>
-      </View>
-    </Modal>
+      </Modal>
+
+      {/* Modal de Confirmação para Deletar */}
+      <ConfirmModal
+        visible={showDeleteConfirm}
+        title="Excluir Transferência"
+        message={`Tem certeza que deseja excluir esta transferência?\n\n${transactionToDelete?.description || 'Transferência'} - ${formatCurrency(transactionToDelete?.amount || 0, 'BRL')}`}
+        type="danger"
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          setShowDeleteConfirm(false);
+          setTransactionToDelete(null);
+        }}
+      />
+
+      {/* Toast para feedback */}
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={hideToast}
+      />
+    </>
   );
 }
 
@@ -474,6 +532,10 @@ const styles = StyleSheet.create({
   transactionAccount: {
     fontSize: 12,
     color: theme.colors.textDim,
+  },
+  deleteButton: {
+    padding: 8,
+    marginLeft: 8,
   },
   emptyState: {
     alignItems: 'center',
