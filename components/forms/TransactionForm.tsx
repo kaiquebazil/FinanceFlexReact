@@ -1,5 +1,5 @@
 // components/forms/TransactionForm.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,91 +8,114 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
-  FlatList
-} from 'react-native';
-import { FontAwesome5 } from '@expo/vector-icons';
-import { Button } from '../ui/Button';
-import { theme } from '../../constants/theme';
-import { useData } from '../../hooks/useData';
-import { formatCurrency } from '../../utils/currency';
+  FlatList,
+} from "react-native";
+import { FontAwesome5 } from "@expo/vector-icons";
+import { Button } from "../ui/Button";
+import { theme } from "../../constants/theme";
+import { useData } from "../../hooks/useData";
+import { formatCurrency } from "../../utils/currency";
 
-type TransactionType = 'income' | 'expense' | 'transfer';
+type TransactionType = "income" | "expense" | "transfer";
 
 interface TransactionFormProps {
   visible: boolean;
   onClose: () => void;
   onSave: (data: any) => void;
+  initialType?: TransactionType;
 }
 
 // Gerar array de anos (2020 até 2030)
 const YEARS = Array.from({ length: 11 }, (_, i) => (2020 + i).toString());
 const MONTHS = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
 ];
 const DAYS = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
 
-export function TransactionForm({ visible, onClose, onSave }: TransactionFormProps) {
+export function TransactionForm({
+  visible,
+  onClose,
+  onSave,
+  initialType = "income",
+}: TransactionFormProps) {
   const { accounts, categories } = useData();
-  
+
   // Estados do formulário
-  const [selectedType, setSelectedType] = useState<TransactionType>('income');
-  const [amount, setAmount] = useState('');
-  const [description, setDescription] = useState('');
+  const [selectedType, setSelectedType] =
+    useState<TransactionType>(initialType);
+  const [amount, setAmount] = useState("");
+  const [description, setDescription] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<any>(null);
   const [selectedAccount, setSelectedAccount] = useState<any>(null);
   const [selectedToAccount, setSelectedToAccount] = useState<any>(null);
-  
+
   // Estados de data
   const today = new Date();
   const [selectedDay, setSelectedDay] = useState(today.getDate().toString());
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
-  const [selectedYear, setSelectedYear] = useState(today.getFullYear().toString());
-  
+  const [selectedYear, setSelectedYear] = useState(
+    today.getFullYear().toString(),
+  );
+
   // Estados para modais de seleção
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showToAccountModal, setShowToAccountModal] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
-  
+
   // Estados de erro
   const [errors, setErrors] = useState<any>({});
 
-  // Resetar formulário quando o modal abrir
+  // Resetar formulário quando o modal abrir, respeitando o initialType
   useEffect(() => {
     if (visible) {
       const now = new Date();
       setSelectedDay(now.getDate().toString());
       setSelectedMonth(now.getMonth());
       setSelectedYear(now.getFullYear().toString());
-      setAmount('');
-      setDescription('');
+      setAmount("");
+      setDescription("");
       setSelectedCategory(null);
       setSelectedAccount(null);
       setSelectedToAccount(null);
+      setSelectedType(initialType); // USA O TIPO INICIAL
       setErrors({});
     }
-  }, [visible]);
+  }, [visible, initialType]);
 
-  // Filtrar categorias por tipo
-  const filteredCategories = categories.filter(c => c.type === selectedType);
+  // Filtrar categorias por tipo (apenas se não for transferência)
+  const filteredCategories =
+    selectedType !== "transfer"
+      ? categories.filter((c) => c.type === selectedType)
+      : [];
 
   // Formatar valor enquanto digita
   const handleAmountChange = (text: string) => {
-    const cleanText = text.replace(/[^0-9]/g, '');
-    
-    if (cleanText === '') {
-      setAmount('');
+    const cleanText = text.replace(/[^0-9]/g, "");
+
+    if (cleanText === "") {
+      setAmount("");
       return;
     }
-    
+
     const numberValue = parseFloat(cleanText) / 100;
-    setAmount(numberValue.toFixed(2).replace('.', ','));
+    setAmount(numberValue.toFixed(2).replace(".", ","));
   };
 
   // Formatar data para exibição
   const getFormattedDate = () => {
-    return `${selectedDay.padStart(2, '0')}/${(selectedMonth + 1).toString().padStart(2, '0')}/${selectedYear}`;
+    return `${selectedDay.padStart(2, "0")}/${(selectedMonth + 1).toString().padStart(2, "0")}/${selectedYear}`;
   };
 
   // Validar dia do mês
@@ -120,45 +143,53 @@ export function TransactionForm({ visible, onClose, onSave }: TransactionFormPro
   // Validar e salvar
   const handleSave = () => {
     const newErrors: any = {};
-    
+
     // Validar valor
-    const amountValue = parseFloat(amount?.replace(',', '.') || '0');
+    const amountValue = parseFloat(amount?.replace(",", ".") || "0");
     if (!amount || amountValue <= 0) {
-      newErrors.amount = 'Valor deve ser maior que zero';
+      newErrors.amount = "Valor deve ser maior que zero";
     }
-    
-    if (selectedType !== 'transfer') {
+
+    if (selectedType !== "transfer") {
       // Validar categoria para receitas/despesas
       if (!selectedCategory) {
-        newErrors.category = 'Selecione uma categoria';
+        newErrors.category = "Selecione uma categoria";
       }
-      
+
       // Validar conta
       if (!selectedAccount) {
-        newErrors.account = 'Selecione uma conta';
+        newErrors.account = "Selecione uma conta";
       }
-      
+
       // Validar saldo para despesas
-      if (selectedType === 'expense' && selectedAccount && selectedAccount.balance < amountValue) {
+      if (
+        selectedType === "expense" &&
+        selectedAccount &&
+        selectedAccount.balance < amountValue
+      ) {
         newErrors.account = `Saldo insuficiente! Saldo: ${formatCurrency(selectedAccount.balance, selectedAccount.currency)}`;
       }
     } else {
       // Validações para transferência
       if (!selectedAccount) {
-        newErrors.account = 'Selecione a conta de origem';
+        newErrors.account = "Selecione a conta de origem";
       }
-      
+
       if (!selectedToAccount) {
-        newErrors.toAccount = 'Selecione a conta de destino';
-      } else if (selectedAccount && selectedToAccount && selectedAccount.id === selectedToAccount.id) {
-        newErrors.toAccount = 'As contas devem ser diferentes';
+        newErrors.toAccount = "Selecione a conta de destino";
+      } else if (
+        selectedAccount &&
+        selectedToAccount &&
+        selectedAccount.id === selectedToAccount.id
+      ) {
+        newErrors.toAccount = "As contas devem ser diferentes";
       }
-      
+
       if (selectedAccount && selectedAccount.balance < amountValue) {
         newErrors.account = `Saldo insuficiente! Saldo: ${formatCurrency(selectedAccount.balance, selectedAccount.currency)}`;
       }
     }
-    
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -166,31 +197,35 @@ export function TransactionForm({ visible, onClose, onSave }: TransactionFormPro
 
     // Criar data no formato ISO
     const selectedDate = new Date(
-      parseInt(selectedYear), 
-      selectedMonth, 
+      parseInt(selectedYear),
+      selectedMonth,
       parseInt(selectedDay),
-      12, 0, 0
+      12,
+      0,
+      0,
     );
 
     // Criar objeto da transação
     const transaction: any = {
       type: selectedType,
       amount: amountValue,
-      description: description.trim() || (
-        selectedType === 'income' ? 'Receita' : 
-        selectedType === 'expense' ? 'Despesa' : 
-        'Transferência'
-      ),
+      description:
+        description.trim() ||
+        (selectedType === "income"
+          ? "Receita"
+          : selectedType === "expense"
+            ? "Despesa"
+            : "Transferência"),
       date: selectedDate.toISOString(),
     };
 
-    if (selectedType === 'transfer') {
+    if (selectedType === "transfer") {
       transaction.fromAccountId = selectedAccount.id;
       transaction.fromAccountName = selectedAccount.name;
       transaction.toAccountId = selectedToAccount.id;
       transaction.toAccountName = selectedToAccount.name;
-      transaction.accountId = selectedAccount.id; // Para compatibilidade
-      transaction.category = 'Transferência';
+      transaction.accountId = selectedAccount.id;
+      transaction.category = "Transferência";
     } else {
       transaction.category = selectedCategory.name;
       transaction.categoryId = selectedCategory.id;
@@ -216,7 +251,11 @@ export function TransactionForm({ visible, onClose, onSave }: TransactionFormPro
         setErrors({ ...errors, category: null });
       }}
     >
-      <FontAwesome5 name={item.icon || 'tag'} size={16} color={theme.colors.primary} />
+      <FontAwesome5
+        name={item.icon || "tag"}
+        size={16}
+        color={theme.colors.primary}
+      />
       <Text style={styles.selectItemText}>{item.name}</Text>
     </TouchableOpacity>
   );
@@ -237,10 +276,10 @@ export function TransactionForm({ visible, onClose, onSave }: TransactionFormPro
         }
       }}
     >
-      <FontAwesome5 
-        name={item.type === 'Dinheiro' ? 'money-bill-wave' : 'university'} 
-        size={16} 
-        color={theme.colors.primary} 
+      <FontAwesome5
+        name={item.type === "Dinheiro" ? "money-bill-wave" : "university"}
+        size={16}
+        color={theme.colors.primary}
       />
       <View style={styles.accountInfo}>
         <Text style={styles.selectItemText}>{item.name}</Text>
@@ -262,9 +301,17 @@ export function TransactionForm({ visible, onClose, onSave }: TransactionFormPro
         <View style={styles.modalContent}>
           {/* Cabeçalho */}
           <View style={styles.header}>
-            <Text style={styles.title}>Nova Transação</Text>
+            <Text style={styles.title}>
+              {selectedType === "income" && "Nova Receita"}
+              {selectedType === "expense" && "Nova Despesa"}
+              {selectedType === "transfer" && "Nova Transferência"}
+            </Text>
             <TouchableOpacity onPress={handleCancel} style={styles.closeButton}>
-              <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
+              <FontAwesome5
+                name="times"
+                size={20}
+                color={theme.colors.textDim}
+              />
             </TouchableOpacity>
           </View>
 
@@ -273,19 +320,23 @@ export function TransactionForm({ visible, onClose, onSave }: TransactionFormPro
             <TouchableOpacity
               style={[
                 styles.typeButton,
-                selectedType === 'income' && styles.typeButtonActive
+                selectedType === "income" && styles.typeButtonActive,
               ]}
-              onPress={() => setSelectedType('income')}
+              onPress={() => setSelectedType("income")}
             >
-              <FontAwesome5 
-                name="arrow-down" 
-                size={20} 
-                color={selectedType === 'income' ? '#fff' : theme.colors.success} 
+              <FontAwesome5
+                name="arrow-down"
+                size={20}
+                color={
+                  selectedType === "income" ? "#fff" : theme.colors.success
+                }
               />
-              <Text style={[
-                styles.typeButtonText,
-                selectedType === 'income' && styles.typeButtonTextActive
-              ]}>
+              <Text
+                style={[
+                  styles.typeButtonText,
+                  selectedType === "income" && styles.typeButtonTextActive,
+                ]}
+              >
                 Receita
               </Text>
             </TouchableOpacity>
@@ -293,19 +344,23 @@ export function TransactionForm({ visible, onClose, onSave }: TransactionFormPro
             <TouchableOpacity
               style={[
                 styles.typeButton,
-                selectedType === 'expense' && styles.typeButtonActive
+                selectedType === "expense" && styles.typeButtonActive,
               ]}
-              onPress={() => setSelectedType('expense')}
+              onPress={() => setSelectedType("expense")}
             >
-              <FontAwesome5 
-                name="arrow-up" 
-                size={20} 
-                color={selectedType === 'expense' ? '#fff' : theme.colors.danger} 
+              <FontAwesome5
+                name="arrow-up"
+                size={20}
+                color={
+                  selectedType === "expense" ? "#fff" : theme.colors.danger
+                }
               />
-              <Text style={[
-                styles.typeButtonText,
-                selectedType === 'expense' && styles.typeButtonTextActive
-              ]}>
+              <Text
+                style={[
+                  styles.typeButtonText,
+                  selectedType === "expense" && styles.typeButtonTextActive,
+                ]}
+              >
                 Despesa
               </Text>
             </TouchableOpacity>
@@ -313,19 +368,21 @@ export function TransactionForm({ visible, onClose, onSave }: TransactionFormPro
             <TouchableOpacity
               style={[
                 styles.typeButton,
-                selectedType === 'transfer' && styles.typeButtonActive
+                selectedType === "transfer" && styles.typeButtonActive,
               ]}
-              onPress={() => setSelectedType('transfer')}
+              onPress={() => setSelectedType("transfer")}
             >
-              <FontAwesome5 
-                name="exchange-alt" 
-                size={20} 
-                color={selectedType === 'transfer' ? '#fff' : theme.colors.info} 
+              <FontAwesome5
+                name="exchange-alt"
+                size={20}
+                color={selectedType === "transfer" ? "#fff" : theme.colors.info}
               />
-              <Text style={[
-                styles.typeButtonText,
-                selectedType === 'transfer' && styles.typeButtonTextActive
-              ]}>
+              <Text
+                style={[
+                  styles.typeButtonText,
+                  selectedType === "transfer" && styles.typeButtonTextActive,
+                ]}
+              >
                 Transferir
               </Text>
             </TouchableOpacity>
@@ -338,7 +395,10 @@ export function TransactionForm({ visible, onClose, onSave }: TransactionFormPro
               <View style={styles.amountContainer}>
                 <Text style={styles.currencySymbol}>R$</Text>
                 <TextInput
-                  style={[styles.amountInput, errors.amount && styles.inputError]}
+                  style={[
+                    styles.amountInput,
+                    errors.amount && styles.inputError,
+                  ]}
                   value={amount}
                   onChangeText={handleAmountChange}
                   placeholder="0,00"
@@ -347,7 +407,9 @@ export function TransactionForm({ visible, onClose, onSave }: TransactionFormPro
                   autoFocus
                 />
               </View>
-              {errors.amount && <Text style={styles.errorText}>{errors.amount}</Text>}
+              {errors.amount && (
+                <Text style={styles.errorText}>{errors.amount}</Text>
+              )}
             </View>
 
             {/* Descrição */}
@@ -357,60 +419,101 @@ export function TransactionForm({ visible, onClose, onSave }: TransactionFormPro
                 style={styles.input}
                 value={description}
                 onChangeText={setDescription}
-                placeholder="Descrição da transação"
+                placeholder={
+                  selectedType === "transfer"
+                    ? "Descrição da transferência"
+                    : "Descrição da transação"
+                }
                 placeholderTextColor={theme.colors.textMuted}
               />
             </View>
 
-            {selectedType !== 'transfer' ? (
+            {selectedType !== "transfer" ? (
               <>
                 {/* Categoria (para receitas/despesas) */}
                 <View style={styles.field}>
                   <Text style={styles.label}>Categoria</Text>
                   <TouchableOpacity
-                    style={[styles.selectButton, errors.category && styles.inputError]}
+                    style={[
+                      styles.selectButton,
+                      errors.category && styles.inputError,
+                    ]}
                     onPress={() => setShowCategoryModal(true)}
                   >
                     {selectedCategory ? (
                       <View style={styles.selectButtonContent}>
-                        <FontAwesome5 name={selectedCategory.icon || 'tag'} size={16} color={theme.colors.primary} />
-                        <Text style={styles.selectButtonText}>{selectedCategory.name}</Text>
+                        <FontAwesome5
+                          name={selectedCategory.icon || "tag"}
+                          size={16}
+                          color={theme.colors.primary}
+                        />
+                        <Text style={styles.selectButtonText}>
+                          {selectedCategory.name}
+                        </Text>
                       </View>
                     ) : (
-                      <Text style={styles.placeholderText}>Selecione a categoria</Text>
+                      <Text style={styles.placeholderText}>
+                        Selecione a categoria
+                      </Text>
                     )}
-                    <FontAwesome5 name="chevron-down" size={14} color={theme.colors.textDim} />
+                    <FontAwesome5
+                      name="chevron-down"
+                      size={14}
+                      color={theme.colors.textDim}
+                    />
                   </TouchableOpacity>
-                  {errors.category && <Text style={styles.errorText}>{errors.category}</Text>}
+                  {errors.category && (
+                    <Text style={styles.errorText}>{errors.category}</Text>
+                  )}
                 </View>
 
                 {/* Conta (para receitas/despesas) */}
                 <View style={styles.field}>
                   <Text style={styles.label}>Conta</Text>
                   <TouchableOpacity
-                    style={[styles.selectButton, errors.account && styles.inputError]}
+                    style={[
+                      styles.selectButton,
+                      errors.account && styles.inputError,
+                    ]}
                     onPress={() => setShowAccountModal(true)}
                   >
                     {selectedAccount ? (
                       <View style={styles.selectButtonContent}>
-                        <FontAwesome5 
-                          name={selectedAccount.type === 'Dinheiro' ? 'money-bill-wave' : 'university'} 
-                          size={16} 
-                          color={theme.colors.primary} 
+                        <FontAwesome5
+                          name={
+                            selectedAccount.type === "Dinheiro"
+                              ? "money-bill-wave"
+                              : "university"
+                          }
+                          size={16}
+                          color={theme.colors.primary}
                         />
                         <View>
-                          <Text style={styles.selectButtonText}>{selectedAccount.name}</Text>
+                          <Text style={styles.selectButtonText}>
+                            {selectedAccount.name}
+                          </Text>
                           <Text style={styles.selectBalance}>
-                            {formatCurrency(selectedAccount.balance, selectedAccount.currency)}
+                            {formatCurrency(
+                              selectedAccount.balance,
+                              selectedAccount.currency,
+                            )}
                           </Text>
                         </View>
                       </View>
                     ) : (
-                      <Text style={styles.placeholderText}>Selecione a conta</Text>
+                      <Text style={styles.placeholderText}>
+                        Selecione a conta
+                      </Text>
                     )}
-                    <FontAwesome5 name="chevron-down" size={14} color={theme.colors.textDim} />
+                    <FontAwesome5
+                      name="chevron-down"
+                      size={14}
+                      color={theme.colors.textDim}
+                    />
                   </TouchableOpacity>
-                  {errors.account && <Text style={styles.errorText}>{errors.account}</Text>}
+                  {errors.account && (
+                    <Text style={styles.errorText}>{errors.account}</Text>
+                  )}
                 </View>
               </>
             ) : (
@@ -419,58 +522,98 @@ export function TransactionForm({ visible, onClose, onSave }: TransactionFormPro
                 <View style={styles.field}>
                   <Text style={styles.label}>Conta de Origem</Text>
                   <TouchableOpacity
-                    style={[styles.selectButton, errors.account && styles.inputError]}
+                    style={[
+                      styles.selectButton,
+                      errors.account && styles.inputError,
+                    ]}
                     onPress={() => setShowAccountModal(true)}
                   >
                     {selectedAccount ? (
                       <View style={styles.selectButtonContent}>
-                        <FontAwesome5 
-                          name={selectedAccount.type === 'Dinheiro' ? 'money-bill-wave' : 'university'} 
-                          size={16} 
-                          color={theme.colors.primary} 
+                        <FontAwesome5
+                          name={
+                            selectedAccount.type === "Dinheiro"
+                              ? "money-bill-wave"
+                              : "university"
+                          }
+                          size={16}
+                          color={theme.colors.primary}
                         />
                         <View>
-                          <Text style={styles.selectButtonText}>{selectedAccount.name}</Text>
+                          <Text style={styles.selectButtonText}>
+                            {selectedAccount.name}
+                          </Text>
                           <Text style={styles.selectBalance}>
-                            {formatCurrency(selectedAccount.balance, selectedAccount.currency)}
+                            {formatCurrency(
+                              selectedAccount.balance,
+                              selectedAccount.currency,
+                            )}
                           </Text>
                         </View>
                       </View>
                     ) : (
-                      <Text style={styles.placeholderText}>Selecione a conta de origem</Text>
+                      <Text style={styles.placeholderText}>
+                        Selecione a conta de origem
+                      </Text>
                     )}
-                    <FontAwesome5 name="chevron-down" size={14} color={theme.colors.textDim} />
+                    <FontAwesome5
+                      name="chevron-down"
+                      size={14}
+                      color={theme.colors.textDim}
+                    />
                   </TouchableOpacity>
-                  {errors.account && <Text style={styles.errorText}>{errors.account}</Text>}
+                  {errors.account && (
+                    <Text style={styles.errorText}>{errors.account}</Text>
+                  )}
                 </View>
 
                 {/* Conta de Destino (para transferência) */}
                 <View style={styles.field}>
                   <Text style={styles.label}>Conta de Destino</Text>
                   <TouchableOpacity
-                    style={[styles.selectButton, errors.toAccount && styles.inputError]}
+                    style={[
+                      styles.selectButton,
+                      errors.toAccount && styles.inputError,
+                    ]}
                     onPress={() => setShowToAccountModal(true)}
                   >
                     {selectedToAccount ? (
                       <View style={styles.selectButtonContent}>
-                        <FontAwesome5 
-                          name={selectedToAccount.type === 'Dinheiro' ? 'money-bill-wave' : 'university'} 
-                          size={16} 
-                          color={theme.colors.primary} 
+                        <FontAwesome5
+                          name={
+                            selectedToAccount.type === "Dinheiro"
+                              ? "money-bill-wave"
+                              : "university"
+                          }
+                          size={16}
+                          color={theme.colors.primary}
                         />
                         <View>
-                          <Text style={styles.selectButtonText}>{selectedToAccount.name}</Text>
+                          <Text style={styles.selectButtonText}>
+                            {selectedToAccount.name}
+                          </Text>
                           <Text style={styles.selectBalance}>
-                            {formatCurrency(selectedToAccount.balance, selectedToAccount.currency)}
+                            {formatCurrency(
+                              selectedToAccount.balance,
+                              selectedToAccount.currency,
+                            )}
                           </Text>
                         </View>
                       </View>
                     ) : (
-                      <Text style={styles.placeholderText}>Selecione a conta de destino</Text>
+                      <Text style={styles.placeholderText}>
+                        Selecione a conta de destino
+                      </Text>
                     )}
-                    <FontAwesome5 name="chevron-down" size={14} color={theme.colors.textDim} />
+                    <FontAwesome5
+                      name="chevron-down"
+                      size={14}
+                      color={theme.colors.textDim}
+                    />
                   </TouchableOpacity>
-                  {errors.toAccount && <Text style={styles.errorText}>{errors.toAccount}</Text>}
+                  {errors.toAccount && (
+                    <Text style={styles.errorText}>{errors.toAccount}</Text>
+                  )}
                 </View>
               </>
             )}
@@ -482,9 +625,17 @@ export function TransactionForm({ visible, onClose, onSave }: TransactionFormPro
                 style={styles.dateButton}
                 onPress={() => setShowDateModal(true)}
               >
-                <FontAwesome5 name="calendar-alt" size={16} color={theme.colors.primary} />
+                <FontAwesome5
+                  name="calendar-alt"
+                  size={16}
+                  color={theme.colors.primary}
+                />
                 <Text style={styles.dateText}>{getFormattedDate()}</Text>
-                <FontAwesome5 name="chevron-down" size={14} color={theme.colors.textDim} />
+                <FontAwesome5
+                  name="chevron-down"
+                  size={14}
+                  color={theme.colors.textDim}
+                />
               </TouchableOpacity>
             </View>
 
@@ -514,16 +665,28 @@ export function TransactionForm({ visible, onClose, onSave }: TransactionFormPro
             <View style={styles.modalOverlay}>
               <View style={styles.selectionModal}>
                 <View style={styles.selectionHeader}>
-                  <Text style={styles.selectionTitle}>Selecione uma categoria</Text>
+                  <Text style={styles.selectionTitle}>
+                    Selecione uma categoria
+                  </Text>
                   <TouchableOpacity onPress={() => setShowCategoryModal(false)}>
-                    <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
+                    <FontAwesome5
+                      name="times"
+                      size={20}
+                      color={theme.colors.textDim}
+                    />
                   </TouchableOpacity>
                 </View>
-                
+
                 {filteredCategories.length === 0 ? (
                   <View style={styles.emptyState}>
-                    <FontAwesome5 name="tags" size={40} color={theme.colors.textDim} />
-                    <Text style={styles.emptyText}>Nenhuma categoria encontrada</Text>
+                    <FontAwesome5
+                      name="tags"
+                      size={40}
+                      color={theme.colors.textDim}
+                    />
+                    <Text style={styles.emptyText}>
+                      Nenhuma categoria encontrada
+                    </Text>
                   </View>
                 ) : (
                   <FlatList
@@ -548,17 +711,29 @@ export function TransactionForm({ visible, onClose, onSave }: TransactionFormPro
               <View style={styles.selectionModal}>
                 <View style={styles.selectionHeader}>
                   <Text style={styles.selectionTitle}>
-                    {selectedType === 'transfer' ? 'Selecione a conta de origem' : 'Selecione uma conta'}
+                    {selectedType === "transfer"
+                      ? "Selecione a conta de origem"
+                      : "Selecione uma conta"}
                   </Text>
                   <TouchableOpacity onPress={() => setShowAccountModal(false)}>
-                    <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
+                    <FontAwesome5
+                      name="times"
+                      size={20}
+                      color={theme.colors.textDim}
+                    />
                   </TouchableOpacity>
                 </View>
-                
+
                 {accounts.length === 0 ? (
                   <View style={styles.emptyState}>
-                    <FontAwesome5 name="wallet" size={40} color={theme.colors.textDim} />
-                    <Text style={styles.emptyText}>Nenhuma conta encontrada</Text>
+                    <FontAwesome5
+                      name="wallet"
+                      size={40}
+                      color={theme.colors.textDim}
+                    />
+                    <Text style={styles.emptyText}>
+                      Nenhuma conta encontrada
+                    </Text>
                   </View>
                 ) : (
                   <FlatList
@@ -582,20 +757,34 @@ export function TransactionForm({ visible, onClose, onSave }: TransactionFormPro
             <View style={styles.modalOverlay}>
               <View style={styles.selectionModal}>
                 <View style={styles.selectionHeader}>
-                  <Text style={styles.selectionTitle}>Selecione a conta de destino</Text>
-                  <TouchableOpacity onPress={() => setShowToAccountModal(false)}>
-                    <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
+                  <Text style={styles.selectionTitle}>
+                    Selecione a conta de destino
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => setShowToAccountModal(false)}
+                  >
+                    <FontAwesome5
+                      name="times"
+                      size={20}
+                      color={theme.colors.textDim}
+                    />
                   </TouchableOpacity>
                 </View>
-                
+
                 {accounts.length === 0 ? (
                   <View style={styles.emptyState}>
-                    <FontAwesome5 name="wallet" size={40} color={theme.colors.textDim} />
-                    <Text style={styles.emptyText}>Nenhuma conta encontrada</Text>
+                    <FontAwesome5
+                      name="wallet"
+                      size={40}
+                      color={theme.colors.textDim}
+                    />
+                    <Text style={styles.emptyText}>
+                      Nenhuma conta encontrada
+                    </Text>
                   </View>
                 ) : (
                   <FlatList
-                    data={accounts.filter(a => a.id !== selectedAccount?.id)}
+                    data={accounts.filter((a) => a.id !== selectedAccount?.id)}
                     keyExtractor={(item) => item.id}
                     renderItem={renderAccountItem}
                     showsVerticalScrollIndicator={false}
@@ -617,27 +806,38 @@ export function TransactionForm({ visible, onClose, onSave }: TransactionFormPro
                 <View style={styles.selectionHeader}>
                   <Text style={styles.selectionTitle}>Selecione a Data</Text>
                   <TouchableOpacity onPress={() => setShowDateModal(false)}>
-                    <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
+                    <FontAwesome5
+                      name="times"
+                      size={20}
+                      color={theme.colors.textDim}
+                    />
                   </TouchableOpacity>
                 </View>
 
                 {/* Seletor de Ano */}
                 <View style={styles.dateSection}>
                   <Text style={styles.dateSectionLabel}>Ano</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dateScroll}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.dateScroll}
+                  >
                     {YEARS.map((year) => (
                       <TouchableOpacity
                         key={year}
                         style={[
                           styles.dateOption,
-                          selectedYear === year && styles.dateOptionSelected
+                          selectedYear === year && styles.dateOptionSelected,
                         ]}
                         onPress={() => setSelectedYear(year)}
                       >
-                        <Text style={[
-                          styles.dateOptionText,
-                          selectedYear === year && styles.dateOptionTextSelected
-                        ]}>
+                        <Text
+                          style={[
+                            styles.dateOptionText,
+                            selectedYear === year &&
+                              styles.dateOptionTextSelected,
+                          ]}
+                        >
                           {year}
                         </Text>
                       </TouchableOpacity>
@@ -648,20 +848,27 @@ export function TransactionForm({ visible, onClose, onSave }: TransactionFormPro
                 {/* Seletor de Mês */}
                 <View style={styles.dateSection}>
                   <Text style={styles.dateSectionLabel}>Mês</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dateScroll}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.dateScroll}
+                  >
                     {MONTHS.map((month, index) => (
                       <TouchableOpacity
                         key={month}
                         style={[
                           styles.dateOption,
-                          selectedMonth === index && styles.dateOptionSelected
+                          selectedMonth === index && styles.dateOptionSelected,
                         ]}
                         onPress={() => setSelectedMonth(index)}
                       >
-                        <Text style={[
-                          styles.dateOptionText,
-                          selectedMonth === index && styles.dateOptionTextSelected
-                        ]}>
+                        <Text
+                          style={[
+                            styles.dateOptionText,
+                            selectedMonth === index &&
+                              styles.dateOptionTextSelected,
+                          ]}
+                        >
                           {month.substring(0, 3)}
                         </Text>
                       </TouchableOpacity>
@@ -672,24 +879,34 @@ export function TransactionForm({ visible, onClose, onSave }: TransactionFormPro
                 {/* Seletor de Dia */}
                 <View style={styles.dateSection}>
                   <Text style={styles.dateSectionLabel}>Dia</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dateScroll}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.dateScroll}
+                  >
                     {DAYS.map((day) => {
-                      const daysInMonth = getDaysInMonth(selectedMonth, parseInt(selectedYear));
+                      const daysInMonth = getDaysInMonth(
+                        selectedMonth,
+                        parseInt(selectedYear),
+                      );
                       if (parseInt(day) > daysInMonth) return null;
                       return (
                         <TouchableOpacity
                           key={day}
                           style={[
                             styles.dateOption,
-                            selectedDay === day && styles.dateOptionSelected
+                            selectedDay === day && styles.dateOptionSelected,
                           ]}
                           onPress={() => handleDaySelect(day)}
                         >
-                          <Text style={[
-                            styles.dateOptionText,
-                            selectedDay === day && styles.dateOptionTextSelected
-                          ]}>
-                            {day.padStart(2, '0')}
+                          <Text
+                            style={[
+                              styles.dateOptionText,
+                              selectedDay === day &&
+                                styles.dateOptionTextSelected,
+                            ]}
+                          >
+                            {day.padStart(2, "0")}
                           </Text>
                         </TouchableOpacity>
                       );
@@ -712,23 +929,24 @@ export function TransactionForm({ visible, onClose, onSave }: TransactionFormPro
   );
 }
 
+// ESTILOS (mantidos os mesmos, sem alterações)
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    justifyContent: 'flex-end',
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    justifyContent: "flex-end",
   },
   modalContent: {
     backgroundColor: theme.colors.dark,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
-    maxHeight: '90%',
+    maxHeight: "90%",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 20,
     paddingBottom: 15,
     borderBottomWidth: 1,
@@ -736,7 +954,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontFamily: 'Inter-Bold',
+    fontFamily: "Inter-Bold",
     color: theme.colors.text,
   },
   closeButton: {
@@ -744,14 +962,14 @@ const styles = StyleSheet.create({
   },
   // NOVO ESTILO PARA OS BOTÕES DE TIPO
   typeContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 10,
     marginBottom: 20,
   },
   typeButton: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 12,
     borderRadius: 10,
     backgroundColor: theme.colors.darkLight,
@@ -765,24 +983,24 @@ const styles = StyleSheet.create({
   },
   typeButtonText: {
     fontSize: 12,
-    fontFamily: 'Inter-Medium',
+    fontFamily: "Inter-Medium",
     color: theme.colors.text,
   },
   typeButtonTextActive: {
-    color: '#fff',
+    color: "#fff",
   },
   field: {
     marginBottom: 20,
   },
   label: {
     fontSize: 14,
-    fontFamily: 'Inter-Medium',
+    fontFamily: "Inter-Medium",
     color: theme.colors.textDim,
     marginBottom: 8,
   },
   amountContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: theme.colors.darkLight,
     borderRadius: 10,
     borderWidth: 1,
@@ -790,14 +1008,14 @@ const styles = StyleSheet.create({
   },
   currencySymbol: {
     fontSize: 18,
-    fontFamily: 'Inter-Bold',
+    fontFamily: "Inter-Bold",
     color: theme.colors.text,
     paddingHorizontal: 15,
   },
   amountInput: {
     flex: 1,
     fontSize: 24,
-    fontFamily: 'Inter-Bold',
+    fontFamily: "Inter-Bold",
     color: theme.colors.text,
     paddingVertical: 12,
     paddingRight: 15,
@@ -823,15 +1041,15 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.darkLight,
     borderRadius: 10,
     padding: 15,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     borderWidth: 1,
     borderColor: theme.colors.border,
   },
   selectButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
     flex: 1,
   },
@@ -852,8 +1070,8 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.darkLight,
     borderRadius: 10,
     padding: 15,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
     borderWidth: 1,
     borderColor: theme.colors.border,
@@ -864,7 +1082,7 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
   },
   footer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
     marginTop: 20,
     marginBottom: 10,
@@ -880,19 +1098,19 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
-    maxHeight: '70%',
+    maxHeight: "70%",
   },
   dateModal: {
     backgroundColor: theme.colors.dark,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
-    maxHeight: '60%',
+    maxHeight: "60%",
   },
   selectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 20,
     paddingBottom: 15,
     borderBottomWidth: 1,
@@ -900,12 +1118,12 @@ const styles = StyleSheet.create({
   },
   selectionTitle: {
     fontSize: 18,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: "Inter-SemiBold",
     color: theme.colors.text,
   },
   selectItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
     paddingVertical: 15,
     paddingHorizontal: 10,
@@ -926,8 +1144,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 40,
   },
   emptyText: {
@@ -940,12 +1158,12 @@ const styles = StyleSheet.create({
   },
   dateSectionLabel: {
     fontSize: 14,
-    fontFamily: 'Inter-Medium',
+    fontFamily: "Inter-Medium",
     color: theme.colors.textDim,
     marginBottom: 10,
   },
   dateScroll: {
-    flexDirection: 'row',
+    flexDirection: "row",
   },
   dateOption: {
     paddingHorizontal: 20,
@@ -963,10 +1181,10 @@ const styles = StyleSheet.create({
   dateOptionText: {
     fontSize: 14,
     color: theme.colors.text,
-    fontFamily: 'Inter-Medium',
+    fontFamily: "Inter-Medium",
   },
   dateOptionTextSelected: {
-    color: '#fff',
+    color: "#fff",
   },
   confirmButton: {
     marginTop: 20,

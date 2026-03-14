@@ -10,7 +10,7 @@ interface FABProps {
   showMenu: boolean;
   onPressIncome: () => void;
   onPressExpense: () => void;
-  onPressTransfer: () => void; // NOVA PROP
+  onPressTransfer: () => void; // Esta prop precisa existir
 }
 
 export function FAB({ visible, onPressMain, showMenu, onPressIncome, onPressExpense, onPressTransfer }: FABProps) {

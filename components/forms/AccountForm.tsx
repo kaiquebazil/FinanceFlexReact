@@ -4,7 +4,7 @@ import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { theme } from '../../constants/theme';
 import { useData } from '../../hooks/useData';
-import { validateAccount } from '../../utils/validators';
+import { validateAccount } from '../../utils/validation';
 import type { AccountType, Currency } from '../../types';
 
 interface AccountFormProps {

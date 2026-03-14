@@ -4,7 +4,7 @@ import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { theme } from '../../constants/theme';
 import { useData } from '../../hooks/useData';
-import { validateAccount } from '../../utils/validators';  // ← Agora funciona!
+import { validateAccount } from '../../utils/validation'; 
 import type { Account, AccountType, Currency } from '../../types';
 
 interface AccountEditFormProps {

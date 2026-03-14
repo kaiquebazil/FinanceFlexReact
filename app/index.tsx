@@ -15,7 +15,6 @@ import {
 } from "react-native";
 import { BackupRestore } from "../components/features/BackupRestore";
 import { CategoryManager } from "../components/features/CategoryManager";
-import { TransferForm } from "../components/forms/TransferForm";
 import { CreditCardManager } from "../components/features/CreditCardManager";
 import { RecurringBillsManager } from "../components/features/RecurringBillsManager";
 import { TransactionsModal } from "../components/features/TransactionsModal";
@@ -80,13 +79,17 @@ export default function HomeScreen() {
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showAccountEditModal, setShowAccountEditModal] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<any>(null);
-  const [showTransferModal, setShowTransferModal] = useState(false);
 
   // Estados para transação
   const [showTransactionModal, setShowTransactionModal] = useState(false);
+  const [transactionInitialType, setTransactionInitialType] = useState<'income' | 'expense' | 'transfer'>('income');
+  
+  // Estados para cofrinho
   const [showPiggyBankModal, setShowPiggyBankModal] = useState(false);
   const [showPiggyBankEditModal, setShowPiggyBankEditModal] = useState(false);
   const [selectedPiggyBank, setSelectedPiggyBank] = useState<any>(null);
+  
+  // Estados para outros modais
   const [showCategoriesModal, setShowCategoriesModal] = useState(false);
   const [showRecurringBillsModal, setShowRecurringBillsModal] = useState(false);
   const [showCreditCardsModal, setShowCreditCardsModal] = useState(false);
@@ -111,6 +114,33 @@ export default function HomeScreen() {
     message: "",
     type: "info",
   });
+
+  // Estados do FAB
+  const [showFABMenu, setShowFABMenu] = useState(false);
+
+  // Estados de filtro
+  const [selectedPeriod, setSelectedPeriod] = useState<
+    "today" | "week" | "month" | "upcoming"
+  >("today");
+
+  // Animações
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   // Funções auxiliares para UI
   const showConfirm = (options: ConfirmOptions) => {
@@ -146,36 +176,70 @@ export default function HomeScreen() {
     });
   }, []);
 
-  // Estados de filtro
-  const [selectedPeriod, setSelectedPeriod] = useState<
-    "today" | "week" | "month" | "upcoming"
-  >("today");
-
-  // Estados do FAB
-  const [showFABMenu, setShowFABMenu] = useState(false);
-
-  // Animações
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
-
   // Resumo mensal
   const summary = getMonthlySummary();
   const totalBalance = getTotalBalance();
+
+  // Funções para abrir modais de transação
+  const handleOpenIncome = () => {
+    setTransactionInitialType('income');
+    setShowTransactionModal(true);
+    setShowFABMenu(false);
+  };
+
+  const handleOpenExpense = () => {
+    setTransactionInitialType('expense');
+    setShowTransactionModal(true);
+    setShowFABMenu(false);
+  };
+
+  const handleOpenTransfer = () => {
+    setTransactionInitialType('transfer');
+    setShowTransactionModal(true);
+    setShowFABMenu(false);
+  };
+
+  // Função para salvar transação (unificada)
+  const handleSaveTransaction = (data: any) => {
+    const newTransaction = {
+      id: Date.now().toString(),
+      type: data.type,
+      amount: data.amount,
+      description: data.description,
+      category: data.category,
+      accountId: data.type === 'transfer' ? data.fromAccountId : data.accountId,
+      toAccountId: data.type === 'transfer' ? data.toAccountId : undefined,
+      date: data.date,
+      createdAt: new Date().toISOString(),
+    };
+
+    addTransaction(newTransaction);
+
+    showToast(
+      data.type === 'income' ? 'Receita adicionada com sucesso!' :
+      data.type === 'expense' ? 'Despesa adicionada com sucesso!' :
+      `Transferência de ${formatCurrency(data.amount, "BRL")} realizada com sucesso!`,
+      "success"
+    );
+
+    setShowTransactionModal(false);
+  };
+
+  // Funções para lidar com contas
+  const handleEditAccount = (account: any) => {
+    setSelectedAccount(account);
+    setShowAccountEditModal(true);
+  };
+
+  const handleDeleteAccount = (accountId: string) => {
+    deleteAccount(accountId);
+  };
+
+  // Funções para lidar com cofrinhos
+  const handleEditPiggyBank = (piggy: any) => {
+    setSelectedPiggyBank(piggy);
+    setShowPiggyBankEditModal(true);
+  };
 
   // Filtrar transações
   const getFilteredTransactions = () => {
@@ -210,86 +274,6 @@ export default function HomeScreen() {
   const formatValue = (value: number) => {
     if (valuesHidden) return "• • • • •";
     return formatCurrency(value, "BRL");
-  };
-
-  const handleOpenTransfer = () => {
-    setShowTransferModal(true);
-    setShowFABMenu(false);
-  };
-
-  const handleSaveTransfer = (data: any) => {
-    // Criar nova transação de transferência
-    const newTransaction = {
-      id: Date.now().toString(),
-      type: "transfer" as const, // <-- ADICIONE "as const" AQUI
-      amount: data.amount,
-      description: data.description,
-      category: "Transferência",
-      accountId: data.fromAccountId,
-      toAccountId: data.toAccountId,
-      date: data.date,
-      createdAt: new Date().toISOString(),
-    };
-
-    // Adicionar transação
-    addTransaction(newTransaction);
-
-    // Mostrar toast de sucesso
-    showToast(
-      `Transferência de ${formatCurrency(data.amount, "BRL")} realizada com sucesso!`,
-      "success",
-    );
-
-    // Fechar o modal
-    setShowTransferModal(false);
-  };
-
-  // ==================== HANDLES DE TRANSAÇÃO ====================
-  const handleOpenTransaction = () => {
-    setShowTransactionModal(true);
-    setShowFABMenu(false);
-  };
-
-  const handleSaveTransaction = (data: any) => {
-    // Criar nova transação com a data selecionada no formulário
-    const newTransaction = {
-      id: Date.now().toString(),
-      type: data.type,
-      amount: data.amount,
-      description: data.description,
-      category: data.category,
-      accountId: data.accountId,
-      date: data.date,
-      createdAt: new Date().toISOString(),
-    };
-
-    // Adicionar transação
-    addTransaction(newTransaction);
-
-    // Mostrar toast de sucesso
-    showToast(
-      `${data.type === "income" ? "Receita" : "Despesa"} adicionada com sucesso!`,
-      "success",
-    );
-
-    // Fechar o modal
-    setShowTransactionModal(false);
-  };
-
-  // ==================== HANDLES DE CONTA ====================
-  const handleEditAccount = (account: any) => {
-    setSelectedAccount(account);
-    setShowAccountEditModal(true);
-  };
-
-  const handleDeleteAccount = (accountId: string) => {
-    deleteAccount(accountId);
-  };
-
-  // ==================== HANDLES DE COFRINHO ====================
-  const handleEditPiggyBank = (piggy: any) => {
-    setSelectedPiggyBank(piggy);
-    setShowPiggyBankEditModal(true);
   };
 
   return (
@@ -590,7 +574,9 @@ export default function HomeScreen() {
                         {transaction.description ||
                           (transaction.type === "income"
                             ? "Receita"
-                            : "Despesa")}
+                            : transaction.type === "expense"
+                              ? "Despesa"
+                              : "Transferência")}
                       </Text>
                       <Text style={styles.transactionCategory}>
                         {transaction.category} •{" "}
@@ -701,20 +687,23 @@ export default function HomeScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
-      {/* Modais */}
-      <TransactionsModal
-        visible={showTransactionsModal}
-        onClose={() => setShowTransactionsModal(false)}
-      />
+
       {/* FAB - Floating Action Button */}
       <FAB
         visible={!showDrawer}
         onPressMain={() => setShowFABMenu(!showFABMenu)}
         showMenu={showFABMenu}
-        onPressIncome={handleOpenTransaction} // Mesma função para ambos
-        onPressExpense={handleOpenTransaction} // Mesma função para ambos
+        onPressIncome={handleOpenIncome}
+        onPressExpense={handleOpenExpense}
         onPressTransfer={handleOpenTransfer}
       />
+
+      {/* Modais */}
+      <TransactionsModal
+        visible={showTransactionsModal}
+        onClose={() => setShowTransactionsModal(false)}
+      />
+
       {/* Drawer Menu */}
       <Drawer
         visible={showDrawer}
@@ -743,6 +732,7 @@ export default function HomeScreen() {
           }
         }}
       />
+
       {/* Modal de Conta */}
       <Modal
         visible={showAccountModal}
@@ -754,12 +744,7 @@ export default function HomeScreen() {
           onCancel={() => setShowAccountModal(false)}
         />
       </Modal>
-      {/* Modal de Transferência */}
-      <TransferForm
-        visible={showTransferModal}
-        onClose={() => setShowTransferModal(false)}
-        onSave={handleSaveTransfer}
-      />
+
       {/* Modal de Editar Conta */}
       <Modal
         visible={showAccountEditModal}
@@ -780,12 +765,15 @@ export default function HomeScreen() {
           />
         )}
       </Modal>
-      {/* Modal de Transação */}
+
+      {/* Modal de Transação Unificado */}
       <TransactionForm
         visible={showTransactionModal}
         onClose={() => setShowTransactionModal(false)}
         onSave={handleSaveTransaction}
+        initialType={transactionInitialType}
       />
+
       {/* Modal de Cofrinho */}
       <Modal
         visible={showPiggyBankModal}
@@ -825,17 +813,16 @@ export default function HomeScreen() {
               </View>
             </View>
           ))}
-          <Button
-            title="Novo Cofrinho"
-            icon="plus"
-            onPress={() => {
+          <PiggyBankForm
+            onSave={() => {
               setShowPiggyBankModal(false);
-              showToast("Funcionalidade em desenvolvimento", "info");
+              showToast("Cofrinho criado com sucesso!", "success");
             }}
-            style={styles.modalAddButton}
+            onCancel={() => setShowPiggyBankModal(false)}
           />
         </ScrollView>
       </Modal>
+
       {/* Modal de Editar Cofrinho */}
       <Modal
         visible={showPiggyBankEditModal}
@@ -860,6 +847,7 @@ export default function HomeScreen() {
           />
         )}
       </Modal>
+
       {/* Modal de Categorias */}
       <Modal
         visible={showCategoriesModal}
@@ -868,6 +856,7 @@ export default function HomeScreen() {
       >
         <CategoryManager onClose={() => setShowCategoriesModal(false)} />
       </Modal>
+
       {/* Modal de Contas Recorrentes */}
       <Modal
         visible={showRecurringBillsModal}
@@ -878,6 +867,7 @@ export default function HomeScreen() {
           onClose={() => setShowRecurringBillsModal(false)}
         />
       </Modal>
+
       {/* Modal de Cartões de Crédito */}
       <Modal
         visible={showCreditCardsModal}
@@ -886,6 +876,7 @@ export default function HomeScreen() {
       >
         <CreditCardManager onClose={() => setShowCreditCardsModal(false)} />
       </Modal>
+
       {/* Modal de Backup e Restauração */}
       <Modal
         visible={showBackupModal}
@@ -894,6 +885,7 @@ export default function HomeScreen() {
       >
         <BackupRestore onClose={() => setShowBackupModal(false)} />
       </Modal>
+
       {/* Modal de Confirmação Global */}
       <ConfirmModal
         visible={showConfirmModal}
@@ -913,6 +905,7 @@ export default function HomeScreen() {
           setShowConfirmModal(false);
         }}
       />
+
       {/* Toast Global */}
       <Toast
         visible={toast.visible}
@@ -1183,8 +1176,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: "Inter-Regular",
     color: theme.colors.textDim,
-  },
-  modalAddButton: {
-    marginTop: 20,
   },
 });
