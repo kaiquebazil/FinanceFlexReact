@@ -114,7 +114,7 @@ export function Toast({ visible, message, type = 'info', onHide, duration = 3000
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 50,
+    bottom: 50,
     left: 20,
     right: 20,
     padding: 16,

@@ -84,10 +84,6 @@ export default function HomeScreen() {
 
   // Estados para transação
   const [showTransactionModal, setShowTransactionModal] = useState(false);
-  const [transactionType, setTransactionType] = useState<"income" | "expense">(
-    "income",
-  );
-
   const [showPiggyBankModal, setShowPiggyBankModal] = useState(false);
   const [showPiggyBankEditModal, setShowPiggyBankEditModal] = useState(false);
   const [selectedPiggyBank, setSelectedPiggyBank] = useState<any>(null);
@@ -221,36 +217,35 @@ export default function HomeScreen() {
     setShowFABMenu(false);
   };
 
- const handleSaveTransfer = (data: any) => {
-  // Criar nova transação de transferência
-  const newTransaction = {
-    id: Date.now().toString(),
-    type: "transfer" as const, // <-- ADICIONE "as const" AQUI
-    amount: data.amount,
-    description: data.description,
-    category: "Transferência",
-    accountId: data.fromAccountId,
-    toAccountId: data.toAccountId,
-    date: data.date,
-    createdAt: new Date().toISOString(),
+  const handleSaveTransfer = (data: any) => {
+    // Criar nova transação de transferência
+    const newTransaction = {
+      id: Date.now().toString(),
+      type: "transfer" as const, // <-- ADICIONE "as const" AQUI
+      amount: data.amount,
+      description: data.description,
+      category: "Transferência",
+      accountId: data.fromAccountId,
+      toAccountId: data.toAccountId,
+      date: data.date,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Adicionar transação
+    addTransaction(newTransaction);
+
+    // Mostrar toast de sucesso
+    showToast(
+      `Transferência de ${formatCurrency(data.amount, "BRL")} realizada com sucesso!`,
+      "success",
+    );
+
+    // Fechar o modal
+    setShowTransferModal(false);
   };
 
-  // Adicionar transação
-  addTransaction(newTransaction);
-
-  // Mostrar toast de sucesso
-  showToast(
-    `Transferência de ${formatCurrency(data.amount, "BRL")} realizada com sucesso!`,
-    "success",
-  );
-
-  // Fechar o modal
-  setShowTransferModal(false);
-};
-
   // ==================== HANDLES DE TRANSAÇÃO ====================
-  const handleOpenTransaction = (type: "income" | "expense") => {
-    setTransactionType(type);
+  const handleOpenTransaction = () => {
     setShowTransactionModal(true);
     setShowFABMenu(false);
   };
@@ -712,13 +707,12 @@ export default function HomeScreen() {
         onClose={() => setShowTransactionsModal(false)}
       />
       {/* FAB - Floating Action Button */}
-      // app/index.tsx - Substitua o componente FAB existente
       <FAB
         visible={!showDrawer}
         onPressMain={() => setShowFABMenu(!showFABMenu)}
         showMenu={showFABMenu}
-        onPressIncome={() => handleOpenTransaction("income")}
-        onPressExpense={() => handleOpenTransaction("expense")}
+        onPressIncome={handleOpenTransaction} // Mesma função para ambos
+        onPressExpense={handleOpenTransaction} // Mesma função para ambos
         onPressTransfer={handleOpenTransfer}
       />
       {/* Drawer Menu */}
@@ -790,7 +784,6 @@ export default function HomeScreen() {
       <TransactionForm
         visible={showTransactionModal}
         onClose={() => setShowTransactionModal(false)}
-        type={transactionType}
         onSave={handleSaveTransaction}
       />
       {/* Modal de Cofrinho */}
