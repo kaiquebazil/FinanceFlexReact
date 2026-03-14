@@ -723,7 +723,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: Platform.OS === "ios" ? 10 : 20,
     paddingBottom: 20,
-    marginTop: 40,
   },
   headerContent: {
     flexDirection: "row",

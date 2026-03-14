@@ -1,3 +1,4 @@
+// contexts/DataContext.tsx
 import React, { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { Alert } from 'react-native';
 import type { 
@@ -13,6 +14,7 @@ import type {
   TransactionType
 } from '../types';
 import { storage, KEYS } from '../services/storage';
+import { createDefaultCategories, DEFAULT_CATEGORIES } from '../constants/defaultCategories';
 
 interface DataContextType {
   // Estados
@@ -74,20 +76,10 @@ interface DataContextType {
   loadData: () => Promise<void>;
   getTotalBalance: () => number;
   getMonthlySummary: () => { income: number; expense: number; balance: number; savingsRate: number };
+  resetToDefaults: () => void; // Nova função para resetar para valores padrão
 }
 
 export const DataContext = createContext<DataContextType | undefined>(undefined);
-
-const defaultCategories: Category[] = [
-  { id: '1', name: 'Salário', type: 'income', icon: 'briefcase', createdAt: new Date().toISOString() },
-  { id: '2', name: 'Alimentação', type: 'expense', icon: 'cutlery', createdAt: new Date().toISOString() },
-  { id: '3', name: 'Transporte', type: 'expense', icon: 'car', createdAt: new Date().toISOString() },
-  { id: '4', name: 'Moradia', type: 'expense', icon: 'home', createdAt: new Date().toISOString() },
-  { id: '5', name: 'Lazer', type: 'expense', icon: 'gamepad', createdAt: new Date().toISOString() },
-  { id: '6', name: 'Saúde', type: 'expense', icon: 'heartbeat', createdAt: new Date().toISOString() },
-  { id: '7', name: 'Educação', type: 'expense', icon: 'book', createdAt: new Date().toISOString() },
-  { id: '8', name: 'Investimentos', type: 'expense', icon: 'chart-line', createdAt: new Date().toISOString() },
-];
 
 export const DataProvider = ({ children }: { children: ReactNode }) => {
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -96,8 +88,45 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
   const [creditCardTransactions, setCreditCardTransactions] = useState<CreditCardTransaction[]>([]);
   const [recurringBills, setRecurringBills] = useState<RecurringBill[]>([]);
-  const [categories, setCategories] = useState<Category[]>(defaultCategories);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [valuesHidden, setValuesHidden] = useState(false);
+  const [isFirstLaunch, setIsFirstLaunch] = useState(false);
+
+  // Função para criar contas padrão
+  const createDefaultAccounts = useCallback((): Account[] => {
+    const now = new Date().toISOString();
+    const defaultAccounts: Account[] = [
+      {
+        id: 'default-cash-1',
+        name: 'Dinheiro',
+        type: 'Dinheiro',
+        currency: 'BRL',
+        balance: 0,
+        createdAt: now,
+      },
+      {
+        id: 'default-bank-1',
+        name: 'Banco Digital',
+        type: 'Banco',
+        currency: 'BRL',
+        balance: 0,
+        createdAt: now,
+      },
+    ];
+    return defaultAccounts;
+  }, []);
+
+  // Função para resetar para valores padrão
+  const resetToDefaults = useCallback(() => {
+    setAccounts(createDefaultAccounts());
+    setCategories(createDefaultCategories());
+    setTransactions([]);
+    setPiggyBanks([]);
+    setCreditCards([]);
+    setCreditCardTransactions([]);
+    setRecurringBills([]);
+    setValuesHidden(false);
+  }, []);
 
   // Carregar dados do storage
   const loadData = async () => {
@@ -113,13 +142,29 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         storage.getItem<boolean>(KEYS.VALUES_HIDDEN),
       ]);
       
-      setAccounts(acc ?? []);
+      // Se não houver contas, é o primeiro lançamento
+      if (!acc || acc.length === 0) {
+        console.log('Primeiro lançamento detectado. Criando dados padrão.');
+        const defaultAccounts = createDefaultAccounts();
+        setAccounts(defaultAccounts);
+        setIsFirstLaunch(true);
+      } else {
+        setAccounts(acc);
+      }
+      
       setTransactions(trans ?? []);
       setPiggyBanks(piggy ?? []);
       setCreditCards(cards ?? []);
       setCreditCardTransactions(cardTrans ?? []);
       setRecurringBills(bills ?? []);
-      setCategories(cats ?? defaultCategories);
+      
+      // Se não houver categorias, carrega as padrão
+      if (!cats || cats.length === 0) {
+        setCategories(createDefaultCategories());
+      } else {
+        setCategories(cats);
+      }
+      
       setValuesHidden(hidden ?? false);
     } catch (error) {
       console.error('Error loading data:', error);
@@ -133,8 +178,11 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
   // Salvar dados quando alterados
   useEffect(() => {
-    storage.setItem(KEYS.ACCOUNTS, accounts);
-  }, [accounts]);
+    // Só salva se não for o primeiro lançamento para não sobrescrever as contas padrão com array vazio
+    if (!isFirstLaunch) {
+      storage.setItem(KEYS.ACCOUNTS, accounts);
+    }
+  }, [accounts, isFirstLaunch]);
 
   useEffect(() => {
     storage.setItem(KEYS.TRANSACTIONS, transactions);
@@ -163,6 +211,13 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     storage.setItem(KEYS.VALUES_HIDDEN, valuesHidden);
   }, [valuesHidden]);
+
+  // Depois do primeiro lançamento, podemos permitir que o salvamento normal aconteça
+  useEffect(() => {
+    if (isFirstLaunch) {
+      setIsFirstLaunch(false);
+    }
+  }, [isFirstLaunch]);
 
   // ==================== FUNÇÕES DE CONTA ====================
 
@@ -232,7 +287,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
  const deleteAccount = async (id: string): Promise<boolean> => {
   // Verificar se há transações vinculadas
   const hasTransactions = transactions.some(t => t.accountId === id || t.toAccountId === id);
-  const hasPiggyBanks = piggyBanks.some(p => p.accountId === id); // ← LINHA 235 CORRIGIDA
+  const hasPiggyBanks = piggyBanks.some(p => p.accountId === id);
   
   if (hasTransactions || hasPiggyBanks) {
     Alert.alert(
@@ -247,7 +302,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             // Remover transações associadas
             setTransactions(prev => prev.filter(t => t.accountId !== id && t.toAccountId !== id));
             // Remover associação de cofrinhos
-            setPiggyBanks(prev => prev.map(p => p.accountId === id ? { ...p, accountId: undefined } : p)); // ← LINHA 250 CORRIGIDA
+            setPiggyBanks(prev => prev.map(p => p.accountId === id ? { ...p, accountId: undefined } : p));
             // Remover a conta
             setAccounts(prev => prev.filter(acc => acc.id !== id));
           }
@@ -326,7 +381,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     targetAmount: data.targetAmount || 0,
     currentAmount: data.currentAmount || 0,
     color: data.color || '#7c4dff',
-    accountId: data.accountId,        // ← LINHA 329 CORRIGIDA
+    accountId: data.accountId,
     targetDate: data.targetDate,
     createdAt: new Date().toISOString(),
   };
@@ -420,9 +475,10 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     id: Date.now().toString(),
     name: data.name || '',
     limit: data.limit || 0,
+    used: data.used || 0,
     closingDay: data.closingDay || 1,
     dueDay: data.dueDay || 10,
-    color: data.color || '#7c4dff',    // ← LINHA 425 CORRIGIDA
+    color: data.color || '#7c4dff',
     createdAt: new Date().toISOString(),
   };
   setCreditCards([...creditCards, newCard]);
@@ -489,6 +545,11 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const deleteCategory = (id: string) => {
+    // Impedir exclusão de categorias padrão
+    if (id.startsWith('default-')) {
+      Alert.alert('Aviso', 'Categorias padrão não podem ser excluídas');
+      return;
+    }
     setCategories(prev => prev.filter(c => c.id !== id));
   };
 
@@ -584,6 +645,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         loadData,
         getTotalBalance,
         getMonthlySummary,
+        resetToDefaults,
       }}
     >
       {children}
