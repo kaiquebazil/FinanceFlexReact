@@ -32,6 +32,7 @@ import { Drawer } from "../components/ui/Drawer";
 import { FAB } from "../components/ui/FAB";
 import { Modal } from "../components/ui/Modal";
 import { Toast } from "../components/ui/Toast";
+import { ResponsiveContainer } from "../components/ui/ResponsiveContainer"; // NOVO COMPONENTE
 import { theme } from "../constants/theme";
 import { useData } from "../hooks/useData";
 import { formatCurrency } from "../utils/currency";
@@ -71,6 +72,8 @@ export default function HomeScreen() {
     valuesHidden,
     setValuesHidden,
     setUICallbacks,
+    depositToPiggyBank,
+    withdrawFromPiggyBank,
   } = useData();
 
   // Estados para modais
@@ -282,411 +285,415 @@ export default function HomeScreen() {
         barStyle="light-content"
         backgroundColor={theme.colors.darker}
       />
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <LinearGradient
-          colors={["rgba(124, 77, 255, 0.15)", "transparent"]}
-          style={styles.header}
+      
+      {/* Container Responsivo - APENAS ISSO FOI ADICIONADO */}
+      <ResponsiveContainer>
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
         >
-          <View style={styles.headerContent}>
-            <View style={styles.logoContainer}>
-              <FontAwesome5
-                name="wallet"
-                size={24}
-                color={theme.colors.primary}
-              />
-              <Text style={styles.logoText}>Finance Flex</Text>
-            </View>
-            <View style={styles.headerActions}>
-              <TouchableOpacity
-                onPress={() => setValuesHidden(!valuesHidden)}
-                style={styles.iconButton}
-              >
-                <FontAwesome5
-                  name={valuesHidden ? "eye-slash" : "eye"}
-                  size={20}
-                  color={theme.colors.text}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setShowDrawer(true)}
-                style={styles.iconButton}
-              >
-                <FontAwesome5 name="bars" size={20} color={theme.colors.text} />
-              </TouchableOpacity>
-            </View>
-          </View>
-        </LinearGradient>
-
-        {/* Contas */}
-        <Animated.View
-          style={[
-            styles.section,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }],
-            },
-          ]}
-        >
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Contas</Text>
-            <Text style={styles.sectionSubtitle}>
-              Total: {formatValue(totalBalance)}
-            </Text>
-          </View>
-          <Card style={styles.card}>
-            {accounts.length === 0 ? (
-              <View style={styles.emptyState}>
-                <FontAwesome5
-                  name="credit-card"
-                  size={32}
-                  color={theme.colors.textDim}
-                />
-                <Text style={styles.emptyText}>Nenhuma conta cadastrada</Text>
-              </View>
-            ) : (
-              accounts.map((account) => (
-                <AccountItem
-                  key={account.id}
-                  account={account}
-                  onEdit={() => handleEditAccount(account)}
-                  onDelete={() => handleDeleteAccount(account.id)}
-                  formatValue={formatValue}
-                />
-              ))
-            )}
-            <Button
-              title="Adicionar Conta"
-              icon="plus"
-              onPress={() => setShowAccountModal(true)}
-              variant="outline"
-              style={styles.addButton}
-            />
-          </Card>
-        </Animated.View>
-
-        {/* Resumo Mensal */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Resumo Mensal</Text>
-          </View>
-          <View style={styles.summaryGrid}>
-            {/* Receitas */}
-            <Card style={styles.summaryCard}>
-              <View style={styles.summaryIconContainer}>
-                <FontAwesome5
-                  name="arrow-down"
-                  size={16}
-                  color={theme.colors.success}
-                />
-              </View>
-              <Text style={styles.summaryLabel}>Receitas</Text>
-              <Text
-                style={[styles.summaryValue, { color: theme.colors.success }]}
-              >
-                {formatValue(summary.income)}
-              </Text>
-            </Card>
-
-            {/* Despesas */}
-            <Card style={styles.summaryCard}>
-              <View style={styles.summaryIconContainer}>
-                <FontAwesome5
-                  name="arrow-up"
-                  size={16}
-                  color={theme.colors.danger}
-                />
-              </View>
-              <Text style={styles.summaryLabel}>Despesas</Text>
-              <Text
-                style={[styles.summaryValue, { color: theme.colors.danger }]}
-              >
-                {formatValue(summary.expense)}
-              </Text>
-            </Card>
-
-            {/* Saldo */}
-            <Card style={styles.summaryCard}>
-              <View style={styles.summaryIconContainer}>
+          {/* Header */}
+          <LinearGradient
+            colors={["rgba(124, 77, 255, 0.15)", "transparent"]}
+            style={styles.header}
+          >
+            <View style={styles.headerContent}>
+              <View style={styles.logoContainer}>
                 <FontAwesome5
                   name="wallet"
-                  size={16}
-                  color={theme.colors.info}
-                />
-              </View>
-              <Text style={styles.summaryLabel}>Saldo</Text>
-              <Text style={[styles.summaryValue, { color: theme.colors.info }]}>
-                {formatValue(summary.balance)}
-              </Text>
-            </Card>
-
-            {/* Percentagem */}
-            <Card style={styles.summaryCard}>
-              <View style={styles.summaryIconContainer}>
-                <FontAwesome5
-                  name="percent"
-                  size={16}
-                  color={theme.colors.warning}
-                />
-              </View>
-              <Text style={styles.summaryLabel}>Percentagem</Text>
-              <Text
-                style={[styles.summaryValue, { color: theme.colors.warning }]}
-              >
-                {valuesHidden ? "• •%" : `${summary.savingsRate.toFixed(0)}%`}
-              </Text>
-            </Card>
-          </View>
-        </View>
-
-        {/* Calendário de Pagamentos */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Calendário de Pagamentos</Text>
-          <Card style={styles.card}>
-            <Calendar
-              transactions={transactions}
-              recurringBills={recurringBills}
-            />
-          </Card>
-        </View>
-
-        {/* Transações Recentes */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Transações Recentes</Text>
-            <TouchableOpacity onPress={() => setShowTransactionsModal(true)}>
-              <FontAwesome5
-                name="external-link-alt"
-                size={16}
-                color={theme.colors.primary}
-              />
-            </TouchableOpacity>
-          </View>
-          <Card style={styles.card}>
-            <View style={styles.tabs}>
-              <TouchableOpacity
-                style={[
-                  styles.tab,
-                  selectedPeriod === "today" && styles.tabActive,
-                ]}
-                onPress={() => setSelectedPeriod("today")}
-              >
-                <Text
-                  style={[
-                    styles.tabText,
-                    selectedPeriod === "today" && styles.tabTextActive,
-                  ]}
-                >
-                  Hoje
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.tab,
-                  selectedPeriod === "week" && styles.tabActive,
-                ]}
-                onPress={() => setSelectedPeriod("week")}
-              >
-                <Text
-                  style={[
-                    styles.tabText,
-                    selectedPeriod === "week" && styles.tabTextActive,
-                  ]}
-                >
-                  Semana
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.tab,
-                  selectedPeriod === "month" && styles.tabActive,
-                ]}
-                onPress={() => setSelectedPeriod("month")}
-              >
-                <Text
-                  style={[
-                    styles.tabText,
-                    selectedPeriod === "month" && styles.tabTextActive,
-                  ]}
-                >
-                  Mês
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.tab,
-                  selectedPeriod === "upcoming" && styles.tabActive,
-                ]}
-                onPress={() => setSelectedPeriod("upcoming")}
-              >
-                <Text
-                  style={[
-                    styles.tabText,
-                    selectedPeriod === "upcoming" && styles.tabTextActive,
-                  ]}
-                >
-                  Futuras
-                </Text>
-              </TouchableOpacity>
-            </View>
-            {filteredTransactions.length === 0 ? (
-              <View style={styles.emptyState}>
-                <FontAwesome5
-                  name="exchange-alt"
-                  size={32}
-                  color={theme.colors.textDim}
-                />
-                <Text style={styles.emptyText}>
-                  Nenhuma transação encontrada
-                </Text>
-              </View>
-            ) : (
-              filteredTransactions.slice(0, 5).map((transaction) => {
-                const icon =
-                  transaction.type === "income"
-                    ? "arrow-down"
-                    : transaction.type === "expense"
-                      ? "arrow-up"
-                      : "exchange-alt";
-                const color =
-                  transaction.type === "income"
-                    ? theme.colors.success
-                    : transaction.type === "expense"
-                      ? theme.colors.danger
-                      : theme.colors.info;
-
-                return (
-                  <View key={transaction.id} style={styles.transactionItem}>
-                    <View
-                      style={[
-                        styles.transactionIcon,
-                        { backgroundColor: `${color}20` },
-                      ]}
-                    >
-                      <FontAwesome5 name={icon} size={16} color={color} />
-                    </View>
-                    <View style={styles.transactionInfo}>
-                      <Text style={styles.transactionName}>
-                        {transaction.description ||
-                          (transaction.type === "income"
-                            ? "Receita"
-                            : transaction.type === "expense"
-                              ? "Despesa"
-                              : "Transferência")}
-                      </Text>
-                      <Text style={styles.transactionCategory}>
-                        {transaction.category} •{" "}
-                        {new Date(transaction.date).toLocaleDateString("pt-BR")}
-                      </Text>
-                    </View>
-                    <Text style={[styles.transactionAmount, { color }]}>
-                      {transaction.type === "expense" ? "-" : "+"}
-                      {formatValue(transaction.amount)}
-                    </Text>
-                  </View>
-                );
-              })
-            )}
-            {filteredTransactions.length > 5 && (
-              <TouchableOpacity
-                style={styles.viewAllButton}
-                onPress={() => setShowTransactionsModal(true)}
-              >
-                <Text style={styles.viewAllText}>Ver todas</Text>
-                <FontAwesome5
-                  name="arrow-right"
-                  size={12}
+                  size={24}
                   color={theme.colors.primary}
                 />
-              </TouchableOpacity>
-            )}
-          </Card>
-        </View>
+                <Text style={styles.logoText}>Finance Flex</Text>
+              </View>
+              <View style={styles.headerActions}>
+                <TouchableOpacity
+                  onPress={() => setValuesHidden(!valuesHidden)}
+                  style={styles.iconButton}
+                >
+                  <FontAwesome5
+                    name={valuesHidden ? "eye-slash" : "eye"}
+                    size={20}
+                    color={theme.colors.text}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setShowDrawer(true)}
+                  style={styles.iconButton}
+                >
+                  <FontAwesome5 name="bars" size={20} color={theme.colors.text} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </LinearGradient>
 
-        {/* Cofrinhos */}
-        {piggyBanks.length > 0 && (
+          {/* Contas */}
+          <Animated.View
+            style={[
+              styles.section,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }],
+              },
+            ]}
+          >
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Contas</Text>
+              <Text style={styles.sectionSubtitle}>
+                Total: {formatValue(totalBalance)}
+              </Text>
+            </View>
+            <Card style={styles.card}>
+              {accounts.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <FontAwesome5
+                    name="credit-card"
+                    size={32}
+                    color={theme.colors.textDim}
+                  />
+                  <Text style={styles.emptyText}>Nenhuma conta cadastrada</Text>
+                </View>
+              ) : (
+                accounts.map((account) => (
+                  <AccountItem
+                    key={account.id}
+                    account={account}
+                    onEdit={() => handleEditAccount(account)}
+                    onDelete={() => handleDeleteAccount(account.id)}
+                    formatValue={formatValue}
+                  />
+                ))
+              )}
+              <Button
+                title="Adicionar Conta"
+                icon="plus"
+                onPress={() => setShowAccountModal(true)}
+                variant="outline"
+                style={styles.addButton}
+              />
+            </Card>
+          </Animated.View>
+
+          {/* Resumo Mensal */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Cofrinhos</Text>
-              <TouchableOpacity onPress={() => setShowPiggyBankModal(true)}>
+              <Text style={styles.sectionTitle}>Resumo Mensal</Text>
+            </View>
+            <View style={styles.summaryGrid}>
+              {/* Receitas */}
+              <Card style={styles.summaryCard}>
+                <View style={styles.summaryIconContainer}>
+                  <FontAwesome5
+                    name="arrow-down"
+                    size={16}
+                    color={theme.colors.success}
+                  />
+                </View>
+                <Text style={styles.summaryLabel}>Receitas</Text>
+                <Text
+                  style={[styles.summaryValue, { color: theme.colors.success }]}
+                >
+                  {formatValue(summary.income)}
+                </Text>
+              </Card>
+
+              {/* Despesas */}
+              <Card style={styles.summaryCard}>
+                <View style={styles.summaryIconContainer}>
+                  <FontAwesome5
+                    name="arrow-up"
+                    size={16}
+                    color={theme.colors.danger}
+                  />
+                </View>
+                <Text style={styles.summaryLabel}>Despesas</Text>
+                <Text
+                  style={[styles.summaryValue, { color: theme.colors.danger }]}
+                >
+                  {formatValue(summary.expense)}
+                </Text>
+              </Card>
+
+              {/* Saldo */}
+              <Card style={styles.summaryCard}>
+                <View style={styles.summaryIconContainer}>
+                  <FontAwesome5
+                    name="wallet"
+                    size={16}
+                    color={theme.colors.info}
+                  />
+                </View>
+                <Text style={styles.summaryLabel}>Saldo</Text>
+                <Text style={[styles.summaryValue, { color: theme.colors.info }]}>
+                  {formatValue(summary.balance)}
+                </Text>
+              </Card>
+
+              {/* Percentagem */}
+              <Card style={styles.summaryCard}>
+                <View style={styles.summaryIconContainer}>
+                  <FontAwesome5
+                    name="percent"
+                    size={16}
+                    color={theme.colors.warning}
+                  />
+                </View>
+                <Text style={styles.summaryLabel}>Percentagem</Text>
+                <Text
+                  style={[styles.summaryValue, { color: theme.colors.warning }]}
+                >
+                  {valuesHidden ? "• •%" : `${summary.savingsRate.toFixed(0)}%`}
+                </Text>
+              </Card>
+            </View>
+          </View>
+
+          {/* Calendário de Pagamentos */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Calendário de Pagamentos</Text>
+            <Card style={styles.card}>
+              <Calendar
+                transactions={transactions}
+                recurringBills={recurringBills}
+              />
+            </Card>
+          </View>
+
+          {/* Transações Recentes */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Transações Recentes</Text>
+              <TouchableOpacity onPress={() => setShowTransactionsModal(true)}>
                 <FontAwesome5
-                  name="plus-circle"
-                  size={20}
+                  name="external-link-alt"
+                  size={16}
                   color={theme.colors.primary}
                 />
               </TouchableOpacity>
             </View>
             <Card style={styles.card}>
-              {piggyBanks.slice(0, 3).map((piggy) => {
-                const progress =
-                  (piggy.currentAmount / piggy.targetAmount) * 100;
-                return (
-                  <View key={piggy.id} style={styles.piggyItem}>
-                    <View style={styles.piggyHeader}>
-                      <View style={styles.piggyIcon}>
-                        <FontAwesome5
-                          name="piggy-bank"
-                          size={18}
-                          color={piggy.color}
-                        />
-                      </View>
-                      <View style={styles.piggyInfo}>
-                        <Text style={styles.piggyName}>{piggy.name}</Text>
-                        <Text style={styles.piggyProgress}>
-                          {formatValue(piggy.currentAmount)} /{" "}
-                          {formatValue(piggy.targetAmount)}
-                        </Text>
-                      </View>
-                      <View style={styles.piggyActions}>
-                        <Text style={styles.piggyPercentage}>
-                          {progress.toFixed(0)}%
-                        </Text>
-                        <TouchableOpacity
-                          onPress={() => handleEditPiggyBank(piggy)}
-                          style={styles.editButton}
-                        >
-                          <FontAwesome5
-                            name="edit"
-                            size={14}
-                            color={theme.colors.primary}
-                          />
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                    <View style={styles.progressBarContainer}>
+              <View style={styles.tabs}>
+                <TouchableOpacity
+                  style={[
+                    styles.tab,
+                    selectedPeriod === "today" && styles.tabActive,
+                  ]}
+                  onPress={() => setSelectedPeriod("today")}
+                >
+                  <Text
+                    style={[
+                      styles.tabText,
+                      selectedPeriod === "today" && styles.tabTextActive,
+                    ]}
+                  >
+                    Hoje
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.tab,
+                    selectedPeriod === "week" && styles.tabActive,
+                  ]}
+                  onPress={() => setSelectedPeriod("week")}
+                >
+                  <Text
+                    style={[
+                      styles.tabText,
+                      selectedPeriod === "week" && styles.tabTextActive,
+                    ]}
+                  >
+                    Semana
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.tab,
+                    selectedPeriod === "month" && styles.tabActive,
+                  ]}
+                  onPress={() => setSelectedPeriod("month")}
+                >
+                  <Text
+                    style={[
+                      styles.tabText,
+                      selectedPeriod === "month" && styles.tabTextActive,
+                    ]}
+                  >
+                    Mês
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.tab,
+                    selectedPeriod === "upcoming" && styles.tabActive,
+                  ]}
+                  onPress={() => setSelectedPeriod("upcoming")}
+                >
+                  <Text
+                    style={[
+                      styles.tabText,
+                      selectedPeriod === "upcoming" && styles.tabTextActive,
+                    ]}
+                  >
+                    Futuras
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              {filteredTransactions.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <FontAwesome5
+                    name="exchange-alt"
+                    size={32}
+                    color={theme.colors.textDim}
+                  />
+                  <Text style={styles.emptyText}>
+                    Nenhuma transação encontrada
+                  </Text>
+                </View>
+              ) : (
+                filteredTransactions.slice(0, 5).map((transaction) => {
+                  const icon =
+                    transaction.type === "income"
+                      ? "arrow-down"
+                      : transaction.type === "expense"
+                        ? "arrow-up"
+                        : "exchange-alt";
+                  const color =
+                    transaction.type === "income"
+                      ? theme.colors.success
+                      : transaction.type === "expense"
+                        ? theme.colors.danger
+                        : theme.colors.info;
+
+                  return (
+                    <View key={transaction.id} style={styles.transactionItem}>
                       <View
                         style={[
-                          styles.progressBar,
-                          {
-                            width: `${Math.min(progress, 100)}%`,
-                            backgroundColor: piggy.color,
-                          },
+                          styles.transactionIcon,
+                          { backgroundColor: `${color}20` },
                         ]}
-                      />
+                      >
+                        <FontAwesome5 name={icon} size={16} color={color} />
+                      </View>
+                      <View style={styles.transactionInfo}>
+                        <Text style={styles.transactionName}>
+                          {transaction.description ||
+                            (transaction.type === "income"
+                              ? "Receita"
+                              : transaction.type === "expense"
+                                ? "Despesa"
+                                : "Transferência")}
+                        </Text>
+                        <Text style={styles.transactionCategory}>
+                          {transaction.category} •{" "}
+                          {new Date(transaction.date).toLocaleDateString("pt-BR")}
+                        </Text>
+                      </View>
+                      <Text style={[styles.transactionAmount, { color }]}>
+                        {transaction.type === "expense" ? "-" : "+"}
+                        {formatValue(transaction.amount)}
+                      </Text>
                     </View>
-                  </View>
-                );
-              })}
-              {piggyBanks.length > 3 && (
+                  );
+                })
+              )}
+              {filteredTransactions.length > 5 && (
                 <TouchableOpacity
                   style={styles.viewAllButton}
-                  onPress={() => setShowPiggyBankModal(true)}
+                  onPress={() => setShowTransactionsModal(true)}
                 >
-                  <Text style={styles.viewAllText}>
-                    Ver todos ({piggyBanks.length})
-                  </Text>
+                  <Text style={styles.viewAllText}>Ver todas</Text>
+                  <FontAwesome5
+                    name="arrow-right"
+                    size={12}
+                    color={theme.colors.primary}
+                  />
                 </TouchableOpacity>
               )}
             </Card>
           </View>
-        )}
 
-        <View style={{ height: 100 }} />
-      </ScrollView>
+          {/* Cofrinhos */}
+          {piggyBanks.length > 0 && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Cofrinhos</Text>
+                <TouchableOpacity onPress={() => setShowPiggyBankModal(true)}>
+                  <FontAwesome5
+                    name="plus-circle"
+                    size={20}
+                    color={theme.colors.primary}
+                  />
+                </TouchableOpacity>
+              </View>
+              <Card style={styles.card}>
+                {piggyBanks.slice(0, 3).map((piggy) => {
+                  const progress =
+                    (piggy.currentAmount / piggy.targetAmount) * 100;
+                  return (
+                    <View key={piggy.id} style={styles.piggyItem}>
+                      <View style={styles.piggyHeader}>
+                        <View style={styles.piggyIcon}>
+                          <FontAwesome5
+                            name="piggy-bank"
+                            size={18}
+                            color={piggy.color}
+                          />
+                        </View>
+                        <View style={styles.piggyInfo}>
+                          <Text style={styles.piggyName}>{piggy.name}</Text>
+                          <Text style={styles.piggyProgress}>
+                            {formatValue(piggy.currentAmount)} /{" "}
+                            {formatValue(piggy.targetAmount)}
+                          </Text>
+                        </View>
+                        <View style={styles.piggyActions}>
+                          <Text style={styles.piggyPercentage}>
+                            {progress.toFixed(0)}%
+                          </Text>
+                          <TouchableOpacity
+                            onPress={() => handleEditPiggyBank(piggy)}
+                            style={styles.editButton}
+                          >
+                            <FontAwesome5
+                              name="edit"
+                              size={14}
+                              color={theme.colors.primary}
+                            />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                      <View style={styles.progressBarContainer}>
+                        <View
+                          style={[
+                            styles.progressBar,
+                            {
+                              width: `${Math.min(progress, 100)}%`,
+                              backgroundColor: piggy.color,
+                            },
+                          ]}
+                        />
+                      </View>
+                    </View>
+                  );
+                })}
+                {piggyBanks.length > 3 && (
+                  <TouchableOpacity
+                    style={styles.viewAllButton}
+                    onPress={() => setShowPiggyBankModal(true)}
+                  >
+                    <Text style={styles.viewAllText}>
+                      Ver todos ({piggyBanks.length})
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </Card>
+            </View>
+          )}
+
+          <View style={{ height: 100 }} />
+        </ScrollView>
+      </ResponsiveContainer>
 
       {/* FAB - Floating Action Button */}
       <FAB
