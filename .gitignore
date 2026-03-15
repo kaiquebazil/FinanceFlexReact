@@ -8,3 +8,5 @@ node_modules
 .expo
 .expo-shared
 .vscode
+.yarnrc.yml
+yarn.lock
