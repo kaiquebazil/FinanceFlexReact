@@ -104,6 +104,7 @@ interface DataContextType {
 
   // Utilitários
   loadData: () => Promise<void>;
+  applyRemoteData: (data: any) => void;
   getTotalBalance: () => number;
   getMonthlySummary: () => {
     income: number;
@@ -231,6 +232,17 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       console.error("Error loading data:", error);
     }
   };
+
+  // Aplica dados recebidos do Firestore em tempo real no estado React
+  const applyRemoteData = useCallback((data: any) => {
+    if (data?.accounts) setAccounts(data.accounts);
+    if (data?.transactions) setTransactions(data.transactions);
+    if (data?.piggyBanks) setPiggyBanks(data.piggyBanks);
+    if (data?.creditCards) setCreditCards(data.creditCards);
+    if (data?.creditCardTransactions) setCreditCardTransactions(data.creditCardTransactions);
+    if (data?.recurringBills) setRecurringBills(data.recurringBills);
+    if (data?.categories) setCategories(data.categories);
+  }, []);
 
   // Carregar dados ao iniciar
   useEffect(() => {
@@ -893,6 +905,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         deleteCategory,
 
         loadData,
+        applyRemoteData,
         getTotalBalance,
         getMonthlySummary,
         resetToDefaults,

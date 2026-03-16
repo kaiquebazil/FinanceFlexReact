@@ -14,6 +14,7 @@ import {
   View,
 } from "react-native";
 import { BackupRestore } from "../components/features/BackupRestore";
+import { FirebaseSync } from "../components/features/FirebaseSync";
 import { CategoryManager } from "../components/features/CategoryManager";
 import { CreditCardManager } from "../components/features/CreditCardManager";
 import { RecurringBillsManager } from "../components/features/RecurringBillsManager";
@@ -35,6 +36,7 @@ import { Toast } from "../components/ui/Toast";
 import { ResponsiveContainer } from "../components/ui/ResponsiveContainer"; // NOVO COMPONENTE
 import { theme } from "../constants/theme";
 import { useData } from "../hooks/useData";
+import { useAuth } from "../contexts/AuthContext";
 import { formatCurrency } from "../utils/currency";
 
 // Tipos para os callbacks
@@ -97,6 +99,10 @@ export default function HomeScreen() {
   const [showRecurringBillsModal, setShowRecurringBillsModal] = useState(false);
   const [showCreditCardsModal, setShowCreditCardsModal] = useState(false);
   const [showBackupModal, setShowBackupModal] = useState(false);
+  const [showSyncModal, setShowSyncModal] = useState(false);
+
+  // Auth e status de sincronização
+  const { user, syncStatus } = useAuth();
 
   // Estados para modais de confirmação e toast
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -308,6 +314,27 @@ export default function HomeScreen() {
                 <Text style={styles.logoText}>Finance Flex</Text>
               </View>
               <View style={styles.headerActions}>
+                {/* Indicador de sincronização em tempo real */}
+                <TouchableOpacity
+                  onPress={() => setShowSyncModal(true)}
+                  style={styles.iconButton}
+                >
+                  <FontAwesome5
+                    name={user ? (syncStatus === 'synced' ? 'cloud' : syncStatus === 'syncing' ? 'sync-alt' : 'cloud-upload-alt') : 'cloud'}
+                    size={20}
+                    color={
+                      user
+                        ? syncStatus === 'synced'
+                          ? '#4CAF50'
+                          : syncStatus === 'syncing'
+                          ? theme.colors.primary
+                          : syncStatus === 'error'
+                          ? '#F44336'
+                          : theme.colors.textDim
+                        : theme.colors.textDim
+                    }
+                  />
+                </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => setValuesHidden(!valuesHidden)}
                   style={styles.iconButton}
@@ -736,6 +763,9 @@ export default function HomeScreen() {
             case "backup":
               setShowBackupModal(true);
               break;
+            case "sync":
+              setShowSyncModal(true);
+              break;
           }
         }}
       />
@@ -891,6 +921,15 @@ export default function HomeScreen() {
         title="Backup e Restauração"
       >
         <BackupRestore onClose={() => setShowBackupModal(false)} />
+      </Modal>
+
+      {/* Modal de Sincronização em Tempo Real */}
+      <Modal
+        visible={showSyncModal}
+        onClose={() => setShowSyncModal(false)}
+        title="Sincronização em Tempo Real"
+      >
+        <FirebaseSync onClose={() => setShowSyncModal(false)} />
       </Modal>
 
       {/* Modal de Confirmação Global */}

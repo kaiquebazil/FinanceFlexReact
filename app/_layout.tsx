@@ -1,11 +1,31 @@
+// app/_layout.tsx
 import { Stack } from 'expo-router';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
-import { useEffect } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { DataProvider } from '../contexts/DataContext';
+import { AuthProvider } from '../contexts/AuthContext';
+import { useData } from '../hooks/useData';
 import { theme } from '../constants/theme';
+import type { CloudData } from '../services/syncService';
 
 SplashScreen.preventAutoHideAsync();
+
+// Componente intermediário que conecta AuthProvider ao DataContext
+function AppWithSync({ children }: { children: React.ReactNode }) {
+  const { applyRemoteData } = useData();
+
+  // Callback estável para o AuthProvider
+  const handleRemoteData = useCallback((data: CloudData) => {
+    applyRemoteData(data);
+  }, [applyRemoteData]);
+
+  return (
+    <AuthProvider onRemoteDataReceived={handleRemoteData}>
+      {children}
+    </AuthProvider>
+  );
+}
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -27,16 +47,18 @@ export default function RootLayout() {
 
   return (
     <DataProvider>
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: theme.colors.darker },
-          headerTintColor: theme.colors.text,
-          contentStyle: { backgroundColor: theme.colors.darker },
-          headerShown: false,
-        }}
-      >
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-      </Stack>
+      <AppWithSync>
+        <Stack
+          screenOptions={{
+            headerStyle: { backgroundColor: theme.colors.darker },
+            headerTintColor: theme.colors.text,
+            contentStyle: { backgroundColor: theme.colors.darker },
+            headerShown: false,
+          }}
+        >
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+        </Stack>
+      </AppWithSync>
     </DataProvider>
   );
 }
