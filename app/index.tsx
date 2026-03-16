@@ -297,7 +297,9 @@ export default function HomeScreen() {
         <ScrollView
           style={styles.container}
           contentContainerStyle={styles.contentContainer}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={Platform.OS === 'web'}
+          scrollEnabled={true}
+          nestedScrollEnabled={true}
         >
           {/* Header */}
           <LinearGradient
@@ -487,6 +489,84 @@ export default function HomeScreen() {
             </Card>
           </View>
 
+          {/* Cofrinhos */}
+          {piggyBanks.length > 0 && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Cofrinhos</Text>
+                <TouchableOpacity onPress={() => setShowPiggyBankModal(true)}>
+                  <FontAwesome5
+                    name="plus-circle"
+                    size={20}
+                    color={theme.colors.primary}
+                  />
+                </TouchableOpacity>
+              </View>
+              <Card style={styles.card}>
+                {piggyBanks.slice(0, 3).map((piggy) => {
+                  const progress =
+                    (piggy.currentAmount / piggy.targetAmount) * 100;
+                  return (
+                    <View key={piggy.id} style={styles.piggyItem}>
+                      <View style={styles.piggyHeader}>
+                        <View style={styles.piggyIcon}>
+                          <FontAwesome5
+                            name="piggy-bank"
+                            size={18}
+                            color={piggy.color}
+                          />
+                        </View>
+                        <View style={styles.piggyInfo}>
+                          <Text style={styles.piggyName}>{piggy.name}</Text>
+                          <Text style={styles.piggyProgress}>
+                            {formatValue(piggy.currentAmount)} /{" "}
+                            {formatValue(piggy.targetAmount)}
+                          </Text>
+                        </View>
+                        <View style={styles.piggyActions}>
+                          <Text style={styles.piggyPercentage}>
+                            {progress.toFixed(0)}%
+                          </Text>
+                          <TouchableOpacity
+                            onPress={() => handleEditPiggyBank(piggy)}
+                            style={styles.editButton}
+                          >
+                            <FontAwesome5
+                              name="edit"
+                              size={14}
+                              color={theme.colors.primary}
+                            />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                      <View style={styles.progressBarContainer}>
+                        <View
+                          style={[
+                            styles.progressBar,
+                            {
+                              width: `${Math.min(progress, 100)}%`,
+                              backgroundColor: piggy.color,
+                            },
+                          ]}
+                        />
+                      </View>
+                    </View>
+                  );
+                })}
+                {piggyBanks.length > 3 && (
+                  <TouchableOpacity
+                    style={styles.viewAllButton}
+                    onPress={() => setShowPiggyBankModal(true)}
+                  >
+                    <Text style={styles.viewAllText}>
+                      Ver todos ({piggyBanks.length})
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </Card>
+            </View>
+          )}
+
           {/* Transações Recentes */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
@@ -639,84 +719,6 @@ export default function HomeScreen() {
               )}
             </Card>
           </View>
-
-          {/* Cofrinhos */}
-          {piggyBanks.length > 0 && (
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Cofrinhos</Text>
-                <TouchableOpacity onPress={() => setShowPiggyBankModal(true)}>
-                  <FontAwesome5
-                    name="plus-circle"
-                    size={20}
-                    color={theme.colors.primary}
-                  />
-                </TouchableOpacity>
-              </View>
-              <Card style={styles.card}>
-                {piggyBanks.slice(0, 3).map((piggy) => {
-                  const progress =
-                    (piggy.currentAmount / piggy.targetAmount) * 100;
-                  return (
-                    <View key={piggy.id} style={styles.piggyItem}>
-                      <View style={styles.piggyHeader}>
-                        <View style={styles.piggyIcon}>
-                          <FontAwesome5
-                            name="piggy-bank"
-                            size={18}
-                            color={piggy.color}
-                          />
-                        </View>
-                        <View style={styles.piggyInfo}>
-                          <Text style={styles.piggyName}>{piggy.name}</Text>
-                          <Text style={styles.piggyProgress}>
-                            {formatValue(piggy.currentAmount)} /{" "}
-                            {formatValue(piggy.targetAmount)}
-                          </Text>
-                        </View>
-                        <View style={styles.piggyActions}>
-                          <Text style={styles.piggyPercentage}>
-                            {progress.toFixed(0)}%
-                          </Text>
-                          <TouchableOpacity
-                            onPress={() => handleEditPiggyBank(piggy)}
-                            style={styles.editButton}
-                          >
-                            <FontAwesome5
-                              name="edit"
-                              size={14}
-                              color={theme.colors.primary}
-                            />
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                      <View style={styles.progressBarContainer}>
-                        <View
-                          style={[
-                            styles.progressBar,
-                            {
-                              width: `${Math.min(progress, 100)}%`,
-                              backgroundColor: piggy.color,
-                            },
-                          ]}
-                        />
-                      </View>
-                    </View>
-                  );
-                })}
-                {piggyBanks.length > 3 && (
-                  <TouchableOpacity
-                    style={styles.viewAllButton}
-                    onPress={() => setShowPiggyBankModal(true)}
-                  >
-                    <Text style={styles.viewAllText}>
-                      Ver todos ({piggyBanks.length})
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </Card>
-            </View>
-          )}
 
           <View style={{ height: 100 }} />
         </ScrollView>
