@@ -1,6 +1,6 @@
 // components/features/FirebaseSync.tsx
 // Painel de sincronização em tempo real com Firebase.
-// Design moderno com animações e feedback visual em tempo real.
+// Design compacto e otimizado para web e mobile.
 
 import React, { useState } from 'react';
 import {
@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Platform,
+  Image,
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -35,8 +36,8 @@ function statusLabel(status: SyncStatus): string {
   switch (status) {
     case 'syncing': return 'Sincronizando…';
     case 'synced':  return 'Sincronizado';
-    case 'error':   return 'Erro na sincronização';
-    case 'offline': return 'Sem conexão';
+    case 'error':   return 'Erro';
+    case 'offline': return 'Offline';
     default:        return 'Não sincronizado';
   }
 }
@@ -133,9 +134,9 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
     setSyncLoading(true);
     try {
       await manualSync();
-      showToast('Dados sincronizados com sucesso!', 'success');
+      showToast('Sincronizado!', 'success');
     } catch {
-      showToast('Erro ao sincronizar. Verifique sua conexão.', 'error');
+      showToast('Erro ao sincronizar', 'error');
     } finally {
       setSyncLoading(false);
     }
@@ -172,7 +173,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
     setValuesHidden(false);
 
     setShowResetConfirm(false);
-    showToast('✅ Dados resetados para o padrão!', 'success');
+    showToast('✅ Dados resetados!', 'success');
   };
 
   // ─── Render ───────────────────────────────────────────────────────────────
@@ -181,7 +182,6 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.loadingText}>Carregando…</Text>
       </View>
     );
   }
@@ -197,7 +197,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
         {user ? (
           // ─── Usuário logado ──────────────────────────────────────────────
           <>
-            {/* Card de Perfil com Gradiente */}
+            {/* Card de Perfil Compacto */}
             <LinearGradient
               colors={[theme.colors.primary + '20', theme.colors.primary + '08']}
               start={{ x: 0, y: 0 }}
@@ -205,77 +205,40 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
               style={styles.profileCard}
             >
               <View style={styles.profileHeader}>
-                <View style={styles.avatarContainer}>
-                  <FontAwesome5 name="user-circle" size={48} color={theme.colors.primary} />
-                </View>
+                <Image
+                  source={require('../../assets/images/logo.png')}
+                  style={styles.logoImage}
+                />
                 <View style={styles.profileInfo}>
                   <Text style={styles.profileName}>{user.displayName || 'Usuário'}</Text>
                   <Text style={styles.profileEmail}>{user.email}</Text>
                 </View>
               </View>
 
-              {/* Status de Sincronização em Tempo Real */}
-              <View style={styles.syncStatusContainer}>
-                <View style={styles.syncStatusBadge}>
-                  <FontAwesome5
-                    name={statusIcon(syncStatus)}
-                    size={16}
-                    color={statusColor(syncStatus)}
+              {/* Status de Sincronização */}
+              <View style={styles.syncStatusBadge}>
+                <FontAwesome5
+                  name={statusIcon(syncStatus)}
+                  size={14}
+                  color={statusColor(syncStatus)}
+                />
+                <Text style={[styles.syncStatusText, { color: statusColor(syncStatus) }]}>
+                  {statusLabel(syncStatus)}
+                </Text>
+                {syncStatus === 'syncing' && (
+                  <ActivityIndicator
+                    size="small"
+                    color={theme.colors.primary}
+                    style={{ marginLeft: 6 }}
                   />
-                  <Text style={[styles.syncStatusText, { color: statusColor(syncStatus) }]}>
-                    {statusLabel(syncStatus)}
-                  </Text>
-                  {syncStatus === 'syncing' && (
-                    <ActivityIndicator
-                      size="small"
-                      color={theme.colors.primary}
-                      style={{ marginLeft: 8 }}
-                    />
-                  )}
-                </View>
-
-                {lastSyncedAt && (
-                  <Text style={styles.lastSyncText}>
-                    {lastSyncedAt.toLocaleTimeString('pt-BR', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </Text>
                 )}
               </View>
-
-              {/* Badge de Sincronização em Tempo Real */}
-              <View style={styles.realtimeBadge}>
-                <FontAwesome5 name="bolt" size={12} color="#4CAF50" />
-                <Text style={styles.realtimeBadgeText}>
-                  Sincronização em tempo real ativa
-                </Text>
-              </View>
             </LinearGradient>
-
-            {/* Estatísticas */}
-            <View style={styles.statsContainer}>
-              <View style={styles.statCard}>
-                <FontAwesome5 name="wallet" size={20} color={theme.colors.primary} />
-                <Text style={styles.statValue}>{accounts.length}</Text>
-                <Text style={styles.statLabel}>Contas</Text>
-              </View>
-              <View style={styles.statCard}>
-                <FontAwesome5 name="exchange-alt" size={20} color="#4CAF50" />
-                <Text style={styles.statValue}>∞</Text>
-                <Text style={styles.statLabel}>Sincronizado</Text>
-              </View>
-              <View style={styles.statCard}>
-                <FontAwesome5 name="shield-alt" size={20} color="#FF9800" />
-                <Text style={styles.statValue}>✓</Text>
-                <Text style={styles.statLabel}>Seguro</Text>
-              </View>
-            </View>
 
             {/* Botões de Ação */}
             <View style={styles.buttons}>
               <Button
-                title={syncLoading ? '🔄 Sincronizando…' : '🔄 Sincronizar Agora'}
+                title={syncLoading ? '🔄' : '🔄 Sincronizar'}
                 onPress={handleManualSync}
                 loading={syncLoading}
                 style={styles.button}
@@ -287,93 +250,38 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
                 style={styles.button}
               />
               <Button
-                title="🚪 Sair da Conta"
+                title="🚪 Sair"
                 onPress={() => setShowLogoutConfirm(true)}
                 variant="outline"
                 style={styles.button}
               />
             </View>
-
-            {/* Informações */}
-            <View style={styles.infoBox}>
-              <View style={styles.infoItem}>
-                <FontAwesome5 name="bolt" size={16} color={theme.colors.primary} />
-                <Text style={styles.infoText}>
-                  Sincronização automática em tempo real ativada
-                </Text>
-              </View>
-              <View style={styles.infoItem}>
-                <FontAwesome5 name="shield-alt" size={16} color={theme.colors.primary} />
-                <Text style={styles.infoText}>
-                  Dados criptografados e seguros no Firebase
-                </Text>
-              </View>
-              <View style={styles.infoItem}>
-                <FontAwesome5 name="mobile-alt" size={16} color={theme.colors.primary} />
-                <Text style={styles.infoText}>
-                  Sincroniza entre todos seus dispositivos
-                </Text>
-              </View>
-            </View>
           </>
         ) : (
           // ─── Usuário não logado ──────────────────────────────────────────
           <>
-            {/* Cabeçalho Atraente */}
-            <LinearGradient
-              colors={[theme.colors.primary, theme.colors.primary + 'CC']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.headerGradient}
-            >
-              <FontAwesome5 name="cloud" size={60} color="#fff" />
-              <Text style={styles.headerTitle}>Sincronize seus Dados</Text>
+            {/* Logo e Título */}
+            <View style={styles.headerSection}>
+              <Image
+                source={require('../../assets/images/logo.png')}
+                style={styles.headerLogo}
+              />
+              <Text style={styles.headerTitle}>Finance Flex</Text>
               <Text style={styles.headerSubtitle}>
-                Acesse suas finanças em qualquer lugar, em qualquer dispositivo
+                Sincronize seus dados na nuvem
               </Text>
-            </LinearGradient>
-
-            {/* Card de Benefícios */}
-            <View style={styles.benefitsCard}>
-              <View style={styles.benefitItem}>
-                <View style={styles.benefitIcon}>
-                  <FontAwesome5 name="sync-alt" size={18} color={theme.colors.primary} />
-                </View>
-                <View style={styles.benefitText}>
-                  <Text style={styles.benefitTitle}>Sincronização em Tempo Real</Text>
-                  <Text style={styles.benefitDesc}>Atualizações instantâneas em todos os dispositivos</Text>
-                </View>
-              </View>
-              <View style={styles.benefitItem}>
-                <View style={styles.benefitIcon}>
-                  <FontAwesome5 name="lock" size={18} color={theme.colors.primary} />
-                </View>
-                <View style={styles.benefitText}>
-                  <Text style={styles.benefitTitle}>Segurança Garantida</Text>
-                  <Text style={styles.benefitDesc}>Autenticação Firebase com criptografia</Text>
-                </View>
-              </View>
-              <View style={styles.benefitItem}>
-                <View style={styles.benefitIcon}>
-                  <FontAwesome5 name="mobile-alt" size={18} color={theme.colors.primary} />
-                </View>
-                <View style={styles.benefitText}>
-                  <Text style={styles.benefitTitle}>Multi-Dispositivo</Text>
-                  <Text style={styles.benefitDesc}>Acesse de celular, tablet ou computador</Text>
-                </View>
-              </View>
             </View>
 
-            {/* Formulário */}
+            {/* Formulário Compacto */}
             <View style={styles.formCard}>
               <Text style={styles.formTitle}>
-                {isSignUp ? 'Criar Conta' : 'Entrar na Conta'}
+                {isSignUp ? 'Criar Conta' : 'Entrar'}
               </Text>
 
               {isSignUp && (
                 <TextInput
                   style={styles.input}
-                  placeholder="Seu nome completo"
+                  placeholder="Seu nome"
                   placeholderTextColor={theme.colors.textDim}
                   value={displayName}
                   onChangeText={setDisplayName}
@@ -394,7 +302,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
 
               <TextInput
                 style={styles.input}
-                placeholder="Senha (mínimo 6 caracteres)"
+                placeholder="Senha"
                 placeholderTextColor={theme.colors.textDim}
                 value={password}
                 onChangeText={setPassword}
@@ -402,9 +310,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
               />
 
               <Button
-                title={authLoading
-                  ? (isSignUp ? 'Criando conta…' : 'Entrando…')
-                  : (isSignUp ? '✅ Criar Conta' : '🔑 Entrar')}
+                title={authLoading ? '…' : (isSignUp ? '✅ Criar' : '🔑 Entrar')}
                 onPress={handleAuth}
                 loading={authLoading}
                 style={styles.button}
@@ -420,9 +326,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
                 style={styles.toggleAuth}
               >
                 <Text style={styles.toggleAuthText}>
-                  {isSignUp
-                    ? 'Já tem uma conta? Entrar'
-                    : 'Não tem conta? Criar agora'}
+                  {isSignUp ? 'Já tem conta? Entrar' : 'Criar conta'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -434,7 +338,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
       <ConfirmModal
         visible={showLogoutConfirm}
         title="Sair da Conta?"
-        message="Tem certeza que deseja sair? Seus dados locais serão mantidos, mas a sincronização em tempo real será desativada."
+        message="Seus dados locais serão mantidos."
         type="warning"
         confirmText="Sair"
         cancelText="Cancelar"
@@ -446,9 +350,9 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
       <ConfirmModal
         visible={showResetConfirm}
         title="⚠️ Apagar Todos os Dados?"
-        message="Tem certeza que deseja resetar todos os dados? Esta ação é irreversível!"
+        message="Esta ação é irreversível!"
         type="danger"
-        confirmText="Sim, Apagar Tudo"
+        confirmText="Sim, Apagar"
         onConfirm={handleResetData}
         onCancel={() => setShowResetConfirm(false)}
       />
@@ -472,17 +376,17 @@ function parseFirebaseError(code?: string): string {
     case 'auth/invalid-credential':
       return 'E-mail ou senha incorretos';
     case 'auth/email-already-in-use':
-      return 'Este e-mail já está cadastrado';
+      return 'E-mail já cadastrado';
     case 'auth/weak-password':
-      return 'A senha deve ter pelo menos 6 caracteres';
+      return 'Senha muito fraca';
     case 'auth/invalid-email':
       return 'E-mail inválido';
     case 'auth/network-request-failed':
-      return 'Sem conexão com a internet';
+      return 'Sem conexão';
     case 'auth/too-many-requests':
-      return 'Muitas tentativas. Tente novamente mais tarde';
+      return 'Muitas tentativas';
     default:
-      return 'Erro ao autenticar. Tente novamente';
+      return 'Erro ao autenticar';
   }
 }
 
@@ -491,42 +395,33 @@ function parseFirebaseError(code?: string): string {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    padding: 16,
   },
   centered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 40,
-  },
-  loadingText: {
-    color: theme.colors.textDim,
-    marginTop: 12,
-    fontFamily: 'Inter-Regular',
   },
 
   // ─── Usuário Logado ──────────────────────────────────────────────────────
 
   profileCard: {
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: theme.colors.primary + '40',
   },
   profileHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-    marginBottom: 16,
+    gap: 12,
+    marginBottom: 12,
   },
-  avatarContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: theme.colors.primary + '20',
-    alignItems: 'center',
-    justifyContent: 'center',
+  logoImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 8,
   },
   profileInfo: {
     flex: 1,
@@ -534,196 +429,89 @@ const styles = StyleSheet.create({
   profileName: {
     color: theme.colors.text,
     fontFamily: 'Inter-Bold',
-    fontSize: 18,
-    marginBottom: 4,
+    fontSize: 16,
+    marginBottom: 2,
   },
   profileEmail: {
     color: theme.colors.textDim,
     fontFamily: 'Inter-Regular',
-    fontSize: 13,
-  },
-  syncStatusContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    backgroundColor: theme.colors.darker + '60',
-    borderRadius: 10,
+    fontSize: 12,
   },
   syncStatusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    backgroundColor: theme.colors.darker + '60',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
   },
   syncStatusText: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'Inter-SemiBold',
   },
-  lastSyncText: {
-    color: theme.colors.textDim,
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-  },
-  realtimeBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(76, 175, 80, 0.12)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    alignSelf: 'flex-start',
-  },
-  realtimeBadgeText: {
-    color: '#4CAF50',
-    fontSize: 12,
-    fontFamily: 'Inter-Medium',
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 20,
-    justifyContent: 'space-between',
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: theme.colors.darkLight,
-    borderRadius: 12,
-    padding: 14,
-    alignItems: 'center',
-    gap: 6,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  statValue: {
-    color: theme.colors.primary,
-    fontFamily: 'Inter-Bold',
-    fontSize: 18,
-  },
-  statLabel: {
-    color: theme.colors.textDim,
-    fontFamily: 'Inter-Regular',
-    fontSize: 11,
-  },
   buttons: {
-    gap: 12,
+    gap: 10,
     marginBottom: 20,
   },
   button: {
     marginBottom: 0,
   },
-  infoBox: {
-    gap: 12,
-    marginBottom: 20,
-  },
-  infoItem: {
-    flexDirection: 'row',
-    gap: 12,
-    backgroundColor: theme.colors.darkLight,
-    padding: 12,
-    borderRadius: 10,
-    borderLeftWidth: 3,
-    borderLeftColor: theme.colors.primary,
-  },
-  infoText: {
-    flex: 1,
-    color: theme.colors.text,
-    fontFamily: 'Inter-Regular',
-    fontSize: 13,
-    lineHeight: 18,
-  },
 
   // ─── Usuário Não Logado ──────────────────────────────────────────────────
 
-  headerGradient: {
-    borderRadius: 16,
-    padding: 30,
+  headerSection: {
     alignItems: 'center',
     marginBottom: 24,
     gap: 12,
   },
+  headerLogo: {
+    width: 80,
+    height: 80,
+    borderRadius: 12,
+  },
   headerTitle: {
     fontSize: 24,
     fontFamily: 'Inter-Bold',
-    color: '#fff',
-    textAlign: 'center',
+    color: theme.colors.text,
   },
   headerSubtitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'Inter-Regular',
-    color: '#fff',
-    textAlign: 'center',
-    lineHeight: 20,
-    opacity: 0.9,
-  },
-  benefitsCard: {
-    backgroundColor: theme.colors.darkLight,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-    gap: 14,
-  },
-  benefitItem: {
-    flexDirection: 'row',
-    gap: 12,
-    alignItems: 'flex-start',
-  },
-  benefitIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    backgroundColor: theme.colors.primary + '20',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  benefitText: {
-    flex: 1,
-  },
-  benefitTitle: {
-    color: theme.colors.text,
-    fontFamily: 'Inter-SemiBold',
-    fontSize: 14,
-    marginBottom: 2,
-  },
-  benefitDesc: {
     color: theme.colors.textDim,
-    fontFamily: 'Inter-Regular',
-    fontSize: 12,
-    lineHeight: 16,
+    textAlign: 'center',
   },
   formCard: {
     backgroundColor: theme.colors.darkLight,
     borderRadius: 12,
-    padding: 20,
+    padding: 16,
     marginBottom: 20,
   },
   formTitle: {
     color: theme.colors.text,
     fontFamily: 'Inter-Bold',
-    fontSize: 18,
-    marginBottom: 16,
+    fontSize: 16,
+    marginBottom: 12,
     textAlign: 'center',
   },
   input: {
     backgroundColor: theme.colors.darker,
     borderRadius: 8,
-    padding: 12,
+    padding: 10,
     color: theme.colors.text,
     fontFamily: 'Inter-Regular',
-    fontSize: 15,
-    marginBottom: 12,
+    fontSize: 14,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: theme.colors.border,
   },
   toggleAuth: {
-    marginTop: 12,
+    marginTop: 10,
     alignItems: 'center',
   },
   toggleAuthText: {
     color: theme.colors.primary,
     fontFamily: 'Inter-Medium',
-    fontSize: 14,
+    fontSize: 13,
   },
 });
