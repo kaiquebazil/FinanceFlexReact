@@ -16,6 +16,7 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  updateProfile,
   Unsubscribe as FirebaseUnsubscribe,
 } from "firebase/auth";
 import { auth } from "../firebase/config";
@@ -44,7 +45,7 @@ interface AuthContextType {
 
   // Autenticação
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, displayName: string) => Promise<void>;
   logOut: () => Promise<void>;
 
   // Sincronização manual
@@ -137,9 +138,12 @@ export function AuthProvider({ children, onRemoteDataReceived }: AuthProviderPro
   };
 
   // ─── Cadastro ────────────────────────────────────────────────────────────
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, displayName: string) => {
     setSyncStatus("syncing");
-    await createUserWithEmailAndPassword(auth, email, password);
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    if (userCredential.user) {
+      await updateProfile(userCredential.user, { displayName });
+    }
   };
 
   // ─── Logout ──────────────────────────────────────────────────────────────

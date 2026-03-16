@@ -1,6 +1,6 @@
 // components/features/BackupRestore.tsx
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Button } from '../ui/Button';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { Toast } from '../ui/Toast';
@@ -9,18 +9,19 @@ import { useData } from '../../hooks/useData';
 import { useToast } from '../../hooks/useToast';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { createDefaultCategories } from '../../constants/defaultCategories';
+import { createDefaultRecurringBills } from '../../constants/defaultRecurringBills';
 
 interface BackupRestoreProps {
   onClose: () => void;
 }
 
 export function BackupRestore({ onClose }: BackupRestoreProps) {
-  const { 
-    accounts, 
-    transactions, 
-    piggyBanks, 
-    creditCards, 
-    recurringBills, 
+  const {
+    accounts,
+    transactions,
+    piggyBanks,
+    creditCards,
+    recurringBills,
     categories,
     setAccounts,
     setTransactions,
@@ -28,11 +29,10 @@ export function BackupRestore({ onClose }: BackupRestoreProps) {
     setCreditCards,
     setRecurringBills,
     setCategories,
-    setValuesHidden
+    setValuesHidden,
   } = useData();
 
   const { toast, showToast, hideToast } = useToast();
-  const [loading, setLoading] = useState(false);
   const [showConfirmClear, setShowConfirmClear] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -57,85 +57,6 @@ export function BackupRestore({ onClose }: BackupRestoreProps) {
     },
   ];
 
-  // ==================== EXPORTAR ====================
-  const handleExport = () => {
-    try {
-      setLoading(true);
-      
-      const backupData = {
-        accounts,
-        transactions,
-        piggyBanks,
-        creditCards,
-        recurringBills,
-        categories,
-        exportDate: new Date().toLocaleString('pt-BR')
-      };
-
-      const jsonString = JSON.stringify(backupData, null, 2);
-      
-      if (Platform.OS === 'web') {
-        const blob = new Blob([jsonString], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `backup-financas-${Date.now()}.json`;
-        link.click();
-        URL.revokeObjectURL(url);
-        setSuccessMessage('Backup salvo na pasta de Downloads!');
-        setShowSuccessModal(true);
-      } else {
-        // Para mobile, podemos abrir um modal com opção de compartilhar
-        setSuccessMessage('Backup gerado! Copie o texto abaixo:');
-        setShowSuccessModal(true);
-      }
-      
-    } catch (error) {
-      showToast('Não foi possível fazer o backup', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ==================== IMPORTAR ====================
-  const handleImport = () => {
-    if (Platform.OS === 'web') {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = '.json';
-      
-      input.onchange = (e: any) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (event: any) => {
-          try {
-            const data = JSON.parse(event.target.result);
-            
-            if (data.accounts) setAccounts(data.accounts);
-            if (data.transactions) setTransactions(data.transactions);
-            if (data.piggyBanks) setPiggyBanks(data.piggyBanks);
-            if (data.creditCards) setCreditCards(data.creditCards);
-            if (data.recurringBills) setRecurringBills(data.recurringBills);
-            if (data.categories) setCategories(data.categories);
-            
-            setSuccessMessage('Dados restaurados com sucesso!');
-            setShowSuccessModal(true);
-            onClose();
-          } catch {
-            showToast('Arquivo inválido', 'error');
-          }
-        };
-        reader.readAsText(file);
-      };
-      
-      input.click();
-    } else {
-      showToast('Use a versão web para restaurar backups', 'info');
-    }
-  };
-
   // ==================== APAGAR TUDO ====================
   const handleClearAll = () => {
     setShowConfirmClear(true);
@@ -144,62 +65,57 @@ export function BackupRestore({ onClose }: BackupRestoreProps) {
   const confirmClearAll = () => {
     setAccounts(DEFAULT_ACCOUNTS);
     setCategories(createDefaultCategories());
+    setRecurringBills(createDefaultRecurringBills());
     setTransactions([]);
     setPiggyBanks([]);
     setCreditCards([]);
-    setRecurringBills([]);
     setValuesHidden(false);
-    
+
     setShowConfirmClear(false);
-    setSuccessMessage('Todos os dados foram resetados!');
+    setSuccessMessage('✅ Todos os dados foram resetados para o padrão!');
     setShowSuccessModal(true);
-    onClose();
+    setTimeout(() => {
+      setShowSuccessModal(false);
+      onClose();
+    }, 2000);
   };
 
   // Calcular estatísticas
-  const userAccounts = accounts.filter(a => 
-    a.id !== 'default-cash-1' && a.id !== 'default-bank-1'
+  const userAccounts = accounts.filter(
+    (a) => a.id !== 'default-cash-1' && a.id !== 'default-bank-1'
   );
-  const userCategories = categories.filter(c => !c.id.startsWith('default-'));
+  const userCategories = categories.filter((c) => !c.id.startsWith('default-'));
 
   return (
     <>
       <ScrollView style={styles.container}>
         <View style={styles.header}>
-          <FontAwesome5 name="database" size={50} color={theme.colors.primary} />
-          <Text style={styles.title}>Backup dos Dados</Text>
+          <FontAwesome5 name="redo" size={50} color={theme.colors.primary} />
+          <Text style={styles.title}>Resetar Dados</Text>
         </View>
 
         <View style={styles.infoBox}>
           <Text style={styles.infoText}>
-            📊 Total: {accounts.length} contas • {transactions.length} transações • {categories.length} categorias
+            📊 Status Atual:{'\n'}
+            • {accounts.length} contas • {transactions.length} transações{'\n'}
+            • {categories.length} categorias • {recurringBills.length} contas recorrentes
           </Text>
           <Text style={styles.infoSubtext}>
-            Contas padrão: 2 • Suas contas: {userAccounts.length}{'\n'}
-            Categorias padrão: 15 • Suas categorias: {userCategories.length}
+            Contas padrão: 2 | Suas contas: {userAccounts.length}{'\n'}
+            Categorias padrão: 15 | Suas categorias: {userCategories.length}
+          </Text>
+        </View>
+
+        <View style={styles.warningBox}>
+          <FontAwesome5 name="exclamation-triangle" size={24} color="#FF9800" />
+          <Text style={styles.warningText}>
+            Ao resetar, todos os seus dados serão apagados e substituídos pelas configurações padrão. Esta ação não pode ser desfeita!
           </Text>
         </View>
 
         <View style={styles.buttons}>
           <Button
-            title="📥 FAZER BACKUP"
-            onPress={handleExport}
-            loading={loading}
-            style={styles.button}
-          />
-
-          <Button
-            title="📤 RESTAURAR BACKUP"
-            onPress={handleImport}
-            variant="outline"
-            loading={loading}
-            style={styles.button}
-          />
-
-          <View style={styles.divider} />
-
-          <Button
-            title="🗑️ APAGAR TUDO"
+            title="🗑️ RESETAR TUDO"
             onPress={handleClearAll}
             variant="danger"
             style={styles.button}
@@ -207,19 +123,19 @@ export function BackupRestore({ onClose }: BackupRestoreProps) {
         </View>
 
         <Text style={styles.note}>
-          • O backup salva todas as suas contas, categorias e movimentações{'\n'}
-          • Para restaurar no celular, use a versão web{'\n'}
-          • "Apagar Tudo" mantém contas e categorias padrão
+          ✅ Contas e categorias padrão serão mantidas{'\n'}
+          ❌ Todas as suas transações serão perdidas{'\n'}
+          ❌ Cofrinhos, cartões e contas recorrentes serão apagados
         </Text>
       </ScrollView>
 
       {/* Modal de Confirmação */}
       <ConfirmModal
         visible={showConfirmClear}
-        title="Apagar Todos os Dados?"
-        message="Tem certeza que deseja apagar todos os seus dados?\n\n✅ Contas e categorias padrão serão mantidas\n❌ Todas as suas transações serão perdidas\n❌ Cofrinhos, cartões e contas recorrentes serão apagados"
+        title="⚠️ Resetar Todos os Dados?"
+        message="Tem certeza que deseja resetar todos os dados? Esta ação é irreversível!"
         type="danger"
-        confirmText="Apagar Tudo"
+        confirmText="Sim, Resetar Tudo"
         onConfirm={confirmClearAll}
         onCancel={() => setShowConfirmClear(false)}
       />
@@ -266,21 +182,41 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.darkLight,
     padding: 15,
     borderRadius: 10,
-    marginBottom: 30,
+    marginBottom: 20,
     alignItems: 'center',
   },
   infoText: {
     color: theme.colors.text,
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: 'Inter-Medium',
     textAlign: 'center',
+    lineHeight: 22,
   },
   infoSubtext: {
     color: theme.colors.textDim,
-    fontSize: 13,
+    fontSize: 12,
     fontFamily: 'Inter-Regular',
     marginTop: 8,
     textAlign: 'center',
+    lineHeight: 18,
+  },
+  warningBox: {
+    backgroundColor: 'rgba(255, 152, 0, 0.12)',
+    borderRadius: 10,
+    padding: 16,
+    marginBottom: 24,
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'flex-start',
+    borderLeftWidth: 3,
+    borderLeftColor: '#FF9800',
+  },
+  warningText: {
+    flex: 1,
+    color: theme.colors.text,
+    fontSize: 13,
+    fontFamily: 'Inter-Regular',
+    lineHeight: 20,
   },
   buttons: {
     gap: 15,
@@ -289,15 +225,11 @@ const styles = StyleSheet.create({
   button: {
     marginBottom: 5,
   },
-  divider: {
-    height: 1,
-    backgroundColor: theme.colors.border,
-    marginVertical: 15,
-  },
   note: {
     color: theme.colors.textDim,
-    fontSize: 14,
-    lineHeight: 22,
+    fontSize: 13,
+    lineHeight: 20,
     textAlign: 'center',
+    fontFamily: 'Inter-Regular',
   },
 });

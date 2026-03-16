@@ -7,11 +7,13 @@ import {
   TouchableOpacity,
   Modal,
   TextInput,
-  Alert
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { ConfirmModal } from '../ui/ConfirmModal';
+import { Toast } from '../ui/Toast';
+import { useToast } from '../../hooks/useToast';
 import { theme } from '../../constants/theme';
 import { useData } from '../../hooks/useData';
 import { formatCurrency } from '../../utils/currency';
@@ -22,10 +24,13 @@ interface CreditCardManagerProps {
 
 export function CreditCardManager({ onClose }: CreditCardManagerProps) {
   const { creditCards, setCreditCards, addCreditCard, deleteCreditCard } = useData();
+  const { toast, showToast, hideToast } = useToast();
   const [selectedCard, setSelectedCard] = useState<any>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   
   // Estado para novo cartão
   const [newCard, setNewCard] = useState({
@@ -46,7 +51,8 @@ export function CreditCardManager({ onClose }: CreditCardManagerProps) {
 
   const handleAddCard = () => {
     if (!newCard.name || !newCard.limit || !newCard.closingDay || !newCard.dueDay) {
-      Alert.alert('Erro', 'Preencha todos os campos');
+      setErrorMessage('Preencha todos os campos');
+      setShowErrorModal(true);
       return;
     }
 
@@ -66,7 +72,8 @@ export function CreditCardManager({ onClose }: CreditCardManagerProps) {
   const handleAddPurchase = () => {
     if (!selectedCard) return;
     if (!newPurchase.description || !newPurchase.amount) {
-      Alert.alert('Erro', 'Preencha descrição e valor');
+      setErrorMessage('Preencha descrição e valor');
+      setShowErrorModal(true);
       return;
     }
 
@@ -85,7 +92,7 @@ export function CreditCardManager({ onClose }: CreditCardManagerProps) {
     // Aqui você pode adicionar a transação parcelada se quiser
     // Por enquanto só atualiza o usado
 
-    Alert.alert('Sucesso', 'Compra adicionada com sucesso!');
+    showToast('Compra adicionada com sucesso!', 'success');
     setNewPurchase({ description: '', amount: '', installments: '1', category: 'Compras' });
     setShowPurchaseModal(false);
   };
@@ -436,6 +443,26 @@ export function CreditCardManager({ onClose }: CreditCardManagerProps) {
           </View>
         </View>
       </Modal>
+
+      {/* Modal de Erro */}
+      <ConfirmModal
+        visible={showErrorModal}
+        title="⚠️ Erro"
+        message={errorMessage}
+        type="warning"
+        confirmText="OK"
+        cancelText=""
+        onConfirm={() => setShowErrorModal(false)}
+        onCancel={() => setShowErrorModal(false)}
+      />
+
+      {/* Toast para feedback */}
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={hideToast}
+      />
     </View>
   );
 }

@@ -6,7 +6,7 @@ import React, {
   ReactNode,
   useCallback,
 } from "react";
-import { Alert } from "react-native";
+
 import type {
   Account,
   Transaction,
@@ -21,6 +21,7 @@ import type {
 } from "../types";
 import { storage, KEYS } from "../services/storage";
 import { createDefaultCategories } from "../constants/defaultCategories";
+import { createDefaultRecurringBills } from "../constants/defaultRecurringBills";
 
 // Função auxiliar para formatar moeda
 const formatCurrency = (value: number, currency: string = "BRL"): string => {
@@ -343,11 +344,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
           type: "warning",
           onConfirm: () => {},
         });
-      } else {
-        Alert.alert(
-          "Erro",
-          "As contas de origem e destino devem ser diferentes",
-        );
       }
       return;
     }
@@ -361,8 +357,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
           type: "warning",
           onConfirm: () => {},
         });
-      } else {
-        Alert.alert("Erro", "Conta de origem não encontrada");
       }
       return;
     }
@@ -375,8 +369,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
           type: "warning",
           onConfirm: () => {},
         });
-      } else {
-        Alert.alert("Erro", "Saldo insuficiente na conta de origem");
       }
       return;
     }
@@ -426,31 +418,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             }
           },
         });
-      } else {
-        Alert.alert(
-          "Ação bloqueada",
-          "Esta conta possui movimentações. Deseja realmente excluí-la? Todas as transações associadas serão perdidas.",
-          [
-            { text: "Cancelar", style: "cancel" },
-            {
-              text: "Excluir mesmo assim",
-              style: "destructive",
-              onPress: () => {
-                setTransactions((prev) =>
-                  prev.filter(
-                    (t) => t.accountId !== id && t.toAccountId !== id,
-                  ),
-                );
-                setPiggyBanks((prev) =>
-                  prev.map((p) =>
-                    p.accountId === id ? { ...p, accountId: undefined } : p,
-                  ),
-                );
-                setAccounts((prev) => prev.filter((acc) => acc.id !== id));
-              },
-            },
-          ],
-        );
       }
       return false;
     }

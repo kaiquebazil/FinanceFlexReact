@@ -18,6 +18,7 @@ import { theme } from '../../constants/theme';
 import { useAuth, SyncStatus } from '../../contexts/AuthContext';
 import { Button } from '../ui/Button';
 import { Toast } from '../ui/Toast';
+import { ConfirmModal } from '../ui/ConfirmModal';
 import { useToast } from '../../hooks/useToast';
 
 interface FirebaseSyncProps {
@@ -64,9 +65,11 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
   const [syncLoading, setSyncLoading] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // ─── Autenticação ─────────────────────────────────────────────────────────
 
@@ -75,10 +78,14 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
       showToast('Preencha e-mail e senha', 'warning');
       return;
     }
+    if (isSignUp && !displayName.trim()) {
+      showToast('Preencha seu nome', 'warning');
+      return;
+    }
     setAuthLoading(true);
     try {
       if (isSignUp) {
-        await signUp(email.trim(), password);
+        await signUp(email.trim(), password, displayName.trim());
         showToast('Conta criada com sucesso!', 'success');
       } else {
         await signIn(email.trim(), password);
@@ -86,6 +93,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
       }
       setEmail('');
       setPassword('');
+      setDisplayName('');
     } catch (err: any) {
       const msg = parseFirebaseError(err?.code);
       showToast(msg, 'error');
@@ -98,6 +106,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
     try {
       await logOut();
       showToast('Desconectado com sucesso', 'info');
+      setShowLogoutConfirm(false);
     } catch {
       showToast('Erro ao desconectar', 'error');
     }
@@ -175,12 +184,14 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
               </View>
             </View>
 
-            {/* Info do usuário */}
+            {/* Info do usuário - SEM ID */}
             <View style={styles.userCard}>
-              <FontAwesome5 name="user-circle" size={24} color={theme.colors.primary} />
+              <View style={styles.userAvatar}>
+                <FontAwesome5 name="user-circle" size={32} color={theme.colors.primary} />
+              </View>
               <View style={styles.userInfo}>
+                <Text style={styles.userName}>{user.displayName || 'Usuário'}</Text>
                 <Text style={styles.userEmail}>{user.email}</Text>
-                <Text style={styles.userUid}>ID: {user.uid.slice(0, 12)}…</Text>
               </View>
             </View>
 
@@ -194,7 +205,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
               />
               <Button
                 title="🚪 Sair da Conta"
-                onPress={handleLogout}
+                onPress={() => setShowLogoutConfirm(true)}
                 variant="outline"
                 style={styles.button}
               />
@@ -216,6 +227,17 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
               <Text style={styles.formTitle}>
                 {isSignUp ? 'Criar Conta' : 'Entrar na Conta'}
               </Text>
+
+              {isSignUp && (
+                <TextInput
+                  style={styles.input}
+                  placeholder="Seu nome completo"
+                  placeholderTextColor={theme.colors.textDim}
+                  value={displayName}
+                  onChangeText={setDisplayName}
+                  autoCapitalize="words"
+                />
+              )}
 
               <TextInput
                 style={styles.input}
@@ -247,7 +269,12 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
               />
 
               <TouchableOpacity
-                onPress={() => setIsSignUp(!isSignUp)}
+                onPress={() => {
+                  setIsSignUp(!isSignUp);
+                  setDisplayName('');
+                  setEmail('');
+                  setPassword('');
+                }}
                 style={styles.toggleAuth}
               >
                 <Text style={styles.toggleAuthText}>
@@ -270,6 +297,18 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
           </>
         )}
       </ScrollView>
+
+      {/* Modal de confirmação de logout */}
+      <ConfirmModal
+        visible={showLogoutConfirm}
+        title="Sair da Conta?"
+        message="Tem certeza que deseja sair? Seus dados locais serão mantidos, mas a sincronização em tempo real será desativada."
+        type="warning"
+        confirmText="Sair"
+        cancelText="Cancelar"
+        onConfirm={handleLogout}
+        onCancel={() => setShowLogoutConfirm(false)}
+      />
 
       <Toast
         visible={toast.visible}
@@ -383,23 +422,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: theme.colors.darkLight,
     borderRadius: 12,
-    padding: 14,
+    padding: 16,
     marginBottom: 20,
-    gap: 12,
+    gap: 14,
+  },
+  userAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: `${theme.colors.primary}20`,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   userInfo: {
     flex: 1,
   },
-  userEmail: {
+  userName: {
     color: theme.colors.text,
     fontFamily: 'Inter-SemiBold',
-    fontSize: 15,
+    fontSize: 16,
+    marginBottom: 2,
   },
-  userUid: {
+  userEmail: {
     color: theme.colors.textDim,
     fontFamily: 'Inter-Regular',
-    fontSize: 12,
-    marginTop: 2,
+    fontSize: 13,
   },
   formCard: {
     backgroundColor: theme.colors.darkLight,
