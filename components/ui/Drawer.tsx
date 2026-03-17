@@ -140,6 +140,31 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
                 </TouchableOpacity>
               </View>
 
+              {/* Info do usuário com link para portfólio */}
+              {isLoggedIn && (
+                <TouchableOpacity
+                  style={styles.userSection}
+                  onPress={() => {
+                    // Abrir portfólio em navegador
+                    try {
+                      const Linking = require('react-native').Linking;
+                      Linking.openURL('https://kaiquebazil.github.io/portifolio/');
+                    } catch (e) {
+                      console.error('Erro ao abrir portfólio:', e);
+                    }
+                  }}
+                >
+                  <View style={styles.userInfo}>
+                    <FontAwesome5 name="user-circle" size={32} color={theme.colors.primary} />
+                    <View style={styles.userDetails}>
+                      <Text style={styles.userName} numberOfLines={1}>{user.displayName || 'Usuário'}</Text>
+                      <Text style={styles.userEmail} numberOfLines={1}>{user.email}</Text>
+                      <Text style={styles.portfolioLink}>Ver meu portfólio →</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              )}
+
               {/* Status de sincronização */}
               <TouchableOpacity 
                 style={styles.syncStatusContainer}
@@ -156,11 +181,6 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
                 <Text style={[styles.syncStatusText, { color: getSyncColor() }]}>
                   {getSyncText()}
                 </Text>
-                {isLoggedIn && (
-                  <Text style={styles.syncEmail} numberOfLines={1}>
-                    {user.email}
-                  </Text>
-                )}
               </TouchableOpacity>
 
               {/* Conteúdo do drawer */}
@@ -340,6 +360,38 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: 8,
+  },
+  userSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: theme.colors.darkLight,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  userDetails: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  userName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.text,
+  },
+  userEmail: {
+    fontSize: 12,
+    color: theme.colors.textDim,
+    marginTop: 2,
+  },
+  portfolioLink: {
+    fontSize: 11,
+    color: theme.colors.primary,
+    fontWeight: '600',
+    marginTop: 4,
   },
   syncStatusContainer: {
     flexDirection: 'row',

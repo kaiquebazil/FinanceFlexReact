@@ -1,9 +1,8 @@
-// components/features/FirebaseSync.tsx
 // Painel de sincronização em tempo real com Firebase.
 // Permite login/cadastro, exibe status da sincronização e
 // oferece botão de sincronização manual.
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +11,8 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
@@ -70,6 +71,14 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
   const [authLoading, setAuthLoading] = useState(false);
   const [syncLoading, setSyncLoading] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showBenefits, setShowBenefits] = useState(false);
+
+  // Mostrar benefícios apenas na primeira vez que o usuário vê o modal deslogado
+  useEffect(() => {
+    if (!user) {
+      setShowBenefits(true);
+    }
+  }, [user]);
 
   // ─── Autenticação ─────────────────────────────────────────────────────────
 
@@ -94,6 +103,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
       setEmail('');
       setPassword('');
       setDisplayName('');
+      setShowBenefits(false); // Ocultar benefícios após login
     } catch (err: any) {
       const msg = parseFirebaseError(err?.code);
       showToast(msg, 'error');
@@ -107,6 +117,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
       await logOut();
       showToast('Desconectado com sucesso', 'info');
       setShowLogoutConfirm(false);
+      setShowBenefits(true); // Mostrar benefícios novamente ao deslogar
     } catch {
       showToast('Erro ao desconectar', 'error');
     }
@@ -138,8 +149,17 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
   }
 
   return (
-    <>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.keyboardAvoid}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+    >
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
         {/* Cabeçalho */}
         <View style={styles.header}>
           <FontAwesome5 name="cloud" size={48} color={theme.colors.primary} />
@@ -223,6 +243,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
         ) : (
           // ─── Usuário não logado ──────────────────────────────────────────
           <>
+            {/* Formulário de autenticação */}
             <View style={styles.formCard}>
               <Text style={styles.formTitle}>
                 {isSignUp ? 'Criar Conta' : 'Entrar na Conta'}
@@ -236,6 +257,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
                   value={displayName}
                   onChangeText={setDisplayName}
                   autoCapitalize="words"
+                  editable={!authLoading}
                 />
               )}
 
@@ -248,6 +270,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
+                editable={!authLoading}
               />
 
               <TextInput
@@ -257,6 +280,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
+                editable={!authLoading}
               />
 
               <Button
@@ -267,6 +291,32 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
                 loading={authLoading}
                 style={styles.button}
               />
+
+              {/* Divider */}
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>ou</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              {/* Login Social */}
+              <View style={styles.socialButtons}>
+                <TouchableOpacity
+                  style={[styles.socialButton, styles.googleButton]}
+                  disabled={authLoading}
+                >
+                  <FontAwesome5 name="google" size={18} color="#fff" />
+                  <Text style={styles.socialButtonText}>Google</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.socialButton, styles.facebookButton]}
+                  disabled={authLoading}
+                >
+                  <FontAwesome5 name="facebook" size={18} color="#fff" />
+                  <Text style={styles.socialButtonText}>Facebook</Text>
+                </TouchableOpacity>
+              </View>
 
               <TouchableOpacity
                 onPress={() => {
@@ -285,13 +335,50 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
               </TouchableOpacity>
             </View>
 
+            {/* Benefícios - Mostrar apenas quando deslogado (primeira vez) */}
+            {showBenefits && (
+              <View style={styles.benefitsBox}>
+                <Text style={styles.benefitsTitle}>✨ Benefícios da Sincronização</Text>
+                
+                <View style={styles.benefitItem}>
+                  <FontAwesome5 name="cloud-upload-alt" size={16} color={theme.colors.primary} />
+                  <View style={styles.benefitContent}>
+                    <Text style={styles.benefitName}>Backup Automático</Text>
+                    <Text style={styles.benefitDesc}>Seus dados são salvos na nuvem com segurança</Text>
+                  </View>
+                </View>
+
+                <View style={styles.benefitItem}>
+                  <FontAwesome5 name="sync-alt" size={16} color={theme.colors.primary} />
+                  <View style={styles.benefitContent}>
+                    <Text style={styles.benefitName}>Sincronização em Tempo Real</Text>
+                    <Text style={styles.benefitDesc}>Alterações aparecem em todos os seus dispositivos instantaneamente</Text>
+                  </View>
+                </View>
+
+                <View style={styles.benefitItem}>
+                  <FontAwesome5 name="lock" size={16} color={theme.colors.primary} />
+                  <View style={styles.benefitContent}>
+                    <Text style={styles.benefitName}>Dados Protegidos</Text>
+                    <Text style={styles.benefitDesc}>Criptografia Firebase garante privacidade total</Text>
+                  </View>
+                </View>
+
+                <View style={styles.benefitItem}>
+                  <FontAwesome5 name="mobile-alt" size={16} color={theme.colors.primary} />
+                  <View style={styles.benefitContent}>
+                    <Text style={styles.benefitName}>Acesso em Qualquer Lugar</Text>
+                    <Text style={styles.benefitDesc}>Use o app em múltiplos dispositivos sem perder dados</Text>
+                  </View>
+                </View>
+              </View>
+            )}
+
+            {/* Info box - Mostrar sempre */}
             <View style={styles.infoBox}>
               <Text style={styles.infoText}>
                 🔒 Seus dados ficam protegidos com autenticação Firebase.
-                Cada usuário tem seu próprio espaço privado na nuvem.{'\n\n'}
-                📱 Após o login, a sincronização em tempo real é ativada
-                automaticamente — seus dados aparecem em todos os dispositivos
-                instantaneamente.
+                Cada usuário tem seu próprio espaço privado na nuvem.
               </Text>
             </View>
           </>
@@ -316,7 +403,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
         type={toast.type}
         onHide={hideToast}
       />
-    </>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -346,9 +433,15 @@ function parseFirebaseError(code?: string): string {
 // ─── Estilos ─────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
+  keyboardAvoid: {
+    flex: 1,
+  },
   container: {
     flex: 1,
+  },
+  scrollContent: {
     padding: 20,
+    paddingBottom: 40,
   },
   centered: {
     flex: 1,
@@ -381,125 +474,195 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   statusCard: {
-    backgroundColor: theme.colors.darkLight,
+    backgroundColor: theme.colors.cardBg,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: theme.colors.primary,
   },
   statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    marginBottom: 8,
   },
   statusText: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Inter-SemiBold',
+    marginLeft: 8,
+    flex: 1,
   },
   lastSync: {
-    color: theme.colors.textDim,
     fontSize: 12,
     fontFamily: 'Inter-Regular',
-    marginTop: 8,
+    color: theme.colors.textDim,
+    marginBottom: 8,
   },
   realtimeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginTop: 12,
-    backgroundColor: 'rgba(76, 175, 80, 0.12)',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 20,
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
     alignSelf: 'flex-start',
   },
   realtimeBadgeText: {
+    fontSize: 11,
+    fontFamily: 'Inter-SemiBold',
     color: '#4CAF50',
-    fontSize: 12,
-    fontFamily: 'Inter-Medium',
+    marginLeft: 6,
   },
   userCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.darkLight,
+    backgroundColor: theme.colors.cardBg,
     borderRadius: 12,
     padding: 16,
-    marginBottom: 20,
-    gap: 14,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   userAvatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: `${theme.colors.primary}20`,
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginRight: 12,
   },
   userInfo: {
     flex: 1,
   },
   userName: {
-    color: theme.colors.text,
+    fontSize: 14,
     fontFamily: 'Inter-SemiBold',
-    fontSize: 16,
-    marginBottom: 2,
+    color: theme.colors.text,
   },
   userEmail: {
-    color: theme.colors.textDim,
+    fontSize: 12,
     fontFamily: 'Inter-Regular',
-    fontSize: 13,
+    color: theme.colors.textDim,
+    marginTop: 4,
+  },
+  buttons: {
+    marginBottom: 16,
+  },
+  button: {
+    marginBottom: 8,
   },
   formCard: {
-    backgroundColor: theme.colors.darkLight,
+    backgroundColor: theme.colors.cardBg,
     borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
+    padding: 16,
+    marginBottom: 16,
   },
   formTitle: {
-    color: theme.colors.text,
+    fontSize: 16,
     fontFamily: 'Inter-Bold',
-    fontSize: 18,
+    color: theme.colors.text,
     marginBottom: 16,
     textAlign: 'center',
   },
   input: {
-    backgroundColor: theme.colors.darker,
+    backgroundColor: theme.colors.inputBg,
     borderRadius: 8,
     padding: 12,
+    marginBottom: 12,
     color: theme.colors.text,
     fontFamily: 'Inter-Regular',
-    fontSize: 15,
-    marginBottom: 12,
+    fontSize: 14,
     borderWidth: 1,
     borderColor: theme.colors.border,
   },
-  buttons: {
-    gap: 12,
-    marginBottom: 20,
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 16,
   },
-  button: {
-    marginBottom: 0,
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: theme.colors.border,
+  },
+  dividerText: {
+    marginHorizontal: 12,
+    color: theme.colors.textDim,
+    fontFamily: 'Inter-Regular',
+    fontSize: 12,
+  },
+  socialButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  socialButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 8,
+  },
+  googleButton: {
+    backgroundColor: '#DB4437',
+  },
+  facebookButton: {
+    backgroundColor: '#1877F2',
+  },
+  socialButtonText: {
+    color: '#fff',
+    fontFamily: 'Inter-SemiBold',
+    fontSize: 13,
   },
   toggleAuth: {
-    marginTop: 12,
+    paddingVertical: 12,
     alignItems: 'center',
   },
   toggleAuthText: {
     color: theme.colors.primary,
-    fontFamily: 'Inter-Medium',
-    fontSize: 14,
+    fontFamily: 'Inter-SemiBold',
+    fontSize: 13,
   },
-  infoBox: {
-    backgroundColor: 'rgba(124, 77, 255, 0.08)',
-    borderRadius: 10,
+  benefitsBox: {
+    backgroundColor: theme.colors.cardBg,
+    borderRadius: 12,
     padding: 16,
-    marginBottom: 20,
-    borderLeftWidth: 3,
+    marginBottom: 16,
+    borderLeftWidth: 4,
     borderLeftColor: theme.colors.primary,
   },
-  infoText: {
-    color: theme.colors.textDim,
+  benefitsTitle: {
+    fontSize: 14,
+    fontFamily: 'Inter-Bold',
+    color: theme.colors.text,
+    marginBottom: 12,
+  },
+  benefitItem: {
+    flexDirection: 'row',
+    marginBottom: 12,
+    alignItems: 'flex-start',
+  },
+  benefitContent: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  benefitName: {
+    fontSize: 12,
+    fontFamily: 'Inter-SemiBold',
+    color: theme.colors.text,
+  },
+  benefitDesc: {
+    fontSize: 11,
     fontFamily: 'Inter-Regular',
-    fontSize: 13,
-    lineHeight: 20,
+    color: theme.colors.textDim,
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  infoBox: {
+    backgroundColor: 'rgba(124, 77, 255, 0.1)',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  infoText: {
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+    color: theme.colors.text,
+    lineHeight: 18,
   },
 });
