@@ -8,7 +8,9 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
-  Alert
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
@@ -142,18 +144,26 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
         transparent
         animationType="slide"
         onRequestClose={onClose}
+        hardwareAccelerated={true}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            {/* Cabeçalho */}
-            <View style={styles.header}>
-              <Text style={styles.title}>Todas as Transações</Text>
-              <TouchableOpacity onPress={onClose}>
-                <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
-              </TouchableOpacity>
-            </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+          style={styles.keyboardView}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              {/* Cabeçalho */}
+              <View style={styles.header}>
+                <Text style={styles.title}>Todas as Transações</Text>
+                <TouchableOpacity onPress={onClose}>
+                  <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
+                </TouchableOpacity>
+              </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+              >
               {/* Filtros */}
               <View style={styles.filtersContainer}>
                 {/* Filtro por tipo */}
@@ -332,9 +342,10 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
               title="Fechar"
               onPress={onClose}
               style={styles.closeButton}
-            />
+            </Button>
+            </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Modal de Confirmação para Deletar */}
@@ -364,6 +375,9 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
 }
 
 const styles = StyleSheet.create({
+  keyboardView: {
+    flex: 1,
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',

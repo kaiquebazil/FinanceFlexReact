@@ -9,6 +9,8 @@ import {
   ScrollView,
   Modal,
   FlatList,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { Button } from "../ui/Button";
@@ -296,9 +298,14 @@ export function TransactionForm({
       transparent
       animationType="slide"
       onRequestClose={handleCancel}
+      hardwareAccelerated={true}
     >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+        style={styles.keyboardView}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
           {/* Cabeçalho */}
           <View style={styles.header}>
             <Text style={styles.title}>
@@ -388,7 +395,10 @@ export function TransactionForm({
             </TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
             {/* Valor */}
             <View style={styles.field}>
               <Text style={styles.label}>Valor</Text>
@@ -925,12 +935,16 @@ export function TransactionForm({
           </Modal>
         </View>
       </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 // ESTILOS (mantidos os mesmos, sem alterações)
 const styles = StyleSheet.create({
+  keyboardView: {
+    flex: 1,
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.8)",
