@@ -61,7 +61,7 @@ function statusIcon(status: SyncStatus): string {
 // ─── Componente ──────────────────────────────────────────────────────────────
 
 export function FirebaseSync({ onClose }: FirebaseSyncProps) {
-  const { user, loading, syncStatus, lastSyncedAt, signIn, signUp, logOut, resetPassword, manualSync } = useAuth();
+  const { user, loading, syncStatus, lastSyncedAt, signIn, signUp, logOut, resetPassword, signInWithGoogle, manualSync } = useAuth();
   const { toast, showToast, hideToast } = useToast();
 
   const [email, setEmail] = useState('');
@@ -325,12 +325,21 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
               <TouchableOpacity
                 style={[styles.socialButton, styles.googleButton]}
                 disabled={authLoading}
-                onPress={() => {
-                  showToast('Login com Google em breve!', 'info');
+                onPress={async () => {
+                  setAuthLoading(true);
+                  try {
+                    await signInWithGoogle();
+                    showToast('Login com Google realizado com sucesso!', 'success');
+                  } catch (err: any) {
+                    const msg = parseFirebaseError(err?.code) || 'Erro ao fazer login com Google';
+                    showToast(msg, 'error');
+                  } finally {
+                    setAuthLoading(false);
+                  }
                 }}
               >
                 <FontAwesome5 name="google" size={18} color="#fff" />
-                <Text style={styles.socialButtonText}>Continuar com Google</Text>
+                <Text style={styles.socialButtonText}>{authLoading ? 'Conectando...' : 'Continuar com Google'}</Text>
               </TouchableOpacity>
 
               <View style={styles.authLinks}>

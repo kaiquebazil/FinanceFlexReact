@@ -18,8 +18,14 @@ import {
   onAuthStateChanged,
   updateProfile,
   sendPasswordResetEmail,
+  signInWithCredential,
+  GoogleAuthProvider,
   Unsubscribe as FirebaseUnsubscribe,
 } from "firebase/auth";
+import * as GoogleSignIn from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
+
+WebBrowser.maybeCompleteAuthSession();
 import { auth } from "../firebase/config";
 import {
   subscribeToRealTimeSync,
@@ -49,6 +55,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   logOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
 
   // Sincronização manual
   manualSync: () => Promise<void>;
@@ -163,6 +170,29 @@ export function AuthProvider({ children, onRemoteDataReceived }: AuthProviderPro
     await sendPasswordResetEmail(auth, email);
   };
 
+  // ─── Login com Google ──────────────────────────────────────────────────
+  const [googleRequest, googleResponse, googlePromptAsync] = GoogleSignIn.useAuthRequest({
+    clientId: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
+  });
+
+  const signInWithGoogle = async () => {
+    try {
+      setSyncStatus('syncing');
+      const result = await googlePromptAsync();
+      if (result?.type === 'success') {
+        const { id_token } = result.params;
+        const credential = GoogleAuthProvider.credential(id_token);
+        await signInWithCredential(auth, credential);
+      } else {
+        throw new Error('Login cancelado');
+      }
+    } catch (err) {
+      console.error('[AuthContext] Erro no login com Google:', err);
+      setSyncStatus('error');
+      throw err;
+    }
+  };
+
   // ─── Sincronização manual ────────────────────────────────────────────────
   const manualSync = async () => {
     if (!user) return;
@@ -190,6 +220,7 @@ export function AuthProvider({ children, onRemoteDataReceived }: AuthProviderPro
         signUp,
         logOut,
         resetPassword,
+        signInWithGoogle,
         manualSync,
       }}
     >
