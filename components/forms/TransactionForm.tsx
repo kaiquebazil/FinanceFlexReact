@@ -306,24 +306,24 @@ export function TransactionForm({
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-          {/* Cabeçalho */}
-          <View style={styles.header}>
-            <Text style={styles.title}>
-              {selectedType === "income" && "Nova Receita"}
-              {selectedType === "expense" && "Nova Despesa"}
-              {selectedType === "transfer" && "Nova Transferência"}
-            </Text>
-            <TouchableOpacity onPress={handleCancel} style={styles.closeButton}>
-              <FontAwesome5
-                name="times"
-                size={20}
-                color={theme.colors.textDim}
-              />
-            </TouchableOpacity>
-          </View>
+            {/* Cabeçalho */}
+            <View style={styles.header}>
+              <Text style={styles.title}>
+                {selectedType === "income" && "Nova Receita"}
+                {selectedType === "expense" && "Nova Despesa"}
+                {selectedType === "transfer" && "Nova Transferência"}
+              </Text>
+              <TouchableOpacity onPress={handleCancel} style={styles.closeButton}>
+                <FontAwesome5
+                  name="times"
+                  size={20}
+                  color={theme.colors.textDim}
+                />
+              </TouchableOpacity>
+            </View>
 
-          {/* Seletor de Tipo - 3 BOTÕES LADO A LADO */}
-          <View style={styles.typeContainer}>
+            {/* Seletor de Tipo - 3 BOTÕES LADO A LADO */}
+            <View style={styles.typeContainer}>
             <TouchableOpacity
               style={[
                 styles.typeButton,
