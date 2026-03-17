@@ -76,6 +76,22 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotLoading, setForgotLoading] = useState(false);
 
+  // Notificacoes internas do modal (fixas no topo)
+  const [modalNotif, setModalNotif] = useState<{
+    visible: boolean;
+    message: string;
+    type: 'success' | 'error' | 'warning' | 'info';
+  }>({
+    visible: false,
+    message: '',
+    type: 'info',
+  });
+
+  const showModalNotif = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') => {
+    setModalNotif({ visible: true, message, type });
+    setTimeout(() => setModalNotif(prev => ({ ...prev, visible: false })), 4000);
+  };
+
   // Mostrar benefícios apenas na primeira vez que o usuário vê o modal deslogado
   useEffect(() => {
     if (!user) {
@@ -87,21 +103,21 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
 
   const handleAuth = async () => {
     if (!email.trim() || !password.trim()) {
-      showToast('Preencha e-mail e senha', 'warning');
+      showModalNotif('Preencha e-mail e senha', 'warning');
       return;
     }
     if (isSignUp && !displayName.trim()) {
-      showToast('Preencha seu nome', 'warning');
+      showModalNotif('Preencha seu nome', 'warning');
       return;
     }
     setAuthLoading(true);
     try {
       if (isSignUp) {
         await signUp(email.trim(), password, displayName.trim());
-        showToast('Conta criada com sucesso!', 'success');
+        showModalNotif('Conta criada com sucesso!', 'success');
       } else {
         await signIn(email.trim(), password);
-        showToast('Login realizado com sucesso!', 'success');
+        showModalNotif('Login realizado com sucesso!', 'success');
       }
       setEmail('');
       setPassword('');
@@ -109,7 +125,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
       setShowBenefits(false); // Ocultar benefícios após login
     } catch (err: any) {
       const msg = parseFirebaseError(err?.code);
-      showToast(msg, 'error');
+      showModalNotif(msg, 'error');
     } finally {
       setAuthLoading(false);
     }
@@ -118,28 +134,28 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
   const handleLogout = async () => {
     try {
       await logOut();
-      showToast('Desconectado com sucesso', 'info');
+      showModalNotif('Desconectado com sucesso', 'info');
       setShowLogoutConfirm(false);
       setShowBenefits(true); // Mostrar benefícios novamente ao deslogar
     } catch {
-      showToast('Erro ao desconectar', 'error');
+      showModalNotif('Erro ao desconectar', 'error');
     }
   };
 
   const handleForgotPassword = async () => {
     if (!forgotEmail.trim()) {
-      showToast('Digite seu e-mail', 'warning');
+      showModalNotif('Digite seu e-mail', 'warning');
       return;
     }
     setForgotLoading(true);
     try {
       await resetPassword(forgotEmail.trim());
-      showToast('E-mail de recuperação enviado! Verifique sua caixa de entrada.', 'success');
+      showModalNotif('E-mail de recuperação enviado! Verifique sua caixa de entrada.', 'success');
       setShowForgotPassword(false);
       setForgotEmail('');
     } catch (err: any) {
       const msg = parseFirebaseError(err?.code);
-      showToast(msg, 'error');
+      showModalNotif(msg, 'error');
     } finally {
       setForgotLoading(false);
     }
@@ -151,9 +167,9 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
     setSyncLoading(true);
     try {
       await manualSync();
-      showToast('Dados sincronizados com sucesso!', 'success');
+      showModalNotif('Dados sincronizados com sucesso!', 'success');
     } catch {
-      showToast('Erro ao sincronizar. Verifique sua conexão.', 'error');
+      showModalNotif('Erro ao sincronizar. Verifique sua conexão.', 'error');
     } finally {
       setSyncLoading(false);
     }
@@ -176,6 +192,25 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
       style={styles.keyboardAvoid}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
     >
+      {/* Notificação fixa no topo */}
+      {modalNotif.visible && (
+        <View style={[
+          styles.modalNotification,
+          modalNotif.type === 'error' && styles.notifError,
+          modalNotif.type === 'success' && styles.notifSuccess,
+          modalNotif.type === 'warning' && styles.notifWarning,
+          modalNotif.type === 'info' && styles.notifInfo,
+        ]}>
+          <FontAwesome5
+            name={modalNotif.type === 'error' ? 'exclamation-circle' : modalNotif.type === 'success' ? 'check-circle' : 'info-circle'}
+            size={16}
+            color="#fff"
+            style={styles.notifIcon}
+          />
+          <Text style={styles.notifText}>{modalNotif.message}</Text>
+        </View>
+      )}
+
       <ScrollView
         style={styles.container}
         showsVerticalScrollIndicator={false}
@@ -329,10 +364,10 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
                   setAuthLoading(true);
                   try {
                     await signInWithGoogle();
-                    showToast('Login com Google realizado com sucesso!', 'success');
+                    showModalNotif('Login com Google realizado com sucesso!', 'success');
                   } catch (err: any) {
                     const msg = parseFirebaseError(err?.code) || 'Erro ao fazer login com Google';
-                    showToast(msg, 'error');
+                    showModalNotif(msg, 'error');
                   } finally {
                     setAuthLoading(false);
                   }
@@ -498,6 +533,35 @@ function parseFirebaseError(code?: string): string {
 
 const styles = StyleSheet.create({
   keyboardAvoid: {
+    flex: 1,
+  },
+  modalNotification: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 10,
+    zIndex: 1000,
+  },
+  notifError: {
+    backgroundColor: '#F44336',
+  },
+  notifSuccess: {
+    backgroundColor: '#4CAF50',
+  },
+  notifWarning: {
+    backgroundColor: '#FF9800',
+  },
+  notifInfo: {
+    backgroundColor: theme.colors.primary,
+  },
+  notifIcon: {
+    marginRight: 4,
+  },
+  notifText: {
+    color: '#fff',
+    fontFamily: 'Inter-SemiBold',
+    fontSize: 13,
     flex: 1,
   },
   container: {
