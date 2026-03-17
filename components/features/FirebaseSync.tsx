@@ -366,8 +366,15 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
                     await signInWithGoogle();
                     showModalNotif('Login com Google realizado com sucesso!', 'success');
                   } catch (err: any) {
-                    const msg = parseFirebaseError(err?.code) || 'Erro ao fazer login com Google';
-                    showModalNotif(msg, 'error');
+                    const errorMsg = err?.message || '';
+                    // Ignorar erro de login cancelado pelo usuario
+                    if (errorMsg.includes('cancelado') || errorMsg.includes('Cancelled') || errorMsg.includes('cancelled')) {
+                      // Silenciosamente ignorar - o usuario apenas interrompeu o fluxo
+                      console.log('[FirebaseSync] Login com Google cancelado pelo usuario');
+                    } else {
+                      const msg = parseFirebaseError(err?.code) || 'Erro ao fazer login com Google';
+                      showModalNotif(msg, 'error');
+                    }
                   } finally {
                     setAuthLoading(false);
                   }
