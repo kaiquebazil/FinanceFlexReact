@@ -164,8 +164,8 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
               >
-              {/* Filtros */}
-              <View style={styles.filtersContainer}>
+                {/* Filtros */}
+                <View style={styles.filtersContainer}>
                 {/* Filtro por tipo */}
                 <Text style={styles.filterLabel}>Filtrar por:</Text>
                 <View style={styles.filterRow}>
@@ -334,17 +334,17 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
                     </View>
                   ))
                 )}
-              </View>
-            </ScrollView>
+                </View>
+              </ScrollView>
 
-            {/* Botão Fechar */}
-            <Button
-              title="Fechar"
-              onPress={onClose}
-              style={styles.closeButton}
-            </Button>
-              </View>
+              {/* Botão Fechar */}
+              <Button
+                title="Fechar"
+                onPress={onClose}
+                style={styles.closeButton}
+              />
             </View>
+          </View>
         </KeyboardAvoidingView>
       </Modal>
 
