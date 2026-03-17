@@ -145,21 +145,15 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
                 <TouchableOpacity
                   style={styles.userSection}
                   onPress={() => {
-                    // Abrir portfólio em navegador
-                    try {
-                      const Linking = require('react-native').Linking;
-                      Linking.openURL('https://kaiquebazil.github.io/portifolio/');
-                    } catch (e) {
-                      console.error('Erro ao abrir portfólio:', e);
-                    }
-                  }}
+                  onNavigate('sync');
+                  onClose();
+                }}
                 >
                   <View style={styles.userInfo}>
                     <FontAwesome5 name="user-circle" size={32} color={theme.colors.primary} />
                     <View style={styles.userDetails}>
                       <Text style={styles.userName} numberOfLines={1}>{user.displayName || 'Usuário'}</Text>
                       <Text style={styles.userEmail} numberOfLines={1}>{user.email}</Text>
-                      <Text style={styles.portfolioLink}>Ver meu portfólio →</Text>
                     </View>
                   </View>
                 </TouchableOpacity>

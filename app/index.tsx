@@ -87,13 +87,15 @@ export default function HomeScreen() {
 
   // Estados para transação
   const [showTransactionModal, setShowTransactionModal] = useState(false);
-  const [transactionInitialType, setTransactionInitialType] = useState<'income' | 'expense' | 'transfer'>('income');
-  
+  const [transactionInitialType, setTransactionInitialType] = useState<
+    "income" | "expense" | "transfer"
+  >("income");
+
   // Estados para cofrinho
   const [showPiggyBankModal, setShowPiggyBankModal] = useState(false);
   const [showPiggyBankEditModal, setShowPiggyBankEditModal] = useState(false);
   const [selectedPiggyBank, setSelectedPiggyBank] = useState<any>(null);
-  
+
   // Estados para outros modais
   const [showCategoriesModal, setShowCategoriesModal] = useState(false);
   const [showRecurringBillsModal, setShowRecurringBillsModal] = useState(false);
@@ -191,19 +193,19 @@ export default function HomeScreen() {
 
   // Funções para abrir modais de transação
   const handleOpenIncome = () => {
-    setTransactionInitialType('income');
+    setTransactionInitialType("income");
     setShowTransactionModal(true);
     setShowFABMenu(false);
   };
 
   const handleOpenExpense = () => {
-    setTransactionInitialType('expense');
+    setTransactionInitialType("expense");
     setShowTransactionModal(true);
     setShowFABMenu(false);
   };
 
   const handleOpenTransfer = () => {
-    setTransactionInitialType('transfer');
+    setTransactionInitialType("transfer");
     setShowTransactionModal(true);
     setShowFABMenu(false);
   };
@@ -216,8 +218,8 @@ export default function HomeScreen() {
       amount: data.amount,
       description: data.description,
       category: data.category,
-      accountId: data.type === 'transfer' ? data.fromAccountId : data.accountId,
-      toAccountId: data.type === 'transfer' ? data.toAccountId : undefined,
+      accountId: data.type === "transfer" ? data.fromAccountId : data.accountId,
+      toAccountId: data.type === "transfer" ? data.toAccountId : undefined,
       date: data.date,
       createdAt: new Date().toISOString(),
     };
@@ -225,10 +227,12 @@ export default function HomeScreen() {
     addTransaction(newTransaction);
 
     showToast(
-      data.type === 'income' ? 'Receita adicionada com sucesso!' :
-      data.type === 'expense' ? 'Despesa adicionada com sucesso!' :
-      `Transferência de ${formatCurrency(data.amount, "BRL")} realizada com sucesso!`,
-      "success"
+      data.type === "income"
+        ? "Receita adicionada com sucesso!"
+        : data.type === "expense"
+          ? "Despesa adicionada com sucesso!"
+          : `Transferência de ${formatCurrency(data.amount, "BRL")} realizada com sucesso!`,
+      "success",
     );
 
     setShowTransactionModal(false);
@@ -291,13 +295,13 @@ export default function HomeScreen() {
         barStyle="light-content"
         backgroundColor={theme.colors.darker}
       />
-      
+
       {/* Container Responsivo - APENAS ISSO FOI ADICIONADO */}
       <ResponsiveContainer>
         <ScrollView
           style={styles.container}
           contentContainerStyle={styles.contentContainer}
-          showsVerticalScrollIndicator={Platform.OS === 'web'}
+          showsVerticalScrollIndicator={Platform.OS === "web"}
           scrollEnabled={true}
           nestedScrollEnabled={true}
         >
@@ -317,26 +321,7 @@ export default function HomeScreen() {
               </View>
               <View style={styles.headerActions}>
                 {/* Indicador de sincronização em tempo real */}
-                <TouchableOpacity
-                  onPress={() => setShowSyncModal(true)}
-                  style={styles.iconButton}
-                >
-                  <FontAwesome5
-                    name={user ? (syncStatus === 'synced' ? 'cloud' : syncStatus === 'syncing' ? 'sync-alt' : 'cloud-upload-alt') : 'cloud'}
-                    size={20}
-                    color={
-                      user
-                        ? syncStatus === 'synced'
-                          ? '#4CAF50'
-                          : syncStatus === 'syncing'
-                          ? theme.colors.primary
-                          : syncStatus === 'error'
-                          ? '#F44336'
-                          : theme.colors.textDim
-                        : theme.colors.textDim
-                    }
-                  />
-                </TouchableOpacity>
+
                 <TouchableOpacity
                   onPress={() => setValuesHidden(!valuesHidden)}
                   style={styles.iconButton}
@@ -351,7 +336,11 @@ export default function HomeScreen() {
                   onPress={() => setShowDrawer(true)}
                   style={styles.iconButton}
                 >
-                  <FontAwesome5 name="bars" size={20} color={theme.colors.text} />
+                  <FontAwesome5
+                    name="bars"
+                    size={20}
+                    color={theme.colors.text}
+                  />
                 </TouchableOpacity>
               </View>
             </View>
@@ -454,7 +443,9 @@ export default function HomeScreen() {
                   />
                 </View>
                 <Text style={styles.summaryLabel}>Saldo</Text>
-                <Text style={[styles.summaryValue, { color: theme.colors.info }]}>
+                <Text
+                  style={[styles.summaryValue, { color: theme.colors.info }]}
+                >
                   {formatValue(summary.balance)}
                 </Text>
               </Card>
@@ -480,7 +471,9 @@ export default function HomeScreen() {
 
           {/* Calendário de Pagamentos */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Calendário de Pagamentos</Text>
+            <Text style={[styles.sectionTitle, styles.calendarTitle]}>
+              Calendário de Pagamentos
+            </Text>
             <Card style={styles.card}>
               <Calendar
                 transactions={transactions}
@@ -693,7 +686,9 @@ export default function HomeScreen() {
                         </Text>
                         <Text style={styles.transactionCategory}>
                           {transaction.category} •{" "}
-                          {new Date(transaction.date).toLocaleDateString("pt-BR")}
+                          {new Date(transaction.date).toLocaleDateString(
+                            "pt-BR",
+                          )}
                         </Text>
                       </View>
                       <Text style={[styles.transactionAmount, { color }]}>
@@ -1017,6 +1012,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: "Inter-SemiBold",
     color: theme.colors.text,
+  },
+  calendarTitle: {
+    marginBottom: 10,
   },
   sectionSubtitle: {
     fontSize: 14,

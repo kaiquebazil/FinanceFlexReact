@@ -1,7 +1,12 @@
 // services/syncService.ts
-// Responsável por toda a comunicação com o Firebase Firestore.
-// O app SEMPRE lê do AsyncStorage (storage.ts). O Firebase é usado
-// apenas para backup na nuvem e sincronização em tempo real entre dispositivos.
+/**
+ * Responsável por toda a comunicação com o Firebase Firestore.
+ * O app SEMPRE lê do AsyncStorage (storage.ts).
+ * O Firebase é usado APENAS para backup na nuvem e sincronização manual entre dispositivos.
+ * ATENÇÃO: Para sincronizar entre dispositivos, é necessário:
+ * 1. Clicar em "Sincronizar" no dispositivo onde as transações foram adicionadas.
+ * 2. Clicar em "Sincronizar" no dispositivo que deve receber as informações.
+ */
 
 import {
   doc,
@@ -30,17 +35,17 @@ export interface CloudData {
   updatedAt?: any;
 }
 
-// ─────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────────
 // Caminho do documento no Firestore:
 //   users/{userId}/data/main
-// ─────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────────
 function getUserDocRef(userId: string) {
   return doc(db, "users", userId, "data", "main");
 }
 
-// ─────────────────────────────────────────────
-// Envia os dados locais para o Firestore
-// ─────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────────
+// Envia os dados locais para o Firestore (sincronização manual)
+// ───────────────────────────────────────────────────────────────────────────────
 export async function uploadToCloud(userId: string): Promise<void> {
   const localData = await storage.getAllData();
   const docRef = getUserDocRef(userId);
@@ -51,15 +56,14 @@ export async function uploadToCloud(userId: string): Promise<void> {
   });
 }
 
-// ─────────────────────────────────────────────
-// Baixa os dados do Firestore e salva no AsyncStorage
-// ─────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────────
+// Baixa os dados do Firestore e salva no AsyncStorage (sincronização manual)
+// ───────────────────────────────────────────────────────────────────────────────
 export async function downloadFromCloud(userId: string): Promise<CloudData | null> {
-  // Usamos onSnapshot de forma pontual (get-once) via Promise
   return new Promise((resolve, reject) => {
     const docRef = getUserDocRef(userId);
-    // getDoc seria suficiente, mas usamos onSnapshot para consistência
     const { getDoc } = require("firebase/firestore");
+
     getDoc(docRef)
       .then(async (snap: any) => {
         if (!snap.exists()) {
@@ -74,21 +78,19 @@ export async function downloadFromCloud(userId: string): Promise<CloudData | nul
   });
 }
 
-// ─────────────────────────────────────────────
-// Sincronização completa manual (upload + download)
-// ─────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────────
+// Sincronização manual completa (upload + download)
+// ───────────────────────────────────────────────────────────────────────────────
 export async function fullSync(userId: string): Promise<CloudData | null> {
   await uploadToCloud(userId);
   return await downloadFromCloud(userId);
 }
 
-// ─────────────────────────────────────────────
-// Listener em TEMPO REAL
+// ───────────────────────────────────────────────────────────────────────────────
+// Listener em TEMPO REAL (apenas para atualizações externas)
 // Retorna uma função de cancelamento (unsubscribe).
-// Sempre que o documento no Firestore for alterado (por outro
-// dispositivo, por exemplo), o callback é chamado com os dados
-// atualizados, que são salvos automaticamente no AsyncStorage.
-// ─────────────────────────────────────────────
+// ATENÇÃO: Este listener só é acionado por alterações externas (outros dispositivos).
+// ───────────────────────────────────────────────────────────────────────────────
 export function subscribeToRealTimeSync(
   userId: string,
   onDataReceived: (data: CloudData) => void,
@@ -103,7 +105,6 @@ export function subscribeToRealTimeSync(
       if (!snap.exists()) return;
 
       // Ignora atualizações originadas do próprio dispositivo
-      // (fromCache = false significa que veio do servidor)
       if (snap.metadata.fromCache) return;
 
       const data: CloudData = snap.data() as CloudData;

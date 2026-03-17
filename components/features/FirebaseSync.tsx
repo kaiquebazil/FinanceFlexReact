@@ -17,7 +17,6 @@ import {
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
 import { useAuth, SyncStatus } from '../../contexts/AuthContext';
-import { useLanguage } from '../../contexts/LanguageContext';
 import { Button } from '../ui/Button';
 import { Toast } from '../ui/Toast';
 import { ConfirmModal } from '../ui/ConfirmModal';
@@ -27,11 +26,42 @@ interface FirebaseSyncProps {
   onClose: () => void;
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function statusLabel(status: SyncStatus): string {
+  switch (status) {
+    case 'syncing': return 'Sincronizando…';
+    case 'synced':  return 'Sincronizado';
+    case 'error':   return 'Erro na sincronização';
+    case 'offline': return 'Sem conexão';
+    default:        return 'Não sincronizado';
+  }
+}
+
+function statusColor(status: SyncStatus): string {
+  switch (status) {
+    case 'syncing': return theme.colors.primary;
+    case 'synced':  return '#4CAF50';
+    case 'error':   return '#F44336';
+    case 'offline': return '#FF9800';
+    default:        return theme.colors.textDim;
+  }
+}
+
+function statusIcon(status: SyncStatus): string {
+  switch (status) {
+    case 'syncing': return 'sync-alt';
+    case 'synced':  return 'check-circle';
+    case 'error':   return 'exclamation-circle';
+    case 'offline': return 'wifi';
+    default:        return 'cloud';
+  }
+}
+
 // ─── Componente ──────────────────────────────────────────────────────────────
 
 export function FirebaseSync({ onClose }: FirebaseSyncProps) {
   const { user, loading, syncStatus, lastSyncedAt, signIn, signUp, logOut, resetPassword, manualSync } = useAuth();
-  const { t, language, setLanguage } = useLanguage();
   const { toast, showToast, hideToast } = useToast();
 
   const [email, setEmail] = useState('');
@@ -62,37 +92,6 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
     setTimeout(() => setModalNotif(prev => ({ ...prev, visible: false })), 4000);
   };
 
-  // Helpers de status traduzidos
-  const statusLabel = (status: SyncStatus): string => {
-    switch (status) {
-      case 'syncing': return t('sync.syncing');
-      case 'synced':  return t('sync.synced');
-      case 'error':   return t('sync.error');
-      case 'offline': return t('sync.offline');
-      default:        return t('sync.notSynced');
-    }
-  };
-
-  const statusColor = (status: SyncStatus): string => {
-    switch (status) {
-      case 'syncing': return theme.colors.primary;
-      case 'synced':  return '#4CAF50';
-      case 'error':   return '#F44336';
-      case 'offline': return '#FF9800';
-      default:        return theme.colors.textDim;
-    }
-  };
-
-  const statusIcon = (status: SyncStatus): string => {
-    switch (status) {
-      case 'syncing': return 'sync-alt';
-      case 'synced':  return 'check-circle';
-      case 'error':   return 'exclamation-circle';
-      case 'offline': return 'wifi';
-      default:        return 'cloud';
-    }
-  };
-
   // Mostrar benefícios apenas na primeira vez que o usuário vê o modal deslogado
   useEffect(() => {
     if (!user) {
@@ -104,21 +103,21 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
 
   const handleAuth = async () => {
     if (!email.trim() || !password.trim()) {
-      showModalNotif(t('auth.fillFields'), 'warning');
+      showModalNotif('Preencha e-mail e senha', 'warning');
       return;
     }
     if (isSignUp && !displayName.trim()) {
-      showModalNotif(t('auth.fillName'), 'warning');
+      showModalNotif('Preencha seu nome', 'warning');
       return;
     }
     setAuthLoading(true);
     try {
       if (isSignUp) {
         await signUp(email.trim(), password, displayName.trim());
-        showModalNotif(t('auth.signupSuccess'), 'success');
+        showModalNotif('Conta criada com sucesso!', 'success');
       } else {
         await signIn(email.trim(), password);
-        showModalNotif(t('auth.loginSuccess'), 'success');
+        showModalNotif('Login realizado com sucesso!', 'success');
       }
       setEmail('');
       setPassword('');
@@ -135,23 +134,23 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
   const handleLogout = async () => {
     try {
       await logOut();
-      showModalNotif(t('auth.logoutSuccess'), 'info');
+      showModalNotif('Desconectado com sucesso', 'info');
       setShowLogoutConfirm(false);
       setShowBenefits(true); // Mostrar benefícios novamente ao deslogar
     } catch {
-      showModalNotif('Error', 'error');
+      showModalNotif('Erro ao desconectar', 'error');
     }
   };
 
   const handleForgotPassword = async () => {
     if (!forgotEmail.trim()) {
-      showModalNotif(t('auth.email'), 'warning');
+      showModalNotif('Digite seu e-mail', 'warning');
       return;
     }
     setForgotLoading(true);
     try {
       await resetPassword(forgotEmail.trim());
-      showModalNotif('Success', 'success');
+      showModalNotif('E-mail de recuperação enviado! Verifique sua caixa de entrada.', 'success');
       setShowForgotPassword(false);
       setForgotEmail('');
     } catch (err: any) {
@@ -168,9 +167,9 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
     setSyncLoading(true);
     try {
       await manualSync();
-      showModalNotif(t('sync.syncSuccess'), 'success');
+      showModalNotif('Dados sincronizados com sucesso!', 'success');
     } catch {
-      showModalNotif(t('sync.syncFail'), 'error');
+      showModalNotif('Erro ao sincronizar. Verifique sua conexão.', 'error');
     } finally {
       setSyncLoading(false);
     }
@@ -182,7 +181,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.loadingText}>{t('common.loading')}</Text>
+        <Text style={styles.loadingText}>Carregando…</Text>
       </View>
     );
   }
@@ -221,33 +220,11 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
         {/* Cabeçalho */}
         <View style={styles.header}>
           <FontAwesome5 name="cloud" size={48} color={theme.colors.primary} />
-          <Text style={styles.title}>{t('sync.title')}</Text>
-          <Text style={styles.subtitle}>{t('sync.subtitle')}</Text>
-        </View>
-
-        {/* Seletor de Idioma */}
-        <View style={styles.languageSelector}>
-          <Text style={styles.languageLabel}>{t('common.language')}:</Text>
-          <View style={styles.languageButtons}>
-            <TouchableOpacity 
-              style={[styles.langBtn, language === 'pt' && styles.langBtnActive]} 
-              onPress={() => setLanguage('pt')}
-            >
-              <Text style={styles.langBtnText}>PT</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.langBtn, language === 'en' && styles.langBtnActive]} 
-              onPress={() => setLanguage('en')}
-            >
-              <Text style={styles.langBtnText}>EN</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.langBtn, language === 'es' && styles.langBtnActive]} 
-              onPress={() => setLanguage('es')}
-            >
-              <Text style={styles.langBtnText}>ES</Text>
-            </TouchableOpacity>
-          </View>
+          <Text style={styles.title}>Sincronização em Tempo Real</Text>
+          <Text style={styles.subtitle}>
+            Seus dados ficam salvos na nuvem e sincronizados automaticamente
+            entre todos os seus dispositivos.
+          </Text>
         </View>
 
         {user ? (
@@ -271,20 +248,20 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
 
               {lastSyncedAt && (
                 <Text style={styles.lastSync}>
-                  {t('sync.lastSync')}:{' '}
-                  {lastSyncedAt.toLocaleString(language === 'pt' ? 'pt-BR' : language === 'en' ? 'en-US' : 'es-ES')}
+                  Última sincronização:{' '}
+                  {lastSyncedAt.toLocaleString('pt-BR')}
                 </Text>
               )}
 
               <View style={styles.realtimeBadge}>
                 <FontAwesome5 name="bolt" size={12} color="#4CAF50" />
                 <Text style={styles.realtimeBadgeText}>
-                  {t('sync.realtimeActive')}
+                  Sincronização em tempo real ativa
                 </Text>
               </View>
             </View>
 
-            {/* Info do usuário */}
+            {/* Info do usuário - SEM ID */}
             <View style={styles.userCard}>
               <View style={styles.userAvatar}>
                 <FontAwesome5 name="user-circle" size={32} color={theme.colors.primary} />
@@ -298,13 +275,13 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
             {/* Botões */}
             <View style={styles.buttons}>
               <Button
-                title={syncLoading ? t('sync.syncing') : t('sync.syncNow')}
+                title={syncLoading ? 'Sincronizando…' : '🔄 Sincronizar Agora'}
                 onPress={handleManualSync}
                 loading={syncLoading}
                 style={styles.button}
               />
               <Button
-                title={t('auth.logout')}
+                title="🚪 Sair da Conta"
                 onPress={() => setShowLogoutConfirm(true)}
                 variant="outline"
                 style={styles.button}
@@ -314,7 +291,9 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
             {/* Nota informativa */}
             <View style={styles.infoBox}>
               <Text style={styles.infoText}>
-                💡 {t('sync.realtimeDesc')}
+                💡 A sincronização em tempo real funciona automaticamente.
+                Qualquer alteração feita em outro dispositivo aparece aqui
+                em segundos, sem precisar pressionar nenhum botão.
               </Text>
             </View>
           </>
@@ -324,13 +303,13 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
             {/* Formulário de autenticação */}
             <View style={styles.formCard}>
               <Text style={styles.formTitle}>
-                {isSignUp ? t('auth.signup') : t('auth.login')}
+                {isSignUp ? 'Criar Conta' : 'Entrar na Conta'}
               </Text>
 
               {isSignUp && (
                 <TextInput
                   style={styles.input}
-                  placeholder={t('auth.name')}
+                  placeholder="Seu nome completo"
                   placeholderTextColor={theme.colors.textDim}
                   value={displayName}
                   onChangeText={setDisplayName}
@@ -341,7 +320,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
 
               <TextInput
                 style={styles.input}
-                placeholder={t('auth.email')}
+                placeholder="E-mail"
                 placeholderTextColor={theme.colors.textDim}
                 value={email}
                 onChangeText={setEmail}
@@ -353,7 +332,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
 
               <TextInput
                 style={styles.input}
-                placeholder={t('auth.password')}
+                placeholder="Senha (mínimo 6 caracteres)"
                 placeholderTextColor={theme.colors.textDim}
                 value={password}
                 onChangeText={setPassword}
@@ -363,8 +342,8 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
 
               <Button
                 title={authLoading
-                  ? (isSignUp ? t('auth.creating') : t('auth.entering'))
-                  : (isSignUp ? t('auth.create') : t('auth.enter'))}
+                  ? (isSignUp ? 'Criando conta…' : 'Entrando…')
+                  : (isSignUp ? '✅ Criar Conta' : '🔑 Entrar')}
                 onPress={handleAuth}
                 loading={authLoading}
                 style={styles.button}
@@ -383,8 +362,8 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
                 >
                   <Text style={styles.toggleAuthText}>
                     {isSignUp
-                      ? t('auth.hasAccount')
-                      : t('auth.noAccount')}
+                      ? 'Já tem uma conta? Entrar'
+                      : 'Não tem conta? Criar agora'}
                   </Text>
                 </TouchableOpacity>
 
@@ -393,55 +372,56 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
                     onPress={() => setShowForgotPassword(true)}
                     style={styles.forgotPasswordLink}
                   >
-                    <Text style={styles.forgotPasswordText}>{t('auth.forgotPassword')}</Text>
+                    <Text style={styles.forgotPasswordText}>Esqueceu a senha?</Text>
                   </TouchableOpacity>
                 )}
               </View>
             </View>
 
-            {/* Benefícios */}
+            {/* Benefícios - Mostrar apenas quando deslogado (primeira vez) */}
             {showBenefits && (
               <View style={styles.benefitsBox}>
-                <Text style={styles.benefitsTitle}>{t('sync.benefits')}</Text>
+                <Text style={styles.benefitsTitle}>✨ Benefícios da Sincronização</Text>
                 
                 <View style={styles.benefitItem}>
                   <FontAwesome5 name="cloud-upload-alt" size={16} color={theme.colors.primary} />
                   <View style={styles.benefitContent}>
-                    <Text style={styles.benefitName}>{t('sync.backup')}</Text>
-                    <Text style={styles.benefitDesc}>{t('sync.backupDesc')}</Text>
+                    <Text style={styles.benefitName}>Backup Automático</Text>
+                    <Text style={styles.benefitDesc}>Seus dados são salvos na nuvem com segurança</Text>
                   </View>
                 </View>
 
                 <View style={styles.benefitItem}>
                   <FontAwesome5 name="sync-alt" size={16} color={theme.colors.primary} />
                   <View style={styles.benefitContent}>
-                    <Text style={styles.benefitName}>{t('sync.realtime')}</Text>
-                    <Text style={styles.benefitDesc}>{t('sync.realtimeDesc')}</Text>
+                    <Text style={styles.benefitName}>Sincronização em Tempo Real</Text>
+                    <Text style={styles.benefitDesc}>Alterações aparecem em todos os seus dispositivos instantaneamente</Text>
                   </View>
                 </View>
 
                 <View style={styles.benefitItem}>
                   <FontAwesome5 name="lock" size={16} color={theme.colors.primary} />
                   <View style={styles.benefitContent}>
-                    <Text style={styles.benefitName}>{t('sync.protected')}</Text>
-                    <Text style={styles.benefitDesc}>{t('sync.protectedDesc')}</Text>
+                    <Text style={performance.now() > 0 ? styles.benefitName : styles.benefitName}>Dados Protegidos</Text>
+                    <Text style={styles.benefitDesc}>Criptografia Firebase garante privacidade total</Text>
                   </View>
                 </View>
 
                 <View style={styles.benefitItem}>
                   <FontAwesome5 name="mobile-alt" size={16} color={theme.colors.primary} />
                   <View style={styles.benefitContent}>
-                    <Text style={styles.benefitName}>{t('sync.accessAnywhere')}</Text>
-                    <Text style={styles.benefitDesc}>{t('sync.accessAnywhereDesc')}</Text>
+                    <Text style={styles.benefitName}>Acesso em Qualquer Lugar</Text>
+                    <Text style={styles.benefitDesc}>Use o app em múltiplos dispositivos sem perder dados</Text>
                   </View>
                 </View>
               </View>
             )}
 
-            {/* Info box */}
+            {/* Info box - Mostrar sempre */}
             <View style={styles.infoBox}>
               <Text style={styles.infoText}>
-                {t('sync.securityNote')}
+                🔒 Seus dados ficam protegidos com autenticação Firebase.
+                Cada usuário tem seu próprio espaço privado na nuvem.
               </Text>
             </View>
           </>
@@ -451,11 +431,11 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
       {/* Modal de confirmação de logout */}
       <ConfirmModal
         visible={showLogoutConfirm}
-        title={t('auth.logoutConfirm')}
-        message={t('auth.logoutMessage')}
+        title="Sair da Conta?"
+        message="Tem certeza que deseja sair? Seus dados locais serão mantidos, mas a sincronização em tempo real será desativada."
         type="warning"
-        confirmText={t('auth.logout')}
-        cancelText={t('auth.cancel')}
+        confirmText="Sair"
+        cancelText="Cancelar"
         onConfirm={handleLogout}
         onCancel={() => setShowLogoutConfirm(false)}
       />
@@ -463,11 +443,11 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
       {/* Modal de esqueci a senha */}
       <ConfirmModal
         visible={showForgotPassword}
-        title={t('auth.recoverPassword')}
-        message={t('auth.recoverMessage')}
+        title="Recuperar Senha"
+        message="Digite seu e-mail para receber um link de recuperação"
         type="info"
-        confirmText={forgotLoading ? t('auth.sending') : t('auth.send')}
-        cancelText={t('auth.cancel')}
+        confirmText={forgotLoading ? 'Enviando...' : 'Enviar'}
+        cancelText="Cancelar"
         onConfirm={handleForgotPassword}
         onCancel={() => {
           setShowForgotPassword(false);
@@ -504,19 +484,19 @@ function parseFirebaseError(code?: string): string {
     case 'auth/user-not-found':
     case 'auth/wrong-password':
     case 'auth/invalid-credential':
-      return 'Invalid credentials';
+      return 'E-mail ou senha incorretos';
     case 'auth/email-already-in-use':
-      return 'Email already in use';
+      return 'Este e-mail já está cadastrado';
     case 'auth/weak-password':
-      return 'Password too weak';
+      return 'A senha deve ter pelo menos 6 caracteres';
     case 'auth/invalid-email':
-      return 'Invalid email';
+      return 'E-mail inválido';
     case 'auth/network-request-failed':
-      return 'Network error';
+      return 'Sem conexão com a internet';
     case 'auth/too-many-requests':
-      return 'Too many requests';
+      return 'Muitas tentativas. Tente novamente mais tarde';
     default:
-      return 'Authentication error';
+      return 'Erro ao autenticar. Tente novamente';
   }
 }
 
@@ -591,41 +571,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 8,
     lineHeight: 20,
-  },
-  languageSelector: {
-    backgroundColor: theme.colors.cardBg,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  languageLabel: {
-    color: theme.colors.text,
-    fontFamily: 'Inter-SemiBold',
-    fontSize: 14,
-  },
-  languageButtons: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  langBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    backgroundColor: theme.colors.inputBg,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  langBtnActive: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
-  },
-  langBtnText: {
-    color: '#fff',
-    fontFamily: 'Inter-Bold',
-    fontSize: 12,
   },
   statusCard: {
     backgroundColor: theme.colors.cardBg,
@@ -721,6 +666,47 @@ const styles = StyleSheet.create({
     fontSize: 14,
     borderWidth: 1,
     borderColor: theme.colors.border,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: theme.colors.border,
+  },
+  dividerText: {
+    marginHorizontal: 12,
+    color: theme.colors.textDim,
+    fontFamily: 'Inter-Regular',
+    fontSize: 12,
+  },
+  socialButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  socialButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 8,
+  },
+  googleButton: {
+    backgroundColor: '#DB4437',
+  },
+  facebookButton: {
+    backgroundColor: '#1877F2',
+  },
+  socialButtonText: {
+    color: '#fff',
+    fontFamily: 'Inter-SemiBold',
+    fontSize: 13,
   },
   authLinks: {
     gap: 12,
