@@ -17,6 +17,7 @@ import {
   signOut,
   onAuthStateChanged,
   updateProfile,
+  sendPasswordResetEmail,
   Unsubscribe as FirebaseUnsubscribe,
 } from "firebase/auth";
 import { auth } from "../firebase/config";
@@ -47,6 +48,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   logOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
 
   // Sincronização manual
   manualSync: () => Promise<void>;
@@ -156,6 +158,11 @@ export function AuthProvider({ children, onRemoteDataReceived }: AuthProviderPro
     setSyncStatus("idle");
   };
 
+  // ─── Recuperação de Senha ──────────────────────────────────────────────────
+  const resetPassword = async (email: string) => {
+    await sendPasswordResetEmail(auth, email);
+  };
+
   // ─── Sincronização manual ────────────────────────────────────────────────
   const manualSync = async () => {
     if (!user) return;
@@ -182,6 +189,7 @@ export function AuthProvider({ children, onRemoteDataReceived }: AuthProviderPro
         signIn,
         signUp,
         logOut,
+        resetPassword,
         manualSync,
       }}
     >

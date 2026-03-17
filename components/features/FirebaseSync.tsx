@@ -61,7 +61,7 @@ function statusIcon(status: SyncStatus): string {
 // ─── Componente ──────────────────────────────────────────────────────────────
 
 export function FirebaseSync({ onClose }: FirebaseSyncProps) {
-  const { user, loading, syncStatus, lastSyncedAt, signIn, signUp, logOut, manualSync } = useAuth();
+  const { user, loading, syncStatus, lastSyncedAt, signIn, signUp, logOut, resetPassword, manualSync } = useAuth();
   const { toast, showToast, hideToast } = useToast();
 
   const [email, setEmail] = useState('');
@@ -72,6 +72,9 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
   const [syncLoading, setSyncLoading] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showBenefits, setShowBenefits] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
 
   // Mostrar benefícios apenas na primeira vez que o usuário vê o modal deslogado
   useEffect(() => {
@@ -120,6 +123,25 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
       setShowBenefits(true); // Mostrar benefícios novamente ao deslogar
     } catch {
       showToast('Erro ao desconectar', 'error');
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!forgotEmail.trim()) {
+      showToast('Digite seu e-mail', 'warning');
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      await resetPassword(forgotEmail.trim());
+      showToast('E-mail de recuperação enviado! Verifique sua caixa de entrada.', 'success');
+      setShowForgotPassword(false);
+      setForgotEmail('');
+    } catch (err: any) {
+      const msg = parseFirebaseError(err?.code);
+      showToast(msg, 'error');
+    } finally {
+      setForgotLoading(false);
     }
   };
 
@@ -299,40 +321,45 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
                 <View style={styles.dividerLine} />
               </View>
 
-              {/* Login Social */}
-              <View style={styles.socialButtons}>
-                <TouchableOpacity
-                  style={[styles.socialButton, styles.googleButton]}
-                  disabled={authLoading}
-                >
-                  <FontAwesome5 name="google" size={18} color="#fff" />
-                  <Text style={styles.socialButtonText}>Google</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.socialButton, styles.facebookButton]}
-                  disabled={authLoading}
-                >
-                  <FontAwesome5 name="facebook" size={18} color="#fff" />
-                  <Text style={styles.socialButtonText}>Facebook</Text>
-                </TouchableOpacity>
-              </View>
-
+              {/* Login Social - Apenas Google */}
               <TouchableOpacity
+                style={[styles.socialButton, styles.googleButton]}
+                disabled={authLoading}
                 onPress={() => {
-                  setIsSignUp(!isSignUp);
-                  setDisplayName('');
-                  setEmail('');
-                  setPassword('');
+                  showToast('Login com Google em breve!', 'info');
                 }}
-                style={styles.toggleAuth}
               >
-                <Text style={styles.toggleAuthText}>
-                  {isSignUp
-                    ? 'Já tem uma conta? Entrar'
-                    : 'Não tem conta? Criar agora'}
-                </Text>
+                <FontAwesome5 name="google" size={18} color="#fff" />
+                <Text style={styles.socialButtonText}>Continuar com Google</Text>
               </TouchableOpacity>
+
+              <View style={styles.authLinks}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setIsSignUp(!isSignUp);
+                    setDisplayName('');
+                    setEmail('');
+                    setPassword('');
+                    setShowForgotPassword(false);
+                  }}
+                  style={styles.toggleAuth}
+                >
+                  <Text style={styles.toggleAuthText}>
+                    {isSignUp
+                      ? 'Já tem uma conta? Entrar'
+                      : 'Não tem conta? Criar agora'}
+                  </Text>
+                </TouchableOpacity>
+
+                {!isSignUp && (
+                  <TouchableOpacity
+                    onPress={() => setShowForgotPassword(true)}
+                    style={styles.forgotPasswordLink}
+                  >
+                    <Text style={styles.forgotPasswordText}>Esqueceu a senha?</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
 
             {/* Benefícios - Mostrar apenas quando deslogado (primeira vez) */}
@@ -395,6 +422,34 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
         cancelText="Cancelar"
         onConfirm={handleLogout}
         onCancel={() => setShowLogoutConfirm(false)}
+      />
+
+      {/* Modal de esqueci a senha */}
+      <ConfirmModal
+        visible={showForgotPassword}
+        title="Recuperar Senha"
+        message="Digite seu e-mail para receber um link de recuperação"
+        type="info"
+        confirmText={forgotLoading ? 'Enviando...' : 'Enviar'}
+        cancelText="Cancelar"
+        onConfirm={handleForgotPassword}
+        onCancel={() => {
+          setShowForgotPassword(false);
+          setForgotEmail('');
+        }}
+        customContent={
+          <TextInput
+            style={styles.forgotInput}
+            placeholder="seu@email.com"
+            placeholderTextColor={theme.colors.textDim}
+            value={forgotEmail}
+            onChangeText={setForgotEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            editable={!forgotLoading}
+          />
+        }
       />
 
       <Toast
@@ -609,6 +664,10 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-SemiBold',
     fontSize: 13,
   },
+  authLinks: {
+    gap: 12,
+    marginTop: 12,
+  },
   toggleAuth: {
     paddingVertical: 12,
     alignItems: 'center',
@@ -617,6 +676,26 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     fontFamily: 'Inter-SemiBold',
     fontSize: 13,
+  },
+  forgotPasswordLink: {
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  forgotPasswordText: {
+    color: theme.colors.primary,
+    fontFamily: 'Inter-Regular',
+    fontSize: 12,
+  },
+  forgotInput: {
+    backgroundColor: theme.colors.inputBg,
+    borderRadius: 8,
+    padding: 12,
+    color: theme.colors.text,
+    fontFamily: 'Inter-Regular',
+    fontSize: 14,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    marginBottom: 12,
   },
   benefitsBox: {
     backgroundColor: theme.colors.cardBg,

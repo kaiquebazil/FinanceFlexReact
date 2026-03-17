@@ -284,7 +284,18 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
                 {/* Rodapé com informações do criador */}
                 <View style={styles.footer}>
                   <Text style={styles.footerText}>© 2026 Finance Flex</Text>
-                  <Text style={styles.creatorText}>Criador: Kaique Bazil</Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      try {
+                        const Linking = require('react-native').Linking;
+                        Linking.openURL('https://kaiquebazil.github.io/portifolio/');
+                      } catch (e) {
+                        console.error('Erro ao abrir portfólio:', e);
+                      }
+                    }}
+                  >
+                    <Text style={styles.creatorText}>Criador: Kaique Bazil →</Text>
+                  </TouchableOpacity>
                 </View>
               </ScrollView>
             </View>
