@@ -173,6 +173,7 @@ export function AuthProvider({ children, onRemoteDataReceived }: AuthProviderPro
   // ─── Login com Google ──────────────────────────────────────────────────
   const [googleRequest, googleResponse, googlePromptAsync] = GoogleSignIn.useAuthRequest({
     clientId: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
+    useProxy: true, // Usa o proxy do Expo para contornar problemas de redirecionamento
   });
 
   const signInWithGoogle = async () => {
