@@ -343,8 +343,8 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
               onPress={onClose}
               style={styles.closeButton}
             </Button>
+              </View>
             </View>
-          </View>
         </KeyboardAvoidingView>
       </Modal>
 
