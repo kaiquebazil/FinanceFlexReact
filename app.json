@@ -30,19 +30,10 @@
         "backgroundColor": "#0a0a0a"
       }
     },
-    "scheme": "financeflex",
     "android": {
       "package": "com.kaiquebazil.financeflex",
       "versionCode": 2
     },
-    "plugins": [
-      [
-        "expo-auth-session/build/withAuthSession",
-        {
-          "projectId": "82a866df-fc13-442a-9272-c0607158b96e"
-        }
-      ]
-    ],
     "extra": {
       "eas": {
         "projectId": "82a866df-fc13-442a-9272-c0607158b96e"

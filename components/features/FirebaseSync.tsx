@@ -61,7 +61,7 @@ function statusIcon(status: SyncStatus): string {
 // ─── Componente ──────────────────────────────────────────────────────────────
 
 export function FirebaseSync({ onClose }: FirebaseSyncProps) {
-  const { user, loading, syncStatus, lastSyncedAt, signIn, signUp, logOut, resetPassword, signInWithGoogle, manualSync } = useAuth();
+  const { user, loading, syncStatus, lastSyncedAt, signIn, signUp, logOut, resetPassword, manualSync } = useAuth();
   const { toast, showToast, hideToast } = useToast();
 
   const [email, setEmail] = useState('');
@@ -349,41 +349,6 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
                 style={styles.button}
               />
 
-              {/* Divider */}
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>ou</Text>
-                <View style={styles.dividerLine} />
-              </View>
-
-              {/* Login Social - Apenas Google */}
-              <TouchableOpacity
-                style={[styles.socialButton, styles.googleButton]}
-                disabled={authLoading}
-                onPress={async () => {
-                  setAuthLoading(true);
-                  try {
-                    await signInWithGoogle();
-                    showModalNotif('Login com Google realizado com sucesso!', 'success');
-                  } catch (err: any) {
-                    const errorMsg = err?.message || '';
-                    // Ignorar erro de login cancelado pelo usuario
-                    if (errorMsg.includes('cancelado') || errorMsg.includes('Cancelled') || errorMsg.includes('cancelled')) {
-                      // Silenciosamente ignorar - o usuario apenas interrompeu o fluxo
-                      console.log('[FirebaseSync] Login com Google cancelado pelo usuario');
-                    } else {
-                      const msg = parseFirebaseError(err?.code) || 'Erro ao fazer login com Google';
-                      showModalNotif(msg, 'error');
-                    }
-                  } finally {
-                    setAuthLoading(false);
-                  }
-                }}
-              >
-                <FontAwesome5 name="google" size={18} color="#fff" />
-                <Text style={styles.socialButtonText}>{authLoading ? 'Conectando...' : 'Continuar com Google'}</Text>
-              </TouchableOpacity>
-
               <View style={styles.authLinks}>
                 <TouchableOpacity
                   onPress={() => {
@@ -437,7 +402,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
                 <View style={styles.benefitItem}>
                   <FontAwesome5 name="lock" size={16} color={theme.colors.primary} />
                   <View style={styles.benefitContent}>
-                    <Text style={styles.benefitName}>Dados Protegidos</Text>
+                    <Text style={performance.now() > 0 ? styles.benefitName : styles.benefitName}>Dados Protegidos</Text>
                     <Text style={styles.benefitDesc}>Criptografia Firebase garante privacidade total</Text>
                   </View>
                 </View>
@@ -498,7 +463,6 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
-            editable={!forgotLoading}
           />
         }
       />

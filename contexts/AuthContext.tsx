@@ -18,14 +18,8 @@ import {
   onAuthStateChanged,
   updateProfile,
   sendPasswordResetEmail,
-  signInWithCredential,
-  GoogleAuthProvider,
   Unsubscribe as FirebaseUnsubscribe,
 } from "firebase/auth";
-import * as GoogleSignIn from "expo-auth-session/providers/google";
-import * as WebBrowser from "expo-web-browser";
-
-WebBrowser.maybeCompleteAuthSession();
 import { auth } from "../firebase/config";
 import {
   subscribeToRealTimeSync,
@@ -54,7 +48,6 @@ interface AuthContextType {
   ) => Promise<void>;
   logOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
 
   // Sincronização manual
   manualSync: () => Promise<void>;
@@ -180,51 +173,6 @@ export function AuthProvider({
     await sendPasswordResetEmail(auth, email);
   };
 
-  // ─── Login com Google ──────────────────────────────────────────────────
-  const [googleRequest, googleResponse, googlePromptAsync] =
-    GoogleSignIn.useAuthRequest({
-      clientId:
-        "125982859538-mo2go22k69175rt79ccbif2a0hnkkaoc.apps.googleusercontent.com",
-      useProxy: true, // Usa o proxy do Expo para contornar problemas de redirecionamento
-    });
-
-  const signInWithGoogle = async () => {
-    try {
-      setSyncStatus("syncing");
-      const result = await googlePromptAsync();
-      
-      // Validar se o resultado existe e tem o tipo esperado
-      if (!result) {
-        throw new Error("Nenhuma resposta do Google Sign-In");
-      }
-      
-      if (result.type === "cancel" || result.type === "dismiss") {
-        setSyncStatus("idle");
-        throw new Error("Login com Google foi cancelado pelo usuário");
-      }
-      
-      if (result.type !== "success") {
-        setSyncStatus("idle");
-        throw new Error(`Tipo de resposta inesperado: ${result.type}`);
-      }
-      
-      // Validar se params e id_token existem
-      if (!result.params || !result.params.id_token) {
-        setSyncStatus("idle");
-        throw new Error("Token de ID não recebido do Google");
-      }
-      
-      const { id_token } = result.params;
-      const credential = GoogleAuthProvider.credential(id_token);
-      await signInWithCredential(auth, credential);
-      // O onAuthStateChanged cuida do resto
-    } catch (err) {
-      console.error("[AuthContext] Erro no login com Google:", err);
-      setSyncStatus("error");
-      throw err;
-    }
-  };
-
   // ─── Sincronização manual ────────────────────────────────────────────────
   const manualSync = async () => {
     if (!user) return;
@@ -252,7 +200,6 @@ export function AuthProvider({
         signUp,
         logOut,
         resetPassword,
-        signInWithGoogle,
         manualSync,
       }}
     >
