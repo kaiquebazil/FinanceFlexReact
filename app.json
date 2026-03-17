@@ -12,11 +12,11 @@
       "backgroundColor": "#0a0a0a"
     },
     "web": {
-      "favicon": "./assets/favicon.ico",
+      "favicon": "./assets/images/icon.svg",
       "name": "Finance Flex",
       "shortName": "FinanceFlex",
       "description": "App de finanças pessoais",
-      "themeColor": "#7c4dff",
+      "themeColor": "transparent",
       "backgroundColor": "#0a0a0a",
       "barStyle": "black-translucent",
       "lang": "pt-BR",
@@ -32,7 +32,7 @@
     },
     "android": {
       "package": "com.kaiquebazil.financeflex",
-      "versionCode": 1
+      "versionCode": 2
     },
     "extra": {
       "eas": {

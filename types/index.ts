@@ -38,10 +38,14 @@ export interface CreditCard {
   id: string;
   name: string;
   limit: number;
-  used: number;           
+  used?: number;
+  availableLimit?: number;
   closingDay: number;
   dueDay: number;
+  lastDigits?: string;
+  brand?: string;
   color?: string;
+  status?: 'active' | 'blocked';
   createdAt: string;
 }
 
@@ -55,6 +59,19 @@ export interface CreditCardTransaction {
   installments: number;
   currentInstallment: number;
   installmentAmount: number;
+  createdAt: string;
+}
+
+export interface Invoice {
+  id: string;
+  creditCardId: string;
+  month: number;
+  year: number;
+  dueDate: string;
+  totalAmount: number;
+  status: 'open' | 'paid' | 'overdue' | 'future';
+  paidAt?: string;
+  transactions: string[];
   createdAt: string;
 }
 

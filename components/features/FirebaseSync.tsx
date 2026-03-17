@@ -1,6 +1,7 @@
 // components/features/FirebaseSync.tsx
 // Painel de sincronização em tempo real com Firebase.
-// Design compacto e otimizado para web e mobile.
+// Permite login/cadastro, exibe status da sincronização e
+// oferece botão de sincronização manual.
 
 import React, { useState } from 'react';
 import {
@@ -11,20 +12,14 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Platform,
-  Image,
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../constants/theme';
 import { useAuth, SyncStatus } from '../../contexts/AuthContext';
-import { useData } from '../../hooks/useData';
 import { Button } from '../ui/Button';
 import { Toast } from '../ui/Toast';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { useToast } from '../../hooks/useToast';
-import { createDefaultCategories } from '../../constants/defaultCategories';
-import { createDefaultRecurringBills } from '../../constants/defaultRecurringBills';
 
 interface FirebaseSyncProps {
   onClose: () => void;
@@ -36,8 +31,8 @@ function statusLabel(status: SyncStatus): string {
   switch (status) {
     case 'syncing': return 'Sincronizando…';
     case 'synced':  return 'Sincronizado';
-    case 'error':   return 'Erro';
-    case 'offline': return 'Offline';
+    case 'error':   return 'Erro na sincronização';
+    case 'offline': return 'Sem conexão';
     default:        return 'Não sincronizado';
   }
 }
@@ -66,16 +61,6 @@ function statusIcon(status: SyncStatus): string {
 
 export function FirebaseSync({ onClose }: FirebaseSyncProps) {
   const { user, loading, syncStatus, lastSyncedAt, signIn, signUp, logOut, manualSync } = useAuth();
-  const {
-    accounts,
-    setAccounts,
-    setTransactions,
-    setPiggyBanks,
-    setCreditCards,
-    setRecurringBills,
-    setCategories,
-    setValuesHidden,
-  } = useData();
   const { toast, showToast, hideToast } = useToast();
 
   const [email, setEmail] = useState('');
@@ -85,7 +70,6 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
   const [authLoading, setAuthLoading] = useState(false);
   const [syncLoading, setSyncLoading] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   // ─── Autenticação ─────────────────────────────────────────────────────────
 
@@ -134,46 +118,12 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
     setSyncLoading(true);
     try {
       await manualSync();
-      showToast('Sincronizado!', 'success');
+      showToast('Dados sincronizados com sucesso!', 'success');
     } catch {
-      showToast('Erro ao sincronizar', 'error');
+      showToast('Erro ao sincronizar. Verifique sua conexão.', 'error');
     } finally {
       setSyncLoading(false);
     }
-  };
-
-  // ─── Reset de dados ───────────────────────────────────────────────────────
-
-  const DEFAULT_ACCOUNTS = [
-    {
-      id: 'default-cash-1',
-      name: 'Dinheiro',
-      type: 'Dinheiro' as const,
-      currency: 'BRL' as const,
-      balance: 0,
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: 'default-bank-1',
-      name: 'Banco Digital',
-      type: 'Banco' as const,
-      currency: 'BRL' as const,
-      balance: 0,
-      createdAt: new Date().toISOString(),
-    },
-  ];
-
-  const handleResetData = () => {
-    setAccounts(DEFAULT_ACCOUNTS);
-    setCategories(createDefaultCategories());
-    setRecurringBills(createDefaultRecurringBills());
-    setTransactions([]);
-    setPiggyBanks([]);
-    setCreditCards([]);
-    setValuesHidden(false);
-
-    setShowResetConfirm(false);
-    showToast('✅ Dados resetados!', 'success');
   };
 
   // ─── Render ───────────────────────────────────────────────────────────────
@@ -182,106 +132,106 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={styles.loadingText}>Carregando…</Text>
       </View>
     );
   }
 
   return (
     <>
-      <ScrollView
-        style={styles.container}
-        showsVerticalScrollIndicator={true}
-        scrollEnabled={true}
-        nestedScrollEnabled={true}
-      >
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        {/* Cabeçalho */}
+        <View style={styles.header}>
+          <FontAwesome5 name="cloud" size={48} color={theme.colors.primary} />
+          <Text style={styles.title}>Sincronização em Tempo Real</Text>
+          <Text style={styles.subtitle}>
+            Seus dados ficam salvos na nuvem e sincronizados automaticamente
+            entre todos os seus dispositivos.
+          </Text>
+        </View>
+
         {user ? (
           // ─── Usuário logado ──────────────────────────────────────────────
           <>
-            {/* Card de Perfil Compacto */}
-            <LinearGradient
-              colors={[theme.colors.primary + '20', theme.colors.primary + '08']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.profileCard}
-            >
-              <View style={styles.profileHeader}>
-                <Image
-                  source={require('../../assets/images/logo.png')}
-                  style={styles.logoImage}
-                />
-                <View style={styles.profileInfo}>
-                  <Text style={styles.profileName}>{user.displayName || 'Usuário'}</Text>
-                  <Text style={styles.profileEmail}>{user.email}</Text>
-                </View>
-              </View>
-
-              {/* Status de Sincronização */}
-              <View style={styles.syncStatusBadge}>
+            {/* Card de status */}
+            <View style={styles.statusCard}>
+              <View style={styles.statusRow}>
                 <FontAwesome5
                   name={statusIcon(syncStatus)}
-                  size={14}
+                  size={20}
                   color={statusColor(syncStatus)}
                 />
-                <Text style={[styles.syncStatusText, { color: statusColor(syncStatus) }]}>
+                <Text style={[styles.statusText, { color: statusColor(syncStatus) }]}>
                   {statusLabel(syncStatus)}
                 </Text>
                 {syncStatus === 'syncing' && (
-                  <ActivityIndicator
-                    size="small"
-                    color={theme.colors.primary}
-                    style={{ marginLeft: 6 }}
-                  />
+                  <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginLeft: 6 }} />
                 )}
               </View>
-            </LinearGradient>
 
-            {/* Botões de Ação */}
+              {lastSyncedAt && (
+                <Text style={styles.lastSync}>
+                  Última sincronização:{' '}
+                  {lastSyncedAt.toLocaleString('pt-BR')}
+                </Text>
+              )}
+
+              <View style={styles.realtimeBadge}>
+                <FontAwesome5 name="bolt" size={12} color="#4CAF50" />
+                <Text style={styles.realtimeBadgeText}>
+                  Sincronização em tempo real ativa
+                </Text>
+              </View>
+            </View>
+
+            {/* Info do usuário - SEM ID */}
+            <View style={styles.userCard}>
+              <View style={styles.userAvatar}>
+                <FontAwesome5 name="user-circle" size={32} color={theme.colors.primary} />
+              </View>
+              <View style={styles.userInfo}>
+                <Text style={styles.userName}>{user.displayName || 'Usuário'}</Text>
+                <Text style={styles.userEmail}>{user.email}</Text>
+              </View>
+            </View>
+
+            {/* Botões */}
             <View style={styles.buttons}>
               <Button
-                title={syncLoading ? '🔄' : '🔄 Sincronizar'}
+                title={syncLoading ? 'Sincronizando…' : '🔄 Sincronizar Agora'}
                 onPress={handleManualSync}
                 loading={syncLoading}
                 style={styles.button}
               />
               <Button
-                title="🗑️ Apagar Tudo"
-                onPress={() => setShowResetConfirm(true)}
-                variant="danger"
-                style={styles.button}
-              />
-              <Button
-                title="🚪 Sair"
+                title="🚪 Sair da Conta"
                 onPress={() => setShowLogoutConfirm(true)}
                 variant="outline"
                 style={styles.button}
               />
             </View>
+
+            {/* Nota informativa */}
+            <View style={styles.infoBox}>
+              <Text style={styles.infoText}>
+                💡 A sincronização em tempo real funciona automaticamente.
+                Qualquer alteração feita em outro dispositivo aparece aqui
+                em segundos, sem precisar pressionar nenhum botão.
+              </Text>
+            </View>
           </>
         ) : (
           // ─── Usuário não logado ──────────────────────────────────────────
           <>
-            {/* Logo e Título */}
-            <View style={styles.headerSection}>
-              <Image
-                source={require('../../assets/images/logo.png')}
-                style={styles.headerLogo}
-              />
-              <Text style={styles.headerTitle}>Finance Flex</Text>
-              <Text style={styles.headerSubtitle}>
-                Sincronize seus dados na nuvem
-              </Text>
-            </View>
-
-            {/* Formulário Compacto */}
             <View style={styles.formCard}>
               <Text style={styles.formTitle}>
-                {isSignUp ? 'Criar Conta' : 'Entrar'}
+                {isSignUp ? 'Criar Conta' : 'Entrar na Conta'}
               </Text>
 
               {isSignUp && (
                 <TextInput
                   style={styles.input}
-                  placeholder="Seu nome"
+                  placeholder="Seu nome completo"
                   placeholderTextColor={theme.colors.textDim}
                   value={displayName}
                   onChangeText={setDisplayName}
@@ -302,7 +252,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
 
               <TextInput
                 style={styles.input}
-                placeholder="Senha"
+                placeholder="Senha (mínimo 6 caracteres)"
                 placeholderTextColor={theme.colors.textDim}
                 value={password}
                 onChangeText={setPassword}
@@ -310,7 +260,9 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
               />
 
               <Button
-                title={authLoading ? '…' : (isSignUp ? '✅ Criar' : '🔑 Entrar')}
+                title={authLoading
+                  ? (isSignUp ? 'Criando conta…' : 'Entrando…')
+                  : (isSignUp ? '✅ Criar Conta' : '🔑 Entrar')}
                 onPress={handleAuth}
                 loading={authLoading}
                 style={styles.button}
@@ -326,9 +278,21 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
                 style={styles.toggleAuth}
               >
                 <Text style={styles.toggleAuthText}>
-                  {isSignUp ? 'Já tem conta? Entrar' : 'Criar conta'}
+                  {isSignUp
+                    ? 'Já tem uma conta? Entrar'
+                    : 'Não tem conta? Criar agora'}
                 </Text>
               </TouchableOpacity>
+            </View>
+
+            <View style={styles.infoBox}>
+              <Text style={styles.infoText}>
+                🔒 Seus dados ficam protegidos com autenticação Firebase.
+                Cada usuário tem seu próprio espaço privado na nuvem.{'\n\n'}
+                📱 Após o login, a sincronização em tempo real é ativada
+                automaticamente — seus dados aparecem em todos os dispositivos
+                instantaneamente.
+              </Text>
             </View>
           </>
         )}
@@ -338,23 +302,12 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
       <ConfirmModal
         visible={showLogoutConfirm}
         title="Sair da Conta?"
-        message="Seus dados locais serão mantidos."
+        message="Tem certeza que deseja sair? Seus dados locais serão mantidos, mas a sincronização em tempo real será desativada."
         type="warning"
         confirmText="Sair"
         cancelText="Cancelar"
         onConfirm={handleLogout}
         onCancel={() => setShowLogoutConfirm(false)}
-      />
-
-      {/* Modal de confirmação de reset */}
-      <ConfirmModal
-        visible={showResetConfirm}
-        title="⚠️ Apagar Todos os Dados?"
-        message="Esta ação é irreversível!"
-        type="danger"
-        confirmText="Sim, Apagar"
-        onConfirm={handleResetData}
-        onCancel={() => setShowResetConfirm(false)}
       />
 
       <Toast
@@ -376,17 +329,17 @@ function parseFirebaseError(code?: string): string {
     case 'auth/invalid-credential':
       return 'E-mail ou senha incorretos';
     case 'auth/email-already-in-use':
-      return 'E-mail já cadastrado';
+      return 'Este e-mail já está cadastrado';
     case 'auth/weak-password':
-      return 'Senha muito fraca';
+      return 'A senha deve ter pelo menos 6 caracteres';
     case 'auth/invalid-email':
       return 'E-mail inválido';
     case 'auth/network-request-failed':
-      return 'Sem conexão';
+      return 'Sem conexão com a internet';
     case 'auth/too-many-requests':
-      return 'Muitas tentativas';
+      return 'Muitas tentativas. Tente novamente mais tarde';
     default:
-      return 'Erro ao autenticar';
+      return 'Erro ao autenticar. Tente novamente';
   }
 }
 
@@ -395,123 +348,158 @@ function parseFirebaseError(code?: string): string {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    padding: 20,
   },
   centered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 40,
   },
-
-  // ─── Usuário Logado ──────────────────────────────────────────────────────
-
-  profileCard: {
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: theme.colors.primary + '40',
-  },
-  profileHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 12,
-  },
-  logoImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 8,
-  },
-  profileInfo: {
-    flex: 1,
-  },
-  profileName: {
-    color: theme.colors.text,
-    fontFamily: 'Inter-Bold',
-    fontSize: 16,
-    marginBottom: 2,
-  },
-  profileEmail: {
+  loadingText: {
     color: theme.colors.textDim,
+    marginTop: 12,
     fontFamily: 'Inter-Regular',
-    fontSize: 12,
   },
-  syncStatusBadge: {
-    flexDirection: 'row',
+  header: {
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: theme.colors.darker + '60',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+    marginBottom: 28,
   },
-  syncStatusText: {
-    fontSize: 13,
-    fontFamily: 'Inter-SemiBold',
-  },
-  buttons: {
-    gap: 10,
-    marginBottom: 20,
-  },
-  button: {
-    marginBottom: 0,
-  },
-
-  // ─── Usuário Não Logado ──────────────────────────────────────────────────
-
-  headerSection: {
-    alignItems: 'center',
-    marginBottom: 24,
-    gap: 12,
-  },
-  headerLogo: {
-    width: 80,
-    height: 80,
-    borderRadius: 12,
-  },
-  headerTitle: {
-    fontSize: 24,
+  title: {
+    fontSize: 20,
     fontFamily: 'Inter-Bold',
     color: theme.colors.text,
+    marginTop: 12,
+    textAlign: 'center',
   },
-  headerSubtitle: {
+  subtitle: {
     fontSize: 13,
     fontFamily: 'Inter-Regular',
     color: theme.colors.textDim,
     textAlign: 'center',
+    marginTop: 8,
+    lineHeight: 20,
+  },
+  statusCard: {
+    backgroundColor: theme.colors.darkLight,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  statusText: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+  },
+  lastSync: {
+    color: theme.colors.textDim,
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+    marginTop: 8,
+  },
+  realtimeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 12,
+    backgroundColor: 'rgba(76, 175, 80, 0.12)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+  },
+  realtimeBadgeText: {
+    color: '#4CAF50',
+    fontSize: 12,
+    fontFamily: 'Inter-Medium',
+  },
+  userCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.darkLight,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    gap: 14,
+  },
+  userAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: `${theme.colors.primary}20`,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  userInfo: {
+    flex: 1,
+  },
+  userName: {
+    color: theme.colors.text,
+    fontFamily: 'Inter-SemiBold',
+    fontSize: 16,
+    marginBottom: 2,
+  },
+  userEmail: {
+    color: theme.colors.textDim,
+    fontFamily: 'Inter-Regular',
+    fontSize: 13,
   },
   formCard: {
     backgroundColor: theme.colors.darkLight,
     borderRadius: 12,
-    padding: 16,
+    padding: 20,
     marginBottom: 20,
   },
   formTitle: {
     color: theme.colors.text,
     fontFamily: 'Inter-Bold',
-    fontSize: 16,
-    marginBottom: 12,
+    fontSize: 18,
+    marginBottom: 16,
     textAlign: 'center',
   },
   input: {
     backgroundColor: theme.colors.darker,
     borderRadius: 8,
-    padding: 10,
+    padding: 12,
     color: theme.colors.text,
     fontFamily: 'Inter-Regular',
-    fontSize: 14,
-    marginBottom: 10,
+    fontSize: 15,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: theme.colors.border,
   },
+  buttons: {
+    gap: 12,
+    marginBottom: 20,
+  },
+  button: {
+    marginBottom: 0,
+  },
   toggleAuth: {
-    marginTop: 10,
+    marginTop: 12,
     alignItems: 'center',
   },
   toggleAuthText: {
     color: theme.colors.primary,
     fontFamily: 'Inter-Medium',
+    fontSize: 14,
+  },
+  infoBox: {
+    backgroundColor: 'rgba(124, 77, 255, 0.08)',
+    borderRadius: 10,
+    padding: 16,
+    marginBottom: 20,
+    borderLeftWidth: 3,
+    borderLeftColor: theme.colors.primary,
+  },
+  infoText: {
+    color: theme.colors.textDim,
+    fontFamily: 'Inter-Regular',
     fontSize: 13,
+    lineHeight: 20,
   },
 });

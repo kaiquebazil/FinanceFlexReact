@@ -1,8 +1,10 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView } from 'react-native';
+import React, { useRef, useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, StatusBar, Animated, Dimensions } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
-import { useAuth, SyncStatus } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { useData } from '../../hooks/useData';
+import { ConfirmModal } from './ConfirmModal';
 
 interface DrawerProps {
   visible: boolean;
@@ -10,158 +12,427 @@ interface DrawerProps {
   onNavigate: (screen: string) => void;
 }
 
-function syncStatusColor(status: SyncStatus, isLoggedIn: boolean): string {
-  if (!isLoggedIn) return theme.colors.textDim;
-  switch (status) {
-    case 'synced':  return '#4CAF50';
-    case 'syncing': return theme.colors.primary;
-    case 'error':   return '#F44336';
-    default:        return theme.colors.textDim;
-  }
-}
-
-function syncStatusLabel(status: SyncStatus, isLoggedIn: boolean): string {
-  if (!isLoggedIn) return 'Não conectado';
-  switch (status) {
-    case 'synced':  return 'Sincronizado';
-    case 'syncing': return 'Sincronizando…';
-    case 'error':   return 'Erro';
-    default:        return 'Aguardando';
-  }
-}
+const { width } = Dimensions.get('window');
 
 export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
-  const { user, syncStatus } = useAuth();
+  const { user, syncStatus, logOut } = useAuth();
+  const { resetToDefaults } = useData();
+  const isLoggedIn = !!user;
+  const slideAnim = useRef(new Animated.Value(-width)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          useNativeDriver: true,
+          bounciness: 8,
+          speed: 12,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        })
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: -width,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        })
+      ]).start();
+    }
+  }, [visible]);
+
+  const handleResetData = () => {
+    resetToDefaults();
+    setShowResetConfirm(false);
+    onClose();
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logOut();
+      setShowLogoutConfirm(false);
+      onClose();
+    } catch (error) {
+      console.error('Erro ao deslogar:', error);
+    }
+  };
+
+  const getSyncColor = () => {
+    if (!user) return theme.colors.textDim;
+    switch (syncStatus) {
+      case 'synced': return '#4CAF50';
+      case 'syncing': return theme.colors.primary;
+      case 'error': return '#F44336';
+      default: return theme.colors.textDim;
+    }
+  };
+
+  const getSyncText = () => {
+    if (!user) return 'Não conectado';
+    switch (syncStatus) {
+      case 'synced': return 'Sincronizado';
+      case 'syncing': return 'Sincronizando...';
+      case 'error': return 'Erro na sincronização';
+      default: return 'Aguardando...';
+    }
+  };
 
   const menuItems = [
-    { id: 'transactions', icon: 'exchange-alt', label: 'Transações' },
-    { id: 'categories', icon: 'list-ul', label: 'Categorias' },
-    { id: 'recurring', icon: 'redo', label: 'Contas Recorrentes' },
-    { id: 'creditCards', icon: 'credit-card', label: 'Cartões de Crédito' },
-    { id: 'piggyBanks', icon: 'piggy-bank', label: 'Cofrinhos' },
+    { id: 'transactions', icon: 'exchange-alt', label: 'Transações', iconColor: '#64B5F6' },
+    { id: 'categories', icon: 'list-ul', label: 'Categorias', iconColor: '#81C784' },
+    { id: 'recurring', icon: 'redo', label: 'Contas Recorrentes', iconColor: '#FFB74D' },
+    { id: 'creditCards', icon: 'credit-card', label: 'Cartões de Crédito', iconColor: '#BA68C8' },
+    { id: 'piggyBanks', icon: 'piggy-bank', label: 'Cofrinhos', iconColor: '#FF8A65' },
   ];
 
   const actionItems = [
-    { id: 'backup', icon: 'download', label: 'Backup e Restauração' },
-    { id: 'sync', icon: 'cloud', label: 'Sincronização em Nuvem' },
+    { id: 'sync', icon: 'cloud', label: 'Sincronização em Nuvem', iconColor: '#64B5F6' },
+    { id: 'reset', icon: 'trash-alt', label: 'Apagar Todos os Dados', iconColor: '#fc2020', danger: false },
   ];
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <TouchableOpacity style={styles.backdrop} onPress={onClose} activeOpacity={1} />
-        <View style={styles.drawer}>
-          <View style={styles.header}>
-            <View style={styles.logoContainer}>
-              <FontAwesome5 name="wallet" size={24} color={theme.colors.primary} />
-              <Text style={styles.logoText}>Finance Flex</Text>
-            </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Badge de status de sincronização */}
-          <TouchableOpacity
-            style={styles.syncBadge}
-            onPress={() => { onClose(); onNavigate('sync'); }}
-          >
-            <FontAwesome5
-              name={user ? 'cloud' : 'cloud'}
-              size={14}
-              color={syncStatusColor(syncStatus, !!user)}
+    <>
+      <StatusBar barStyle="light-content" />
+      <Modal
+        visible={visible}
+        transparent={true}
+        animationType="none"
+        onRequestClose={onClose}
+      >
+        <View style={styles.overlay}>
+          {/* Fundo escuro com fade */}
+          <Animated.View style={[styles.backdrop, { opacity: fadeAnim }]}>
+            <TouchableOpacity
+              style={StyleSheet.absoluteFillObject}
+              onPress={onClose}
+              activeOpacity={1}
             />
-            <Text style={[styles.syncBadgeText, { color: syncStatusColor(syncStatus, !!user) }]}>
-              {syncStatusLabel(syncStatus, !!user)}
-            </Text>
-            {user && (
-              <Text style={styles.syncEmail} numberOfLines={1}>
-                {user.email}
-              </Text>
-            )}
-          </TouchableOpacity>
+          </Animated.View>
 
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>NAVEGAÇÃO</Text>
-              {menuItems.map((item) => (
-                <TouchableOpacity key={item.id} style={styles.menuItem} onPress={() => onNavigate(item.id)}>
-                  <FontAwesome5 name={item.icon} size={16} color={theme.colors.text} />
-                  <Text style={styles.menuItemText}>{item.label}</Text>
+          {/* Drawer lateral com animação */}
+          <Animated.View style={[
+            styles.drawerContainer,
+            { transform: [{ translateX: slideAnim }] }
+          ]}>
+            <View style={styles.drawer}>
+              {/* Cabeçalho */}
+              <View style={styles.header}>
+                <View style={styles.logoContainer}>
+                  <FontAwesome5 name="wallet" size={24} color={theme.colors.primary} />
+                  <Text style={styles.logoText}>Finance Flex</Text>
+                </View>
+                <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                  <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
                 </TouchableOpacity>
-              ))}
+              </View>
+
+              {/* Status de sincronização */}
+              <TouchableOpacity 
+                style={styles.syncStatusContainer}
+                onPress={() => {
+                  onNavigate('sync');
+                  onClose();
+                }}
+              >
+                <FontAwesome5
+                  name="cloud"
+                  size={14}
+                  color={getSyncColor()}
+                />
+                <Text style={[styles.syncStatusText, { color: getSyncColor() }]}>
+                  {getSyncText()}
+                </Text>
+                {isLoggedIn && (
+                  <Text style={styles.syncEmail} numberOfLines={1}>
+                    {user.email}
+                  </Text>
+                )}
+              </TouchableOpacity>
+
+              {/* Conteúdo do drawer */}
+              <ScrollView
+                style={styles.content}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
+              >
+                {/* Menu Principal */}
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>MENU PRINCIPAL</Text>
+                  {menuItems.map((item) => (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={styles.menuItem}
+                      onPress={() => {
+                        onNavigate(item.id);
+                        onClose();
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.menuItemContent}>
+                        <FontAwesome5
+                          name={item.icon}
+                          size={18}
+                          color={item.iconColor}
+                          style={styles.menuItemIcon}
+                        />
+                        <Text style={styles.menuItemText}>{item.label}</Text>
+                      </View>
+                      <FontAwesome5 name="chevron-right" size={16} color={theme.colors.textDim} />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Divisor */}
+                <View style={styles.divider} />
+
+                {/* Ações Rápidas - AGORA COM O BOTÃO APAGAR */}
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>AÇÕES RÁPIDAS</Text>
+                  {actionItems.map((item) => (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={styles.menuItem}
+                      onPress={() => {
+                        if (item.id === 'reset') {
+                          setShowResetConfirm(true);
+                        } else {
+                          onNavigate(item.id);
+                          onClose();
+                        }
+                      }}
+                      activeOpacity={0.4}
+                    >
+                      <View style={styles.menuItemContent}>
+                        <FontAwesome5
+                          name={item.icon}
+                          size={18}
+                          color={item.iconColor}
+                          style={styles.menuItemIcon}
+                        />
+                        <Text style={styles.menuItemText}>{item.label}</Text>
+                      </View>
+                      <FontAwesome5 name="chevron-right" size={16} color={theme.colors.textDim} />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Seção de Usuário - SÓ APARECE QUANDO LOGADO */}
+                {isLoggedIn && (
+                  <>
+                    <View style={styles.divider} />
+                    
+                    <View style={styles.section}>
+                      <Text style={[styles.sectionTitle, styles.userSectionTitle]}>CONTA</Text>
+                      
+                      {/* Botão Sair */}
+                      <TouchableOpacity
+                        style={[styles.menuItem, styles.logoutItem]}
+                        onPress={() => setShowLogoutConfirm(true)}
+                        activeOpacity={0.7}
+                      >
+                        <View style={styles.menuItemContent}>
+                          <FontAwesome5
+                            name="sign-out-alt"
+                            size={18}
+                            color={theme.colors.danger}
+                            style={styles.menuItemIcon}
+                          />
+                          <Text style={[styles.menuItemText, styles.logoutText]}>
+                            Sair da Conta
+                          </Text>
+                        </View>
+                        <FontAwesome5 name="chevron-right" size={16} color={theme.colors.danger} />
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                )}
+
+                {/* Rodapé com informações do criador */}
+                <View style={styles.footer}>
+                  <Text style={styles.footerText}>© 2026 Finance Flex</Text>
+                  <Text style={styles.creatorText}>Criador: Kaique Bazil</Text>
+                </View>
+              </ScrollView>
             </View>
-            <View style={styles.divider} />
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>AÇÕES RÁPIDAS</Text>
-              {actionItems.map((item) => (
-                <TouchableOpacity
-                  key={item.id}
-                  style={styles.menuItem}
-                  onPress={() => onNavigate(item.id)}
-                >
-                  <FontAwesome5
-                    name={item.icon}
-                    size={16}
-                    color={
-                      item.id === 'sync'
-                        ? syncStatusColor(syncStatus, !!user)
-                        : theme.colors.text
-                    }
-                  />
-                  <Text style={styles.menuItemText}>{item.label}</Text>
-                  {item.id === 'sync' && user && syncStatus === 'synced' && (
-                    <View style={styles.syncedDot} />
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-          </ScrollView>
+          </Animated.View>
         </View>
-      </View>
-    </Modal>
+      </Modal>
+
+      {/* Modal de confirmação para logout */}
+      <ConfirmModal
+        visible={showLogoutConfirm}
+        title="Sair da Conta"
+        message="Tem certeza que deseja sair? Seus dados locais serão mantidos."
+        type="warning"
+        confirmText="Sair"
+        cancelText="Cancelar"
+        onConfirm={handleLogout}
+        onCancel={() => setShowLogoutConfirm(false)}
+      />
+
+      {/* Modal de confirmação para apagar dados - VERSÃO MELHORADA */}
+      <ConfirmModal
+        visible={showResetConfirm}
+        title="⚠️ Apagar Todos os Dados?"
+        message="Esta ação é irreversível e apagará TODOS os seus dados, incluindo transações, categorias, contas recorrentes, cartões de crédito e cofrinhos."
+        type="danger"
+        confirmText="Sim"
+        cancelText="Cancelar"
+        onConfirm={handleResetData}
+        onCancel={() => setShowResetConfirm(false)}
+      />
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, flexDirection: 'row' },
-  backdrop: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.7)' },
-  drawer: { width: '80%', maxWidth: 320, backgroundColor: theme.colors.dark, borderLeftWidth: 1, borderLeftColor: theme.colors.border, marginTop: 30 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: theme.colors.border },
-  logoContainer: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  logoText: { fontSize: 18, fontFamily: 'Inter-Bold', color: theme.colors.text },
-  closeButton: { padding: 8 },
-  syncBadge: {
+  overlay: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: 'transparent',
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  drawerContainer: {
+    width: '80%',
+    maxWidth: 320,
+    backgroundColor: theme.colors.dark,
+    borderRightWidth: 1,
+    borderRightColor: theme.colors.border,
+  },
+  drawer: {
+    flex: 1,
+    backgroundColor: theme.colors.dark,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  logoText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: theme.colors.text,
+  },
+  closeButton: {
+    padding: 8,
+  },
+  syncStatusContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 12,
     backgroundColor: theme.colors.darkLight,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
   },
-  syncBadgeText: {
-    fontSize: 13,
-    fontFamily: 'Inter-Medium',
+  syncStatusText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
   syncEmail: {
     flex: 1,
-    fontSize: 11,
-    fontFamily: 'Inter-Regular',
+    fontSize: 12,
     color: theme.colors.textDim,
     textAlign: 'right',
   },
-  content: { flex: 1, padding: 20 },
-  section: { marginBottom: 24 },
-  sectionTitle: { fontSize: 12, fontFamily: 'Inter-SemiBold', color: theme.colors.textDim, marginBottom: 12, letterSpacing: 1 },
-  menuItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, gap: 12 },
-  menuItemText: { flex: 1, fontSize: 15, fontFamily: 'Inter-Medium', color: theme.colors.text },
-  divider: { height: 1, backgroundColor: theme.colors.border, marginVertical: 16 },
-  syncedDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#4CAF50',
+  content: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  scrollContent: {
+    paddingBottom: 20,
+  },
+  section: {
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: theme.colors.textDim,
+    marginBottom: 12,
+    marginTop: 16,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+  userSectionTitle: {
+    color: theme.colors.primary,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    marginBottom: 4,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+  },
+  menuItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  menuItemIcon: {
+    width: 30,
+    textAlign: 'center',
+  },
+  menuItemText: {
+    fontSize: 15,
+    color: theme.colors.text,
+    fontWeight: '500',
+    marginLeft: 12,
+    flex: 1,
+  },
+  logoutText: {
+    color: theme.colors.danger,
+  },
+  logoutItem: {
+    backgroundColor: 'rgba(255, 61, 0, 0.05)',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: theme.colors.border,
+    marginVertical: 8,
+    marginHorizontal: 16,
+  },
+  footer: {
+    marginTop: 20,
+    alignItems: 'center',
+    paddingBottom: 20,
+  },
+  footerText: {
+    fontSize: 11,
+    color: theme.colors.textDim,
+    marginBottom: 4,
+  },
+  creatorText: {
+    fontSize: 11,
+    color: theme.colors.textDim,
+    fontStyle: 'italic',
   },
 });

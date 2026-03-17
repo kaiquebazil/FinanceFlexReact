@@ -929,7 +929,7 @@ export default function HomeScreen() {
       <Modal
         visible={showSyncModal}
         onClose={() => setShowSyncModal(false)}
-        title="Sincronização em Tempo Real"
+        title="Sincronização"
       >
         <FirebaseSync onClose={() => setShowSyncModal(false)} />
       </Modal>

@@ -15,6 +15,7 @@ import type {
   CreditCardTransaction,
   RecurringBill,
   Category,
+  Invoice,
   AccountType,
   Currency,
   TransactionType,
@@ -40,6 +41,7 @@ interface DataContextType {
   creditCardTransactions: CreditCardTransaction[];
   recurringBills: RecurringBill[];
   categories: Category[];
+  invoices: Invoice[];
   valuesHidden: boolean;
 
   // Setters
@@ -50,6 +52,7 @@ interface DataContextType {
   setCreditCardTransactions: (transactions: CreditCardTransaction[]) => void;
   setRecurringBills: (bills: RecurringBill[]) => void;
   setCategories: (categories: Category[]) => void;
+  setInvoices: (invoices: Invoice[]) => void;
   setValuesHidden: (hidden: boolean) => void;
 
   // Funções de conta
@@ -91,6 +94,14 @@ interface DataContextType {
   addCreditCard: (data: Partial<CreditCard>) => void;
   updateCreditCard: (id: string, data: Partial<CreditCard>) => void;
   deleteCreditCard: (id: string) => void;
+  
+  // NOVAS FUNÇÕES PARA TRANSAÇÕES DE CARTÃO
+  addCreditCardTransaction: (data: Partial<CreditCardTransaction>) => void;
+  updateCreditCardTransaction?: (id: string, data: Partial<CreditCardTransaction>) => void;
+  deleteCreditCardTransaction?: (id: string) => void;
+  
+  // Funções de fatura
+  payInvoice?: (invoiceId: string, accountId: string, amount: number) => void;
 
   // Funções de conta recorrente
   addRecurringBill: (data: Partial<RecurringBill>) => void;
@@ -140,6 +151,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   >([]);
   const [recurringBills, setRecurringBills] = useState<RecurringBill[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [valuesHidden, setValuesHidden] = useState(false);
   const [isFirstLaunch, setIsFirstLaunch] = useState(false);
 
@@ -185,13 +197,14 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     setCreditCards([]);
     setCreditCardTransactions([]);
     setRecurringBills([]);
+    setInvoices([]);
     setValuesHidden(false);
   }, []);
 
   // Carregar dados do storage
   const loadData = async () => {
     try {
-      const [acc, trans, piggy, cards, cardTrans, bills, cats, hidden] =
+      const [acc, trans, piggy, cards, cardTrans, bills, cats, inv, hidden] =
         await Promise.all([
           storage.getItem<Account[]>(KEYS.ACCOUNTS),
           storage.getItem<Transaction[]>(KEYS.TRANSACTIONS),
@@ -202,6 +215,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
           ),
           storage.getItem<RecurringBill[]>(KEYS.RECURRING_BILLS),
           storage.getItem<Category[]>(KEYS.CATEGORIES),
+          storage.getItem<Invoice[]>(KEYS.INVOICES),
           storage.getItem<boolean>(KEYS.VALUES_HIDDEN),
         ]);
 
@@ -220,6 +234,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       setCreditCards(cards ?? []);
       setCreditCardTransactions(cardTrans ?? []);
       setRecurringBills(bills ?? []);
+      setInvoices(inv ?? []);
 
       // Se não houver categorias, carrega as padrão
       if (!cats || cats.length === 0) {
@@ -243,6 +258,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     if (data?.creditCardTransactions) setCreditCardTransactions(data.creditCardTransactions);
     if (data?.recurringBills) setRecurringBills(data.recurringBills);
     if (data?.categories) setCategories(data.categories);
+    if (data?.invoices) setInvoices(data.invoices);
   }, []);
 
   // Carregar dados ao iniciar
@@ -280,6 +296,10 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     storage.setItem(KEYS.CATEGORIES, categories);
   }, [categories]);
+
+  useEffect(() => {
+    storage.setItem(KEYS.INVOICES, invoices);
+  }, [invoices]);
 
   useEffect(() => {
     storage.setItem(KEYS.VALUES_HIDDEN, valuesHidden);
@@ -477,8 +497,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     return newTransaction;
   };
 
-  // ==================== FUNÇÃO DELETAR TRANSAÇÃO CORRIGIDA ====================
-  
   const deleteTransaction = (id: string) => {
     const transaction = transactions.find((t) => t.id === id);
     if (!transaction) return;
@@ -683,9 +701,13 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       name: data.name || "",
       limit: data.limit || 0,
       used: data.used || 0,
+      availableLimit: data.availableLimit || data.limit || 0,
       closingDay: data.closingDay || 1,
       dueDay: data.dueDay || 10,
+      lastDigits: data.lastDigits || "",
+      brand: data.brand || "visa",
       color: data.color || "#7c4dff",
+      status: data.status || "active",
       createdAt: new Date().toISOString(),
     };
     setCreditCards([...creditCards, newCard]);
@@ -705,6 +727,109 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     setCreditCards((prev) => prev.filter((c) => c.id !== id));
     if (uiCallbacks.showToast) {
       uiCallbacks.showToast("Cartão excluído com sucesso!", "success");
+    }
+  };
+
+  // ==================== NOVAS FUNÇÕES DE TRANSAÇÃO DE CARTÃO ====================
+
+  const addCreditCardTransaction = (data: Partial<CreditCardTransaction>) => {
+    const newTransaction: CreditCardTransaction = {
+      id: Date.now().toString(),
+      creditCardId: data.creditCardId || '',
+      description: data.description || '',
+      amount: data.amount || 0,
+      category: data.category || 'Outros',
+      date: data.date || new Date().toISOString(),
+      installments: data.installments || 1,
+      currentInstallment: data.currentInstallment || 1,
+      installmentAmount: data.installmentAmount || 0,
+      createdAt: new Date().toISOString(),
+    };
+    
+    setCreditCardTransactions(prev => [...prev, newTransaction]);
+    
+    // Atualizar o limite usado do cartão
+    if (newTransaction.creditCardId) {
+      setCreditCards(prev => prev.map(card => 
+        card.id === newTransaction.creditCardId
+          ? { 
+              ...card, 
+              used: (card.used || 0) + newTransaction.amount,
+              availableLimit: (card.availableLimit || card.limit) - newTransaction.amount
+            }
+          : card
+      ));
+    }
+    
+    // Gerar faturas automaticamente
+    generateInvoicesForTransaction(newTransaction);
+    
+    if (uiCallbacks.showToast) {
+      uiCallbacks.showToast('Compra adicionada com sucesso!', 'success');
+    }
+  };
+
+  // Função auxiliar para gerar faturas
+  const generateInvoicesForTransaction = (transaction: CreditCardTransaction) => {
+    const card = creditCards.find(c => c.id === transaction.creditCardId);
+    if (!card) return;
+    
+    const transactionDate = new Date(transaction.date);
+    const closingDay = card.closingDay;
+    
+    // Determinar em qual fatura a compra entra
+    let firstInvoiceMonth = transactionDate.getMonth() + 1;
+    let firstInvoiceYear = transactionDate.getFullYear();
+    
+    if (transactionDate.getDate() > closingDay) {
+      firstInvoiceMonth = firstInvoiceMonth === 12 ? 1 : firstInvoiceMonth + 1;
+      firstInvoiceYear = firstInvoiceMonth === 1 ? firstInvoiceYear + 1 : firstInvoiceYear;
+    }
+    
+    // Criar/atualizar faturas para cada parcela
+    for (let i = 0; i < transaction.installments; i++) {
+      let invoiceMonth = firstInvoiceMonth + i;
+      let invoiceYear = firstInvoiceYear;
+      
+      while (invoiceMonth > 12) {
+        invoiceMonth -= 12;
+        invoiceYear += 1;
+      }
+      
+      const invoiceId = `${transaction.creditCardId}-${invoiceYear}-${invoiceMonth}`;
+      const dueDate = new Date(invoiceYear, invoiceMonth - 1, card.dueDay).toISOString();
+      
+      setInvoices(prev => {
+        const existingInvoice = prev.find(inv => inv.id === invoiceId);
+        const installmentAmount = transaction.installmentAmount;
+        
+        if (existingInvoice) {
+          // Atualizar fatura existente
+          return prev.map(inv => 
+            inv.id === invoiceId
+              ? {
+                  ...inv,
+                  totalAmount: inv.totalAmount + installmentAmount,
+                  transactions: [...inv.transactions, transaction.id]
+                }
+              : inv
+          );
+        } else {
+          // Criar nova fatura
+          const newInvoice: Invoice = {
+            id: invoiceId,
+            creditCardId: transaction.creditCardId,
+            month: invoiceMonth,
+            year: invoiceYear,
+            dueDate,
+            totalAmount: installmentAmount,
+            status: new Date() > new Date(dueDate) ? 'overdue' : 'future',
+            transactions: [transaction.id],
+            createdAt: new Date().toISOString(),
+          };
+          return [...prev, newInvoice];
+        }
+      });
     }
   };
 
@@ -831,6 +956,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         creditCardTransactions,
         recurringBills,
         categories,
+        invoices,
         valuesHidden,
 
         setAccounts,
@@ -840,6 +966,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         setCreditCardTransactions,
         setRecurringBills,
         setCategories,
+        setInvoices,
         setValuesHidden,
 
         addAccount,
@@ -861,6 +988,12 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         addCreditCard,
         updateCreditCard,
         deleteCreditCard,
+        
+        addCreditCardTransaction,
+        updateCreditCardTransaction: undefined,
+        deleteCreditCardTransaction: undefined,
+        
+        payInvoice: undefined,
 
         addRecurringBill,
         updateRecurringBill,

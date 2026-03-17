@@ -31,7 +31,7 @@ export function CreditCardTransactions({ creditCard, onClose }: CreditCardTransa
   const transactionsByInvoice = useMemo(() => {
     const grouped: { [key: string]: CreditCardTransaction[] } = {};
     
-    cardTransactions.forEach((transaction: CreditCardTransaction) => {
+    cardTransactions.forEach((transaction) => {
       const date = new Date(transaction.date);
       const month = date.getMonth() + 1;
       const year = date.getFullYear();
@@ -62,7 +62,7 @@ export function CreditCardTransactions({ creditCard, onClose }: CreditCardTransa
     const totals: { [key: string]: number } = {};
     
     Object.entries(transactionsByInvoice).forEach(([key, transactions]) => {
-      totals[key] = transactions.reduce((sum, t) => sum + (t.installmentAmount * t.installments), 0);
+      totals[key] = transactions.reduce((sum, t) => sum + t.amount, 0);
     });
     
     return totals;
@@ -89,13 +89,15 @@ export function CreditCardTransactions({ creditCard, onClose }: CreditCardTransa
           
           <View style={styles.headerInfo}>
             <Text style={styles.headerName}>{creditCard.name}</Text>
-            <Text style={styles.headerDigits}>•••• {creditCard.lastDigits}</Text>
+            <Text style={styles.headerDigits}>
+              {creditCard.lastDigits ? `•••• ${creditCard.lastDigits}` : ''}
+            </Text>
           </View>
           
           <View style={styles.headerLimit}>
             <Text style={styles.headerLimitLabel}>Disponível</Text>
             <Text style={styles.headerLimitValue}>
-              {formatCurrency(creditCard.availableLimit, 'BRL')}
+              {formatCurrency(creditCard.availableLimit || creditCard.limit, 'BRL')}
             </Text>
           </View>
         </View>
@@ -118,17 +120,23 @@ export function CreditCardTransactions({ creditCard, onClose }: CreditCardTransa
                              'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'][parseInt(month) - 1];
           
           const dueDate = new Date(parseInt(year), parseInt(month) - 1, creditCard.dueDay);
-          const isOverdue = dueDate < new Date() && !invoices.some((i: Invoice) => i.creditCardId === creditCard.id && i.month === parseInt(month) && i.year === parseInt(year) && i.status === 'paid');
+          const isOverdue = dueDate < new Date() && !invoices.some(i => 
+            i.creditCardId === creditCard.id && 
+            i.month === parseInt(month) && 
+            i.year === parseInt(year) && 
+            i.status === 'paid'
+          );
+          
+          const invoice = invoices.find(i => 
+            i.creditCardId === creditCard.id && 
+            i.month === parseInt(month) && 
+            i.year === parseInt(year)
+          );
           
           return (
             <Card key={key} style={styles.invoiceCard}>
               <TouchableOpacity
                 onPress={() => {
-                  const invoice = invoices.find((i: Invoice) => 
-                    i.creditCardId === creditCard.id && 
-                    i.month === parseInt(month) && 
-                    i.year === parseInt(year)
-                  );
                   if (invoice) {
                     setSelectedInvoice(invoice);
                   }
@@ -144,7 +152,7 @@ export function CreditCardTransactions({ creditCard, onClose }: CreditCardTransa
                   
                   <View style={styles.invoiceAmounts}>
                     <Text style={styles.invoiceTotal}>
-                      {formatCurrency(invoiceTotals[key], 'BRL')}
+                      {formatCurrency(invoice?.totalAmount || invoiceTotals[key] || 0, 'BRL')}
                     </Text>
                     {isOverdue && (
                       <View style={styles.overdueBadge}>
@@ -155,7 +163,7 @@ export function CreditCardTransactions({ creditCard, onClose }: CreditCardTransa
                 </View>
 
                 <View style={styles.transactionsList}>
-                  {transactions.map((transaction: CreditCardTransaction) => (
+                  {transactions.map((transaction) => (
                     <View key={transaction.id} style={styles.transactionItem}>
                       <View style={styles.transactionIcon}>
                         <FontAwesome5 name="shopping-cart" size={12} color={theme.colors.primary} />
@@ -174,7 +182,7 @@ export function CreditCardTransactions({ creditCard, onClose }: CreditCardTransa
                       </View>
                       
                       <Text style={styles.transactionAmount}>
-                        {formatCurrency(transaction.installmentAmount, 'BRL')}
+                        {formatCurrency(transaction.installmentAmount || transaction.amount, 'BRL')}
                       </Text>
                     </View>
                   ))}
