@@ -22,8 +22,8 @@ import {
   GoogleAuthProvider,
   Unsubscribe as FirebaseUnsubscribe,
 } from "firebase/auth";
-import * as GoogleSignIn from 'expo-auth-session/providers/google';
-import * as WebBrowser from 'expo-web-browser';
+import * as GoogleSignIn from "expo-auth-session/providers/google";
+import * as WebBrowser from "expo-web-browser";
 
 WebBrowser.maybeCompleteAuthSession();
 import { auth } from "../firebase/config";
@@ -37,12 +37,7 @@ import {
 // ─────────────────────────────────────────────
 // Tipos
 // ─────────────────────────────────────────────
-export type SyncStatus =
-  | "idle"
-  | "syncing"
-  | "synced"
-  | "error"
-  | "offline";
+export type SyncStatus = "idle" | "syncing" | "synced" | "error" | "offline";
 
 interface AuthContextType {
   user: User | null;
@@ -52,7 +47,11 @@ interface AuthContextType {
 
   // Autenticação
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, displayName: string) => Promise<void>;
+  signUp: (
+    email: string,
+    password: string,
+    displayName: string,
+  ) => Promise<void>;
   logOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
@@ -81,7 +80,10 @@ interface AuthProviderProps {
   onRemoteDataReceived?: (data: CloudData) => void;
 }
 
-export function AuthProvider({ children, onRemoteDataReceived }: AuthProviderProps) {
+export function AuthProvider({
+  children,
+  onRemoteDataReceived,
+}: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
@@ -124,7 +126,7 @@ export function AuthProvider({ children, onRemoteDataReceived }: AuthProviderPro
               onRemoteDataReceived(data);
             }
           },
-          () => setSyncStatus("error")
+          () => setSyncStatus("error"),
         );
       } else {
         setSyncStatus("idle");
@@ -147,9 +149,17 @@ export function AuthProvider({ children, onRemoteDataReceived }: AuthProviderPro
   };
 
   // ─── Cadastro ────────────────────────────────────────────────────────────
-  const signUp = async (email: string, password: string, displayName: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    displayName: string,
+  ) => {
     setSyncStatus("syncing");
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password,
+    );
     if (userCredential.user) {
       await updateProfile(userCredential.user, { displayName });
     }
@@ -171,25 +181,27 @@ export function AuthProvider({ children, onRemoteDataReceived }: AuthProviderPro
   };
 
   // ─── Login com Google ──────────────────────────────────────────────────
-  const [googleRequest, googleResponse, googlePromptAsync] = GoogleSignIn.useAuthRequest({
-    clientId: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
-    useProxy: true, // Usa o proxy do Expo para contornar problemas de redirecionamento
-  });
+  const [googleRequest, googleResponse, googlePromptAsync] =
+    GoogleSignIn.useAuthRequest({
+      clientId:
+        "125982859538-mo2go22k69175rt79ccbif2a0hnkkaoc.apps.googleusercontent.com",
+      useProxy: true, // Usa o proxy do Expo para contornar problemas de redirecionamento
+    });
 
   const signInWithGoogle = async () => {
     try {
-      setSyncStatus('syncing');
+      setSyncStatus("syncing");
       const result = await googlePromptAsync();
-      if (result?.type === 'success') {
+      if (result?.type === "success") {
         const { id_token } = result.params;
         const credential = GoogleAuthProvider.credential(id_token);
         await signInWithCredential(auth, credential);
       } else {
-        throw new Error('Login cancelado');
+        throw new Error("Login cancelado");
       }
     } catch (err) {
-      console.error('[AuthContext] Erro no login com Google:', err);
-      setSyncStatus('error');
+      console.error("[AuthContext] Erro no login com Google:", err);
+      setSyncStatus("error");
       throw err;
     }
   };
