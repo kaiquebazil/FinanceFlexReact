@@ -192,13 +192,32 @@ export function AuthProvider({
     try {
       setSyncStatus("syncing");
       const result = await googlePromptAsync();
-      if (result?.type === "success") {
-        const { id_token } = result.params;
-        const credential = GoogleAuthProvider.credential(id_token);
-        await signInWithCredential(auth, credential);
-      } else {
-        throw new Error("Login cancelado");
+      
+      // Validar se o resultado existe e tem o tipo esperado
+      if (!result) {
+        throw new Error("Nenhuma resposta do Google Sign-In");
       }
+      
+      if (result.type === "cancel" || result.type === "dismiss") {
+        setSyncStatus("idle");
+        throw new Error("Login com Google foi cancelado pelo usuário");
+      }
+      
+      if (result.type !== "success") {
+        setSyncStatus("idle");
+        throw new Error(`Tipo de resposta inesperado: ${result.type}`);
+      }
+      
+      // Validar se params e id_token existem
+      if (!result.params || !result.params.id_token) {
+        setSyncStatus("idle");
+        throw new Error("Token de ID não recebido do Google");
+      }
+      
+      const { id_token } = result.params;
+      const credential = GoogleAuthProvider.credential(id_token);
+      await signInWithCredential(auth, credential);
+      // O onAuthStateChanged cuida do resto
     } catch (err) {
       console.error("[AuthContext] Erro no login com Google:", err);
       setSyncStatus("error");
