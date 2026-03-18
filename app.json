@@ -34,7 +34,11 @@
       "package": "com.kaiquebazil.financeflex",
       "versionCode": 2
     },
-    "extra": {},
+    "extra": {
+      "eas": {
+        "projectId": "33788232-54e6-4d42-a681-297f6acd2f97"
+      }
+    },
     "ios": {
       "bundleIdentifier": "com.kaiquebazil.financeflex"
     }
