@@ -11,6 +11,8 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { Button } from "../ui/Button";
@@ -91,7 +93,7 @@ export function TransactionForm({
       setSelectedCategory(null);
       setSelectedAccount(null);
       setSelectedToAccount(null);
-      setSelectedType(initialType); // USA O TIPO INICIAL
+      setSelectedType(initialType);
       setErrors({});
     }
   }, [visible, initialType]);
@@ -153,17 +155,14 @@ export function TransactionForm({
     }
 
     if (selectedType !== "transfer") {
-      // Validar categoria para receitas/despesas
       if (!selectedCategory) {
         newErrors.category = "Selecione uma categoria";
       }
 
-      // Validar conta
       if (!selectedAccount) {
         newErrors.account = "Selecione uma conta";
       }
 
-      // Validar saldo para despesas
       if (
         selectedType === "expense" &&
         selectedAccount &&
@@ -172,7 +171,6 @@ export function TransactionForm({
         newErrors.account = `Saldo insuficiente! Saldo: ${formatCurrency(selectedAccount.balance, selectedAccount.currency)}`;
       }
     } else {
-      // Validações para transferência
       if (!selectedAccount) {
         newErrors.account = "Selecione a conta de origem";
       }
@@ -240,6 +238,7 @@ export function TransactionForm({
 
   // Cancelar
   const handleCancel = () => {
+    Keyboard.dismiss();
     onClose();
   };
 
@@ -298,383 +297,397 @@ export function TransactionForm({
       transparent
       animationType="fade"
       onRequestClose={handleCancel}
+      statusBarTranslucent
     >
-      <View style={styles.modalOverlay}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.keyboardView}
-        >
-          <View style={styles.modalContent}>
-            {/* Cabeçalho */}
-            <View style={styles.header}>
-              <Text style={styles.title}>
-                {selectedType === "income" && "Nova Receita"}
-                {selectedType === "expense" && "Nova Despesa"}
-                {selectedType === "transfer" && "Nova Transferência"}
-              </Text>
-              <TouchableOpacity
-                onPress={handleCancel}
-                style={styles.closeButton}
-              >
-                <FontAwesome5
-                  name="times"
-                  size={20}
-                  color={theme.colors.textDim}
-                />
-              </TouchableOpacity>
-            </View>
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback onPress={() => {}}>
+              <View style={styles.modalContent}>
+                {/* Cabeçalho */}
+                <View style={styles.header}>
+                  <Text style={styles.title}>
+                    {selectedType === "income" && "Nova Receita"}
+                    {selectedType === "expense" && "Nova Despesa"}
+                    {selectedType === "transfer" && "Nova Transferência"}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={handleCancel}
+                    style={styles.closeButton}
+                  >
+                    <FontAwesome5
+                      name="times"
+                      size={20}
+                      color={theme.colors.textDim}
+                    />
+                  </TouchableOpacity>
+                </View>
 
-            {/* Seletor de Tipo - 3 BOTÕES LADO A LADO */}
-            <View style={styles.typeContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.typeButton,
-                  selectedType === "income" && styles.typeButtonActive,
-                ]}
-                onPress={() => setSelectedType("income")}
-              >
-                <FontAwesome5
-                  name="arrow-down"
-                  size={20}
-                  color={
-                    selectedType === "income" ? "#fff" : theme.colors.success
-                  }
-                />
-                <Text
-                  style={[
-                    styles.typeButtonText,
-                    selectedType === "income" && styles.typeButtonTextActive,
-                  ]}
+                {/* Seletor de Tipo - 3 BOTÕES LADO A LADO */}
+                <View style={styles.typeContainer}>
+                  <TouchableOpacity
+                    style={[
+                      styles.typeButton,
+                      selectedType === "income" && styles.typeButtonActive,
+                    ]}
+                    onPress={() => setSelectedType("income")}
+                  >
+                    <FontAwesome5
+                      name="arrow-down"
+                      size={20}
+                      color={
+                        selectedType === "income" ? "#fff" : theme.colors.success
+                      }
+                    />
+                    <Text
+                      style={[
+                        styles.typeButtonText,
+                        selectedType === "income" && styles.typeButtonTextActive,
+                      ]}
+                    >
+                      Receita
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.typeButton,
+                      selectedType === "expense" && styles.typeButtonActive,
+                    ]}
+                    onPress={() => setSelectedType("expense")}
+                  >
+                    <FontAwesome5
+                      name="arrow-up"
+                      size={20}
+                      color={
+                        selectedType === "expense" ? "#fff" : theme.colors.danger
+                      }
+                    />
+                    <Text
+                      style={[
+                        styles.typeButtonText,
+                        selectedType === "expense" && styles.typeButtonTextActive,
+                      ]}
+                    >
+                      Despesa
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.typeButton,
+                      selectedType === "transfer" && styles.typeButtonActive,
+                    ]}
+                    onPress={() => setSelectedType("transfer")}
+                  >
+                    <FontAwesome5
+                      name="exchange-alt"
+                      size={20}
+                      color={
+                        selectedType === "transfer" ? "#fff" : theme.colors.info
+                      }
+                    />
+                    <Text
+                      style={[
+                        styles.typeButtonText,
+                        selectedType === "transfer" && styles.typeButtonTextActive,
+                      ]}
+                    >
+                      Transferir
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                  keyboardDismissMode="none"
                 >
-                  Receita
-                </Text>
-              </TouchableOpacity>
+                  {/* Valor */}
+                  <View style={styles.field}>
+                    <Text style={styles.label}>Valor</Text>
+                    <View style={styles.amountContainer}>
+                      <Text style={styles.currencySymbol}>R$</Text>
+                      <TextInput
+                        style={[
+                          styles.amountInput,
+                          errors.amount && styles.inputError,
+                        ]}
+                        value={amount}
+                        onChangeText={handleAmountChange}
+                        placeholder="0,00"
+                        placeholderTextColor={theme.colors.textMuted}
+                        keyboardType="numeric"
+                        autoFocus
+                      />
+                    </View>
+                    {errors.amount && (
+                      <Text style={styles.errorText}>{errors.amount}</Text>
+                    )}
+                  </View>
 
-              <TouchableOpacity
-                style={[
-                  styles.typeButton,
-                  selectedType === "expense" && styles.typeButtonActive,
-                ]}
-                onPress={() => setSelectedType("expense")}
-              >
-                <FontAwesome5
-                  name="arrow-up"
-                  size={20}
-                  color={
-                    selectedType === "expense" ? "#fff" : theme.colors.danger
-                  }
-                />
-                <Text
-                  style={[
-                    styles.typeButtonText,
-                    selectedType === "expense" && styles.typeButtonTextActive,
-                  ]}
-                >
-                  Despesa
-                </Text>
-              </TouchableOpacity>
+                  {/* Descrição */}
+                  <View style={styles.field}>
+                    <Text style={styles.label}>Descrição</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={description}
+                      onChangeText={setDescription}
+                      placeholder={
+                        selectedType === "transfer"
+                          ? "Descrição da transferência"
+                          : "Descrição da transação"
+                      }
+                      placeholderTextColor={theme.colors.textMuted}
+                    />
+                  </View>
 
-              <TouchableOpacity
-                style={[
-                  styles.typeButton,
-                  selectedType === "transfer" && styles.typeButtonActive,
-                ]}
-                onPress={() => setSelectedType("transfer")}
-              >
-                <FontAwesome5
-                  name="exchange-alt"
-                  size={20}
-                  color={
-                    selectedType === "transfer" ? "#fff" : theme.colors.info
-                  }
-                />
-                <Text
-                  style={[
-                    styles.typeButtonText,
-                    selectedType === "transfer" && styles.typeButtonTextActive,
-                  ]}
-                >
-                  Transferir
-                </Text>
-              </TouchableOpacity>
-            </View>
+                  {selectedType !== "transfer" ? (
+                    <>
+                      {/* Categoria (para receitas/despesas) */}
+                      <View style={styles.field}>
+                        <Text style={styles.label}>Categoria</Text>
+                        <TouchableOpacity
+                          style={[
+                            styles.selectButton,
+                            errors.category && styles.inputError,
+                          ]}
+                          onPress={() => setShowCategoryModal(true)}
+                        >
+                          {selectedCategory ? (
+                            <View style={styles.selectButtonContent}>
+                              <FontAwesome5
+                                name={selectedCategory.icon || "tag"}
+                                size={16}
+                                color={theme.colors.primary}
+                              />
+                              <Text style={styles.selectButtonText}>
+                                {selectedCategory.name}
+                              </Text>
+                            </View>
+                          ) : (
+                            <Text style={styles.placeholderText}>
+                              Selecione a categoria
+                            </Text>
+                          )}
+                          <FontAwesome5
+                            name="chevron-down"
+                            size={14}
+                            color={theme.colors.textDim}
+                          />
+                        </TouchableOpacity>
+                        {errors.category && (
+                          <Text style={styles.errorText}>{errors.category}</Text>
+                        )}
+                      </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
-            {/* Valor */}
-            <View style={styles.field}>
-              <Text style={styles.label}>Valor</Text>
-              <View style={styles.amountContainer}>
-                <Text style={styles.currencySymbol}>R$</Text>
-                <TextInput
-                  style={[
-                    styles.amountInput,
-                    errors.amount && styles.inputError,
-                  ]}
-                  value={amount}
-                  onChangeText={handleAmountChange}
-                  placeholder="0,00"
-                  placeholderTextColor={theme.colors.textMuted}
-                  keyboardType="numeric"
-                  autoFocus
-                />
+                      {/* Conta (para receitas/despesas) */}
+                      <View style={styles.field}>
+                        <Text style={styles.label}>Conta</Text>
+                        <TouchableOpacity
+                          style={[
+                            styles.selectButton,
+                            errors.account && styles.inputError,
+                          ]}
+                          onPress={() => setShowAccountModal(true)}
+                        >
+                          {selectedAccount ? (
+                            <View style={styles.selectButtonContent}>
+                              <FontAwesome5
+                                name={
+                                  selectedAccount.type === "Dinheiro"
+                                    ? "money-bill-wave"
+                                    : "university"
+                                }
+                                size={16}
+                                color={theme.colors.primary}
+                              />
+                              <View>
+                                <Text style={styles.selectButtonText}>
+                                  {selectedAccount.name}
+                                </Text>
+                                <Text style={styles.selectBalance}>
+                                  {formatCurrency(
+                                    selectedAccount.balance,
+                                    selectedAccount.currency,
+                                  )}
+                                </Text>
+                              </View>
+                            </View>
+                          ) : (
+                            <Text style={styles.placeholderText}>
+                              Selecione a conta
+                            </Text>
+                          )}
+                          <FontAwesome5
+                            name="chevron-down"
+                            size={14}
+                            color={theme.colors.textDim}
+                          />
+                        </TouchableOpacity>
+                        {errors.account && (
+                          <Text style={styles.errorText}>{errors.account}</Text>
+                        )}
+                      </View>
+                    </>
+                  ) : (
+                    <>
+                      {/* Conta de Origem (para transferência) */}
+                      <View style={styles.field}>
+                        <Text style={styles.label}>Conta de Origem</Text>
+                        <TouchableOpacity
+                          style={[
+                            styles.selectButton,
+                            errors.account && styles.inputError,
+                          ]}
+                          onPress={() => setShowAccountModal(true)}
+                        >
+                          {selectedAccount ? (
+                            <View style={styles.selectButtonContent}>
+                              <FontAwesome5
+                                name={
+                                  selectedAccount.type === "Dinheiro"
+                                    ? "money-bill-wave"
+                                    : "university"
+                                }
+                                size={16}
+                                color={theme.colors.primary}
+                              />
+                              <View>
+                                <Text style={styles.selectButtonText}>
+                                  {selectedAccount.name}
+                                </Text>
+                                <Text style={styles.selectBalance}>
+                                  {formatCurrency(
+                                    selectedAccount.balance,
+                                    selectedAccount.currency,
+                                  )}
+                                </Text>
+                              </View>
+                            </View>
+                          ) : (
+                            <Text style={styles.placeholderText}>
+                              Selecione a conta de origem
+                            </Text>
+                          )}
+                          <FontAwesome5
+                            name="chevron-down"
+                            size={14}
+                            color={theme.colors.textDim}
+                          />
+                        </TouchableOpacity>
+                        {errors.account && (
+                          <Text style={styles.errorText}>{errors.account}</Text>
+                        )}
+                      </View>
+
+                      {/* Conta de Destino (para transferência) */}
+                      <View style={styles.field}>
+                        <Text style={styles.label}>Conta de Destino</Text>
+                        <TouchableOpacity
+                          style={[
+                            styles.selectButton,
+                            errors.toAccount && styles.inputError,
+                          ]}
+                          onPress={() => setShowToAccountModal(true)}
+                        >
+                          {selectedToAccount ? (
+                            <View style={styles.selectButtonContent}>
+                              <FontAwesome5
+                                name={
+                                  selectedToAccount.type === "Dinheiro"
+                                    ? "money-bill-wave"
+                                    : "university"
+                                }
+                                size={16}
+                                color={theme.colors.primary}
+                              />
+                              <View>
+                                <Text style={styles.selectButtonText}>
+                                  {selectedToAccount.name}
+                                </Text>
+                                <Text style={styles.selectBalance}>
+                                  {formatCurrency(
+                                    selectedToAccount.balance,
+                                    selectedToAccount.currency,
+                                  )}
+                                </Text>
+                              </View>
+                            </View>
+                          ) : (
+                            <Text style={styles.placeholderText}>
+                              Selecione a conta de destino
+                            </Text>
+                          )}
+                          <FontAwesome5
+                            name="chevron-down"
+                            size={14}
+                            color={theme.colors.textDim}
+                          />
+                        </TouchableOpacity>
+                        {errors.toAccount && (
+                          <Text style={styles.errorText}>{errors.toAccount}</Text>
+                        )}
+                      </View>
+                    </>
+                  )}
+
+                  {/* Data */}
+                  <View style={styles.field}>
+                    <Text style={styles.label}>Data</Text>
+                    <TouchableOpacity
+                      style={styles.dateButton}
+                      onPress={() => setShowDateModal(true)}
+                    >
+                      <FontAwesome5
+                        name="calendar-alt"
+                        size={16}
+                        color={theme.colors.primary}
+                      />
+                      <Text style={styles.dateText}>{getFormattedDate()}</Text>
+                      <FontAwesome5
+                        name="chevron-down"
+                        size={14}
+                        color={theme.colors.textDim}
+                      />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Botões */}
+                  <View style={styles.footer}>
+                    <Button
+                      title="Cancelar"
+                      onPress={handleCancel}
+                      variant="outline"
+                      style={styles.cancelButton}
+                    />
+                    <Button
+                      title="Salvar"
+                      onPress={handleSave}
+                      style={styles.saveButton}
+                    />
+                  </View>
+                </ScrollView>
               </View>
-              {errors.amount && (
-                <Text style={styles.errorText}>{errors.amount}</Text>
-              )}
-            </View>
-
-            {/* Descrição */}
-            <View style={styles.field}>
-              <Text style={styles.label}>Descrição</Text>
-              <TextInput
-                style={styles.input}
-                value={description}
-                onChangeText={setDescription}
-                placeholder={
-                  selectedType === "transfer"
-                    ? "Descrição da transferência"
-                    : "Descrição da transação"
-                }
-                placeholderTextColor={theme.colors.textMuted}
-              />
-            </View>
-
-            {selectedType !== "transfer" ? (
-              <>
-                {/* Categoria (para receitas/despesas) */}
-                <View style={styles.field}>
-                  <Text style={styles.label}>Categoria</Text>
-                  <TouchableOpacity
-                    style={[
-                      styles.selectButton,
-                      errors.category && styles.inputError,
-                    ]}
-                    onPress={() => setShowCategoryModal(true)}
-                  >
-                    {selectedCategory ? (
-                      <View style={styles.selectButtonContent}>
-                        <FontAwesome5
-                          name={selectedCategory.icon || "tag"}
-                          size={16}
-                          color={theme.colors.primary}
-                        />
-                        <Text style={styles.selectButtonText}>
-                          {selectedCategory.name}
-                        </Text>
-                      </View>
-                    ) : (
-                      <Text style={styles.placeholderText}>
-                        Selecione a categoria
-                      </Text>
-                    )}
-                    <FontAwesome5
-                      name="chevron-down"
-                      size={14}
-                      color={theme.colors.textDim}
-                    />
-                  </TouchableOpacity>
-                  {errors.category && (
-                    <Text style={styles.errorText}>{errors.category}</Text>
-                  )}
-                </View>
-
-                {/* Conta (para receitas/despesas) */}
-                <View style={styles.field}>
-                  <Text style={styles.label}>Conta</Text>
-                  <TouchableOpacity
-                    style={[
-                      styles.selectButton,
-                      errors.account && styles.inputError,
-                    ]}
-                    onPress={() => setShowAccountModal(true)}
-                  >
-                    {selectedAccount ? (
-                      <View style={styles.selectButtonContent}>
-                        <FontAwesome5
-                          name={
-                            selectedAccount.type === "Dinheiro"
-                              ? "money-bill-wave"
-                              : "university"
-                          }
-                          size={16}
-                          color={theme.colors.primary}
-                        />
-                        <View>
-                          <Text style={styles.selectButtonText}>
-                            {selectedAccount.name}
-                          </Text>
-                          <Text style={styles.selectBalance}>
-                            {formatCurrency(
-                              selectedAccount.balance,
-                              selectedAccount.currency,
-                            )}
-                          </Text>
-                        </View>
-                      </View>
-                    ) : (
-                      <Text style={styles.placeholderText}>
-                        Selecione a conta
-                      </Text>
-                    )}
-                    <FontAwesome5
-                      name="chevron-down"
-                      size={14}
-                      color={theme.colors.textDim}
-                    />
-                  </TouchableOpacity>
-                  {errors.account && (
-                    <Text style={styles.errorText}>{errors.account}</Text>
-                  )}
-                </View>
-              </>
-            ) : (
-              <>
-                {/* Conta de Origem (para transferência) */}
-                <View style={styles.field}>
-                  <Text style={styles.label}>Conta de Origem</Text>
-                  <TouchableOpacity
-                    style={[
-                      styles.selectButton,
-                      errors.account && styles.inputError,
-                    ]}
-                    onPress={() => setShowAccountModal(true)}
-                  >
-                    {selectedAccount ? (
-                      <View style={styles.selectButtonContent}>
-                        <FontAwesome5
-                          name={
-                            selectedAccount.type === "Dinheiro"
-                              ? "money-bill-wave"
-                              : "university"
-                          }
-                          size={16}
-                          color={theme.colors.primary}
-                        />
-                        <View>
-                          <Text style={styles.selectButtonText}>
-                            {selectedAccount.name}
-                          </Text>
-                          <Text style={styles.selectBalance}>
-                            {formatCurrency(
-                              selectedAccount.balance,
-                              selectedAccount.currency,
-                            )}
-                          </Text>
-                        </View>
-                      </View>
-                    ) : (
-                      <Text style={styles.placeholderText}>
-                        Selecione a conta de origem
-                      </Text>
-                    )}
-                    <FontAwesome5
-                      name="chevron-down"
-                      size={14}
-                      color={theme.colors.textDim}
-                    />
-                  </TouchableOpacity>
-                  {errors.account && (
-                    <Text style={styles.errorText}>{errors.account}</Text>
-                  )}
-                </View>
-
-                {/* Conta de Destino (para transferência) */}
-                <View style={styles.field}>
-                  <Text style={styles.label}>Conta de Destino</Text>
-                  <TouchableOpacity
-                    style={[
-                      styles.selectButton,
-                      errors.toAccount && styles.inputError,
-                    ]}
-                    onPress={() => setShowToAccountModal(true)}
-                  >
-                    {selectedToAccount ? (
-                      <View style={styles.selectButtonContent}>
-                        <FontAwesome5
-                          name={
-                            selectedToAccount.type === "Dinheiro"
-                              ? "money-bill-wave"
-                              : "university"
-                          }
-                          size={16}
-                          color={theme.colors.primary}
-                        />
-                        <View>
-                          <Text style={styles.selectButtonText}>
-                            {selectedToAccount.name}
-                          </Text>
-                          <Text style={styles.selectBalance}>
-                            {formatCurrency(
-                              selectedToAccount.balance,
-                              selectedToAccount.currency,
-                            )}
-                          </Text>
-                        </View>
-                      </View>
-                    ) : (
-                      <Text style={styles.placeholderText}>
-                        Selecione a conta de destino
-                      </Text>
-                    )}
-                    <FontAwesome5
-                      name="chevron-down"
-                      size={14}
-                      color={theme.colors.textDim}
-                    />
-                  </TouchableOpacity>
-                  {errors.toAccount && (
-                    <Text style={styles.errorText}>{errors.toAccount}</Text>
-                  )}
-                </View>
-              </>
-            )}
-
-            {/* Data */}
-            <View style={styles.field}>
-              <Text style={styles.label}>Data</Text>
-              <TouchableOpacity
-                style={styles.dateButton}
-                onPress={() => setShowDateModal(true)}
-              >
-                <FontAwesome5
-                  name="calendar-alt"
-                  size={16}
-                  color={theme.colors.primary}
-                />
-                <Text style={styles.dateText}>{getFormattedDate()}</Text>
-                <FontAwesome5
-                  name="chevron-down"
-                  size={14}
-                  color={theme.colors.textDim}
-                />
-              </TouchableOpacity>
-            </View>
-
-            {/* Botões */}
-            <View style={styles.footer}>
-              <Button
-                title="Cancelar"
-                onPress={handleCancel}
-                variant="outline"
-                style={styles.cancelButton}
-              />
-              <Button
-                title="Salvar"
-                onPress={handleSave}
-                style={styles.saveButton}
-              />
-            </View>
-            </ScrollView>
+            </TouchableWithoutFeedback>
           </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
 
-          {/* Modal de Seleção de Categoria */}
-          <Modal
-            visible={showCategoryModal}
-            transparent
-            animationType="slide"
-            onRequestClose={() => setShowCategoryModal(false)}
-          >
-            <View style={styles.modalOverlay}>
+      {/* Modal de Seleção de Categoria */}
+      <Modal
+        visible={showCategoryModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowCategoryModal(false)}
+        statusBarTranslucent
+      >
+        <TouchableWithoutFeedback onPress={() => setShowCategoryModal(false)}>
+          <View style={styles.bottomSheetOverlay}>
+            <TouchableWithoutFeedback onPress={() => {}}>
               <View style={styles.selectionModal}>
                 <View style={styles.selectionHeader}>
                   <Text style={styles.selectionTitle}>
@@ -706,20 +719,26 @@ export function TransactionForm({
                     keyExtractor={(item) => item.id}
                     renderItem={renderCategoryItem}
                     showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
                   />
                 )}
               </View>
-            </View>
-          </Modal>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
 
-          {/* Modal de Seleção de Conta (Origem) */}
-          <Modal
-            visible={showAccountModal}
-            transparent
-            animationType="slide"
-            onRequestClose={() => setShowAccountModal(false)}
-          >
-            <View style={styles.modalOverlay}>
+      {/* Modal de Seleção de Conta (Origem) */}
+      <Modal
+        visible={showAccountModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowAccountModal(false)}
+        statusBarTranslucent
+      >
+        <TouchableWithoutFeedback onPress={() => setShowAccountModal(false)}>
+          <View style={styles.bottomSheetOverlay}>
+            <TouchableWithoutFeedback onPress={() => {}}>
               <View style={styles.selectionModal}>
                 <View style={styles.selectionHeader}>
                   <Text style={styles.selectionTitle}>
@@ -753,20 +772,26 @@ export function TransactionForm({
                     keyExtractor={(item) => item.id}
                     renderItem={renderAccountItem}
                     showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
                   />
                 )}
               </View>
-            </View>
-          </Modal>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
 
-          {/* Modal de Seleção de Conta de Destino */}
-          <Modal
-            visible={showToAccountModal}
-            transparent
-            animationType="slide"
-            onRequestClose={() => setShowToAccountModal(false)}
-          >
-            <View style={styles.modalOverlay}>
+      {/* Modal de Seleção de Conta de Destino */}
+      <Modal
+        visible={showToAccountModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowToAccountModal(false)}
+        statusBarTranslucent
+      >
+        <TouchableWithoutFeedback onPress={() => setShowToAccountModal(false)}>
+          <View style={styles.bottomSheetOverlay}>
+            <TouchableWithoutFeedback onPress={() => {}}>
               <View style={styles.selectionModal}>
                 <View style={styles.selectionHeader}>
                   <Text style={styles.selectionTitle}>
@@ -800,20 +825,26 @@ export function TransactionForm({
                     keyExtractor={(item) => item.id}
                     renderItem={renderAccountItem}
                     showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
                   />
                 )}
               </View>
-            </View>
-          </Modal>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
 
-          {/* Modal de Seleção de Data */}
-          <Modal
-            visible={showDateModal}
-            transparent
-            animationType="slide"
-            onRequestClose={() => setShowDateModal(false)}
-          >
-            <View style={styles.modalOverlay}>
+      {/* Modal de Seleção de Data */}
+      <Modal
+        visible={showDateModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowDateModal(false)}
+        statusBarTranslucent
+      >
+        <TouchableWithoutFeedback onPress={() => setShowDateModal(false)}>
+          <View style={styles.bottomSheetOverlay}>
+            <TouchableWithoutFeedback onPress={() => {}}>
               <View style={styles.dateModal}>
                 <View style={styles.selectionHeader}>
                   <Text style={styles.selectionTitle}>Selecione a Data</Text>
@@ -833,6 +864,7 @@ export function TransactionForm({
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     style={styles.dateScroll}
+                    keyboardShouldPersistTaps="handled"
                   >
                     {YEARS.map((year) => (
                       <TouchableOpacity
@@ -864,6 +896,7 @@ export function TransactionForm({
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     style={styles.dateScroll}
+                    keyboardShouldPersistTaps="handled"
                   >
                     {MONTHS.map((month, index) => (
                       <TouchableOpacity
@@ -895,6 +928,7 @@ export function TransactionForm({
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     style={styles.dateScroll}
+                    keyboardShouldPersistTaps="handled"
                   >
                     {DAYS.map((day) => {
                       const daysInMonth = getDaysInMonth(
@@ -933,35 +967,34 @@ export function TransactionForm({
                   style={styles.confirmButton}
                 />
               </View>
-            </View>
-          </Modal>
-        </KeyboardAvoidingView>
-      </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </Modal>
   );
 }
 
-// ESTILOS (mantidos os mesmos, sem alterações)
 const styles = StyleSheet.create({
+  keyboardView: {
+    flex: 1,
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.8)",
     justifyContent: "center",
     alignItems: "center",
-  },
-  keyboardView: {
-    width: "100%",
-    maxWidth: 500,
     padding: 20,
-    justifyContent: "flex-end", // Garante que o modal suba a partir de baixo
-    flex: 1,
   },
   modalContent: {
     backgroundColor: theme.colors.dark,
     borderRadius: 20,
     padding: 20,
-    maxHeight: "85%", // Limita a altura para não cobrir a tela toda
-    marginBottom: Platform.OS === "ios" ? 20 : 0, // Espaço extra no iOS
+    width: "100%",
+    maxWidth: 500,
+    maxHeight: "90%",
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   header: {
     flexDirection: "row",
@@ -980,7 +1013,6 @@ const styles = StyleSheet.create({
   closeButton: {
     padding: 5,
   },
-  // NOVO ESTILO PARA OS BOTÕES DE TIPO
   typeContainer: {
     flexDirection: "row",
     gap: 10,
@@ -1112,6 +1144,11 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     flex: 1,
+  },
+  bottomSheetOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    justifyContent: "flex-end",
   },
   selectionModal: {
     backgroundColor: theme.colors.dark,

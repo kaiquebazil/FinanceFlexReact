@@ -6,7 +6,10 @@ import {
   ScrollView,
   TouchableOpacity,
   Modal,
-  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { Button } from '../ui/Button';
@@ -79,7 +82,6 @@ export function CreditCardManager({ onClose }: CreditCardManagerProps) {
 
     const amount = parseFloat(newPurchase.amount.replace(',', '.'));
     const installments = parseInt(newPurchase.installments);
-    const installmentAmount = amount / installments;
 
     // Atualizar valor usado do cartão
     const updatedCards = creditCards.map(card => 
@@ -88,9 +90,6 @@ export function CreditCardManager({ onClose }: CreditCardManagerProps) {
         : card
     );
     setCreditCards(updatedCards);
-
-    // Aqui você pode adicionar a transação parcelada se quiser
-    // Por enquanto só atualiza o usado
 
     showToast('Compra adicionada com sucesso!', 'success');
     setNewPurchase({ description: '', amount: '', installments: '1', category: 'Compras' });
@@ -111,8 +110,6 @@ export function CreditCardManager({ onClose }: CreditCardManagerProps) {
 
   return (
     <View style={styles.container}>
-      {/* Cabeçalho */}
-
       <ScrollView showsVerticalScrollIndicator={false}>
         {creditCards.length === 0 ? (
           <View style={styles.emptyState}>
@@ -237,64 +234,78 @@ export function CreditCardManager({ onClose }: CreditCardManagerProps) {
         transparent
         animationType="slide"
         onRequestClose={() => setShowAddModal(false)}
+        statusBarTranslucent
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Novo Cartão</Text>
-              <TouchableOpacity onPress={() => setShowAddModal(false)}>
-                <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
-              </TouchableOpacity>
+        <KeyboardAvoidingView
+          style={styles.keyboardView}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback onPress={() => {}}>
+                <View style={styles.modalContent}>
+                  <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>Novo Cartão</Text>
+                    <TouchableOpacity onPress={() => setShowAddModal(false)}>
+                      <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <ScrollView
+                    keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="none"
+                    showsVerticalScrollIndicator={false}
+                  >
+                    <Input
+                      label="Nome do Cartão"
+                      value={newCard.name}
+                      onChangeText={(text) => setNewCard({ ...newCard, name: text })}
+                      placeholder="Ex: Nubank, PicPay"
+                    />
+
+                    <Input
+                      label="Limite (R$)"
+                      value={newCard.limit}
+                      onChangeText={(text) => setNewCard({ ...newCard, limit: text })}
+                      placeholder="5000"
+                      keyboardType="numeric"
+                    />
+
+                    <Input
+                      label="Dia do Fechamento"
+                      value={newCard.closingDay}
+                      onChangeText={(text) => setNewCard({ ...newCard, closingDay: text })}
+                      placeholder="10"
+                      keyboardType="numeric"
+                    />
+
+                    <Input
+                      label="Dia do Vencimento"
+                      value={newCard.dueDay}
+                      onChangeText={(text) => setNewCard({ ...newCard, dueDay: text })}
+                      placeholder="15"
+                      keyboardType="numeric"
+                    />
+
+                    <View style={styles.modalButtons}>
+                      <Button
+                        title="Cancelar"
+                        onPress={() => setShowAddModal(false)}
+                        variant="outline"
+                        style={styles.modalButton}
+                      />
+                      <Button
+                        title="Salvar"
+                        onPress={handleAddCard}
+                        style={styles.modalButton}
+                      />
+                    </View>
+                  </ScrollView>
+                </View>
+              </TouchableWithoutFeedback>
             </View>
-
-            <ScrollView>
-              <Input
-                label="Nome do Cartão"
-                value={newCard.name}
-                onChangeText={(text) => setNewCard({ ...newCard, name: text })}
-                placeholder="Ex: Nubank, PicPay"
-              />
-
-              <Input
-                label="Limite (R$)"
-                value={newCard.limit}
-                onChangeText={(text) => setNewCard({ ...newCard, limit: text })}
-                placeholder="5000"
-                keyboardType="numeric"
-              />
-
-              <Input
-                label="Dia do Fechamento"
-                value={newCard.closingDay}
-                onChangeText={(text) => setNewCard({ ...newCard, closingDay: text })}
-                placeholder="10"
-                keyboardType="numeric"
-              />
-
-              <Input
-                label="Dia do Vencimento"
-                value={newCard.dueDay}
-                onChangeText={(text) => setNewCard({ ...newCard, dueDay: text })}
-                placeholder="15"
-                keyboardType="numeric"
-              />
-
-              <View style={styles.modalButtons}>
-                <Button
-                  title="Cancelar"
-                  onPress={() => setShowAddModal(false)}
-                  variant="outline"
-                  style={styles.modalButton}
-                />
-                <Button
-                  title="Salvar"
-                  onPress={handleAddCard}
-                  style={styles.modalButton}
-                />
-              </View>
-            </ScrollView>
-          </View>
-        </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Modal Adicionar Compra */}
@@ -303,74 +314,88 @@ export function CreditCardManager({ onClose }: CreditCardManagerProps) {
         transparent
         animationType="slide"
         onRequestClose={() => setShowPurchaseModal(false)}
+        statusBarTranslucent
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Nova Compra</Text>
-              <TouchableOpacity onPress={() => setShowPurchaseModal(false)}>
-                <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
-              </TouchableOpacity>
-            </View>
-
-            {selectedCard && (
-              <ScrollView>
-                <View style={styles.selectedCardInfo}>
-                  <FontAwesome5 name="credit-card" size={16} color={selectedCard.color} />
-                  <Text style={styles.selectedCardName}>{selectedCard.name}</Text>
-                </View>
-
-                <Input
-                  label="Descrição"
-                  value={newPurchase.description}
-                  onChangeText={(text) => setNewPurchase({ ...newPurchase, description: text })}
-                  placeholder="Ex: TV, Notebook"
-                />
-
-                <Input
-                  label="Valor (R$)"
-                  value={newPurchase.amount}
-                  onChangeText={(text) => setNewPurchase({ ...newPurchase, amount: text })}
-                  placeholder="1500"
-                  keyboardType="numeric"
-                />
-
-                <Input
-                  label="Número de Parcelas"
-                  value={newPurchase.installments}
-                  onChangeText={(text) => setNewPurchase({ ...newPurchase, installments: text })}
-                  placeholder="12"
-                  keyboardType="numeric"
-                />
-
-                {newPurchase.amount && newPurchase.installments && (
-                  <View style={styles.installmentInfo}>
-                    <Text style={styles.installmentText}>
-                      {parseInt(newPurchase.installments)}x de {formatCurrency(
-                        parseFloat(newPurchase.amount.replace(',', '.')) / parseInt(newPurchase.installments),
-                        'BRL'
-                      )}
-                    </Text>
+        <KeyboardAvoidingView
+          style={styles.keyboardView}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback onPress={() => {}}>
+                <View style={styles.modalContent}>
+                  <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>Nova Compra</Text>
+                    <TouchableOpacity onPress={() => setShowPurchaseModal(false)}>
+                      <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
+                    </TouchableOpacity>
                   </View>
-                )}
 
-                <View style={styles.modalButtons}>
-                  <Button
-                    title="Cancelar"
-                    onPress={() => setShowPurchaseModal(false)}
-                    variant="outline"
-                    style={styles.modalButton}
-                  />
-                  <Button
-                    title="Adicionar"
-                    onPress={handleAddPurchase}
-                    style={styles.modalButton}
-                  />
+                  {selectedCard && (
+                    <ScrollView
+                      keyboardShouldPersistTaps="handled"
+                      keyboardDismissMode="none"
+                      showsVerticalScrollIndicator={false}
+                    >
+                      <View style={styles.selectedCardInfo}>
+                        <FontAwesome5 name="credit-card" size={16} color={selectedCard.color} />
+                        <Text style={styles.selectedCardName}>{selectedCard.name}</Text>
+                      </View>
+
+                      <Input
+                        label="Descrição"
+                        value={newPurchase.description}
+                        onChangeText={(text) => setNewPurchase({ ...newPurchase, description: text })}
+                        placeholder="Ex: TV, Notebook"
+                      />
+
+                      <Input
+                        label="Valor (R$)"
+                        value={newPurchase.amount}
+                        onChangeText={(text) => setNewPurchase({ ...newPurchase, amount: text })}
+                        placeholder="1500"
+                        keyboardType="numeric"
+                      />
+
+                      <Input
+                        label="Número de Parcelas"
+                        value={newPurchase.installments}
+                        onChangeText={(text) => setNewPurchase({ ...newPurchase, installments: text })}
+                        placeholder="12"
+                        keyboardType="numeric"
+                      />
+
+                      {newPurchase.amount && newPurchase.installments && (
+                        <View style={styles.installmentInfo}>
+                          <Text style={styles.installmentText}>
+                            {parseInt(newPurchase.installments)}x de {formatCurrency(
+                              parseFloat(newPurchase.amount.replace(',', '.')) / parseInt(newPurchase.installments),
+                              'BRL'
+                            )}
+                          </Text>
+                        </View>
+                      )}
+
+                      <View style={styles.modalButtons}>
+                        <Button
+                          title="Cancelar"
+                          onPress={() => setShowPurchaseModal(false)}
+                          variant="outline"
+                          style={styles.modalButton}
+                        />
+                        <Button
+                          title="Adicionar"
+                          onPress={handleAddPurchase}
+                          style={styles.modalButton}
+                        />
+                      </View>
+                    </ScrollView>
+                  )}
                 </View>
-              </ScrollView>
-            )}
-          </View>
-        </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Modal Detalhes */}
@@ -379,75 +404,80 @@ export function CreditCardManager({ onClose }: CreditCardManagerProps) {
         transparent
         animationType="slide"
         onRequestClose={() => setShowDetails(false)}
+        statusBarTranslucent
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Detalhes do Cartão</Text>
-              <TouchableOpacity onPress={() => setShowDetails(false)}>
-                <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
-              </TouchableOpacity>
-            </View>
-
-            {selectedCard && (
-              <ScrollView>
-                <View style={styles.detailsCard}>
-                  <View style={styles.detailsHeader}>
-                    <FontAwesome5 name="credit-card" size={30} color={selectedCard.color} />
-                    <Text style={styles.detailsCardName}>{selectedCard.name}</Text>
-                  </View>
-
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Limite Total:</Text>
-                    <Text style={styles.detailValue}>
-                      {formatCurrency(selectedCard.limit, 'BRL')}
-                    </Text>
-                  </View>
-
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Valor Utilizado:</Text>
-                    <Text style={[styles.detailValue, { color: theme.colors.danger }]}>
-                      {formatCurrency(selectedCard.used || 0, 'BRL')}
-                    </Text>
-                  </View>
-
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Disponível:</Text>
-                    <Text style={[styles.detailValue, { color: theme.colors.success }]}>
-                      {formatCurrency(calculateAvailable(selectedCard), 'BRL')}
-                    </Text>
-                  </View>
-
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Fechamento:</Text>
-                    <Text style={styles.detailValue}>
-                      Dia {formatDate(selectedCard.closingDay)}
-                    </Text>
-                  </View>
-
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Vencimento:</Text>
-                    <Text style={styles.detailValue}>
-                      Dia {formatDate(selectedCard.dueDay)}
-                    </Text>
-                  </View>
+        <TouchableWithoutFeedback onPress={() => setShowDetails(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback onPress={() => {}}>
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Detalhes do Cartão</Text>
+                  <TouchableOpacity onPress={() => setShowDetails(false)}>
+                    <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
+                  </TouchableOpacity>
                 </View>
 
-                <Button
-                  title="Voltar"
-                  onPress={() => setShowDetails(false)}
-                  style={styles.backButton}
-                />
-              </ScrollView>
-            )}
+                {selectedCard && (
+                  <ScrollView showsVerticalScrollIndicator={false}>
+                    <View style={styles.detailsCard}>
+                      <View style={styles.detailsHeader}>
+                        <FontAwesome5 name="credit-card" size={30} color={selectedCard.color} />
+                        <Text style={styles.detailsCardName}>{selectedCard.name}</Text>
+                      </View>
+
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Limite Total:</Text>
+                        <Text style={styles.detailValue}>
+                          {formatCurrency(selectedCard.limit, 'BRL')}
+                        </Text>
+                      </View>
+
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Valor Utilizado:</Text>
+                        <Text style={[styles.detailValue, { color: theme.colors.danger }]}>
+                          {formatCurrency(selectedCard.used || 0, 'BRL')}
+                        </Text>
+                      </View>
+
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Disponível:</Text>
+                        <Text style={[styles.detailValue, { color: theme.colors.success }]}>
+                          {formatCurrency(calculateAvailable(selectedCard), 'BRL')}
+                        </Text>
+                      </View>
+
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Fechamento:</Text>
+                        <Text style={styles.detailValue}>
+                          Dia {formatDate(selectedCard.closingDay)}
+                        </Text>
+                      </View>
+
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Vencimento:</Text>
+                        <Text style={styles.detailValue}>
+                          Dia {formatDate(selectedCard.dueDay)}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <Button
+                      title="Voltar"
+                      onPress={() => setShowDetails(false)}
+                      style={styles.backButton}
+                    />
+                  </ScrollView>
+                )}
+              </View>
+            </TouchableWithoutFeedback>
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       </Modal>
 
       {/* Modal de Erro */}
       <ConfirmModal
         visible={showErrorModal}
-        title="⚠️ Erro"
+        title="Atenção"
         message={errorMessage}
         type="warning"
         confirmText="OK"
@@ -472,23 +502,8 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    paddingBottom: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  title: {
+  keyboardView: {
     flex: 1,
-    fontSize: 20,
-    fontFamily: 'Inter-Bold',
-    color: theme.colors.text,
-    marginLeft: 10,
-  },
-  closeButton: {
-    padding: 5,
   },
   emptyState: {
     alignItems: 'center',
@@ -498,7 +513,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     color: theme.colors.textDim,
-    marginTop: 10,
+    marginTop: 15,
   },
   card: {
     backgroundColor: theme.colors.darkLight,

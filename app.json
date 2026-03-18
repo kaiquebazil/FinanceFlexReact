@@ -32,7 +32,8 @@
     },
     "android": {
       "package": "com.kaiquebazil.financeflex",
-      "versionCode": 2
+      "versionCode": 2,
+      "softwareKeyboardLayoutMode": "pan"
     },
     "extra": {},
     "ios": {
