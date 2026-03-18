@@ -664,7 +664,8 @@ export function TransactionForm({
                 style={styles.saveButton}
               />
             </View>
-          </ScrollView>
+            </ScrollView>
+          </View>
 
           {/* Modal de Seleção de Categoria */}
           <Modal
