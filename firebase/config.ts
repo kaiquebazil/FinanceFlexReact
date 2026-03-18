@@ -1,15 +1,9 @@
 // firebase/config.ts
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { 
-  getAuth, 
-  initializeAuth, 
-  getReactNativePersistence, 
-  browserLocalPersistence, 
-  setPersistence 
-} from "firebase/auth";
+import { initializeAuth, getAuth, getReactNativePersistence } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD8A1XDlezTHhBpMBbMBGI9ldPNNGpGHfo",
@@ -24,26 +18,25 @@ const firebaseConfig = {
 // Evita reinicializar o app em hot reload
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// ✅ SOLUÇÃO DEFINITIVA PARA PERSISTÊNCIA NO REACT NATIVE
-// O erro de resolução de módulo "firebase/auth/react-native" acontece quando o Metro 
-// tenta encontrar o arquivo físico, mas nas versões atuais do Firebase (v11+), 
-// o getReactNativePersistence deve ser importado diretamente de 'firebase/auth'.
-
+// Configura autenticação com persistência:
+// - Android/iOS: usa AsyncStorage para manter o usuário logado entre sessões
+// - Web: usa a persistência padrão do Firebase (localStorage)
+//
+// NOTA: getReactNativePersistence é importado de 'firebase/auth' (não de 'firebase/auth/react-native').
+// O subpath 'firebase/auth/react-native' foi removido no Firebase SDK v9+ modular.
+// O Metro Bundler resolve 'firebase/auth' para o bundle react-native correto automaticamente
+// via o campo 'react-native' no package.json do @firebase/auth.
 let auth;
 
-if (Platform.OS === 'web') {
+if (Platform.OS === "web") {
   auth = getAuth(app);
-  setPersistence(auth, browserLocalPersistence).catch(err => {
-    console.warn("[Firebase] Erro na persistência Web:", err);
-  });
 } else {
   try {
-    // Tenta inicializar com a persistência do AsyncStorage
     auth = initializeAuth(app, {
       persistence: getReactNativePersistence(AsyncStorage),
     });
-  } catch (error) {
-    // Caso já tenha sido inicializado ou ocorra erro, usa a instância padrão
+  } catch {
+    // App já inicializado (hot reload) — reutiliza a instância existente
     auth = getAuth(app);
   }
 }
