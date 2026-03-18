@@ -8,3 +8,8 @@ node_modules
 .expo
 .expo-shared
 .vscode
+# Yarn cache
+.yarn/install-state.gz
+
+# NPM lock (já que usa yarn)
+package-lock.json
