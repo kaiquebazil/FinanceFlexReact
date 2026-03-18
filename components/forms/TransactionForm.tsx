@@ -9,6 +9,8 @@ import {
   ScrollView,
   Modal,
   FlatList,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { Button } from "../ui/Button";
@@ -294,101 +296,110 @@ export function TransactionForm({
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="fade"
       onRequestClose={handleCancel}
     >
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          {/* Cabeçalho */}
-          <View style={styles.header}>
-            <Text style={styles.title}>
-              {selectedType === "income" && "Nova Receita"}
-              {selectedType === "expense" && "Nova Despesa"}
-              {selectedType === "transfer" && "Nova Transferência"}
-            </Text>
-            <TouchableOpacity onPress={handleCancel} style={styles.closeButton}>
-              <FontAwesome5
-                name="times"
-                size={20}
-                color={theme.colors.textDim}
-              />
-            </TouchableOpacity>
-          </View>
-
-          {/* Seletor de Tipo - 3 BOTÕES LADO A LADO */}
-          <View style={styles.typeContainer}>
-            <TouchableOpacity
-              style={[
-                styles.typeButton,
-                selectedType === "income" && styles.typeButtonActive,
-              ]}
-              onPress={() => setSelectedType("income")}
-            >
-              <FontAwesome5
-                name="arrow-down"
-                size={20}
-                color={
-                  selectedType === "income" ? "#fff" : theme.colors.success
-                }
-              />
-              <Text
-                style={[
-                  styles.typeButtonText,
-                  selectedType === "income" && styles.typeButtonTextActive,
-                ]}
-              >
-                Receita
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.keyboardView}
+        >
+          <View style={styles.modalContent}>
+            {/* Cabeçalho */}
+            <View style={styles.header}>
+              <Text style={styles.title}>
+                {selectedType === "income" && "Nova Receita"}
+                {selectedType === "expense" && "Nova Despesa"}
+                {selectedType === "transfer" && "Nova Transferência"}
               </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.typeButton,
-                selectedType === "expense" && styles.typeButtonActive,
-              ]}
-              onPress={() => setSelectedType("expense")}
-            >
-              <FontAwesome5
-                name="arrow-up"
-                size={20}
-                color={
-                  selectedType === "expense" ? "#fff" : theme.colors.danger
-                }
-              />
-              <Text
-                style={[
-                  styles.typeButtonText,
-                  selectedType === "expense" && styles.typeButtonTextActive,
-                ]}
+              <TouchableOpacity
+                onPress={handleCancel}
+                style={styles.closeButton}
               >
-                Despesa
-              </Text>
-            </TouchableOpacity>
+                <FontAwesome5
+                  name="times"
+                  size={20}
+                  color={theme.colors.textDim}
+                />
+              </TouchableOpacity>
+            </View>
 
-            <TouchableOpacity
-              style={[
-                styles.typeButton,
-                selectedType === "transfer" && styles.typeButtonActive,
-              ]}
-              onPress={() => setSelectedType("transfer")}
-            >
-              <FontAwesome5
-                name="exchange-alt"
-                size={20}
-                color={selectedType === "transfer" ? "#fff" : theme.colors.info}
-              />
-              <Text
+            {/* Seletor de Tipo - 3 BOTÕES LADO A LADO */}
+            <View style={styles.typeContainer}>
+              <TouchableOpacity
                 style={[
-                  styles.typeButtonText,
-                  selectedType === "transfer" && styles.typeButtonTextActive,
+                  styles.typeButton,
+                  selectedType === "income" && styles.typeButtonActive,
                 ]}
+                onPress={() => setSelectedType("income")}
               >
-                Transferir
-              </Text>
-            </TouchableOpacity>
-          </View>
+                <FontAwesome5
+                  name="arrow-down"
+                  size={20}
+                  color={
+                    selectedType === "income" ? "#fff" : theme.colors.success
+                  }
+                />
+                <Text
+                  style={[
+                    styles.typeButtonText,
+                    selectedType === "income" && styles.typeButtonTextActive,
+                  ]}
+                >
+                  Receita
+                </Text>
+              </TouchableOpacity>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
+              <TouchableOpacity
+                style={[
+                  styles.typeButton,
+                  selectedType === "expense" && styles.typeButtonActive,
+                ]}
+                onPress={() => setSelectedType("expense")}
+              >
+                <FontAwesome5
+                  name="arrow-up"
+                  size={20}
+                  color={
+                    selectedType === "expense" ? "#fff" : theme.colors.danger
+                  }
+                />
+                <Text
+                  style={[
+                    styles.typeButtonText,
+                    selectedType === "expense" && styles.typeButtonTextActive,
+                  ]}
+                >
+                  Despesa
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.typeButton,
+                  selectedType === "transfer" && styles.typeButtonActive,
+                ]}
+                onPress={() => setSelectedType("transfer")}
+              >
+                <FontAwesome5
+                  name="exchange-alt"
+                  size={20}
+                  color={
+                    selectedType === "transfer" ? "#fff" : theme.colors.info
+                  }
+                />
+                <Text
+                  style={[
+                    styles.typeButtonText,
+                    selectedType === "transfer" && styles.typeButtonTextActive,
+                  ]}
+                >
+                  Transferir
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
             {/* Valor */}
             <View style={styles.field}>
               <Text style={styles.label}>Valor</Text>
@@ -921,9 +932,9 @@ export function TransactionForm({
                   style={styles.confirmButton}
                 />
               </View>
-            </View>
-          </Modal>
-        </View>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
       </View>
     </Modal>
   );
@@ -934,14 +945,20 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.8)",
-    justifyContent: "flex-end",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  keyboardView: {
+    width: "100%",
+    maxWidth: 500,
+    padding: 20,
+    justifyContent: "center",
   },
   modalContent: {
     backgroundColor: theme.colors.dark,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderRadius: 20,
     padding: 20,
-    maxHeight: "90%",
+    maxHeight: Platform.OS === "web" ? "90%" : "95%",
   },
   header: {
     flexDirection: "row",
