@@ -1,9 +1,14 @@
 // firebase/config.ts
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, setPersistence, browserLocalPersistence, connectAuthEmulator } from "firebase/auth";
+import { 
+  getAuth, 
+  initializeAuth, 
+  getReactNativePersistence, 
+  browserLocalPersistence, 
+  setPersistence 
+} from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { initializeAuth, getReactNativePersistence } from 'firebase/auth/react-native';
 import { Platform } from 'react-native';
 
 const firebaseConfig = {
@@ -23,19 +28,20 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 let auth;
 
 if (Platform.OS === 'web') {
-  // Para web, usa browserLocalPersistence
+  // Para web, usa browserLocalPersistence padrão
   auth = getAuth(app);
   setPersistence(auth, browserLocalPersistence).catch((error) => {
     console.warn("[Firebase] Erro ao configurar persistência web:", error);
   });
 } else {
-  // Para React Native (iOS/Android), usa AsyncStorage
+  // Para React Native (iOS/Android), usa AsyncStorage via getReactNativePersistence
+  // Importante: getReactNativePersistence agora é exportado diretamente de 'firebase/auth' em versões recentes
   try {
     auth = initializeAuth(app, {
       persistence: getReactNativePersistence(AsyncStorage),
     });
   } catch (error) {
-    // Se já foi inicializado, apenas pega a instância existente
+    // Se já foi inicializado (hot reload), pega a instância existente
     auth = getAuth(app);
   }
 }
