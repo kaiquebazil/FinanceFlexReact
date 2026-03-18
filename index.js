@@ -1,5 +1,3 @@
-import { AppRegistry } from 'react-native';
-import App from './App';
-
-AppRegistry.registerComponent('App', () => App);
-AppRegistry.runApplication('App', { rootTag: document.getElementById('root') });
+// Este arquivo é ignorado pelo Expo (o package.json usa "main": "expo-router/entry").
+// Mantido apenas por compatibilidade com ferramentas que esperam um index.js.
+import "expo-router/entry";

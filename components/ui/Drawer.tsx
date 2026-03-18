@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, StatusBar, Animated, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, StatusBar, Animated, Dimensions, Linking } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
 import { useAuth } from '../../contexts/AuthContext';
@@ -280,12 +280,9 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
                   <Text style={styles.footerText}>© 2026 Finance Flex</Text>
                   <TouchableOpacity
                     onPress={() => {
-                      try {
-                        const Linking = require('react-native').Linking;
-                        Linking.openURL('https://kaiquebazil.github.io/portifolio/');
-                      } catch (e) {
+                      Linking.openURL('https://kaiquebazil.github.io/portifolio/').catch((e: Error) => {
                         console.error('Erro ao abrir portfólio:', e);
-                      }
+                      });
                     }}
                   >
                     <Text style={styles.creatorText}>Criador: Kaique Bazil →</Text>

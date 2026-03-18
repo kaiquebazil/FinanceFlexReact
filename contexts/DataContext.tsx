@@ -1,4 +1,5 @@
 // contexts/DataContext.tsx
+import { Alert } from "react-native";
 import React, {
   createContext,
   useState,
@@ -22,7 +23,6 @@ import type {
 } from "../types";
 import { storage, KEYS } from "../services/storage";
 import { createDefaultCategories } from "../constants/defaultCategories";
-import { createDefaultRecurringBills } from "../constants/defaultRecurringBills";
 
 // Função auxiliar para formatar moeda
 const formatCurrency = (value: number, currency: string = "BRL"): string => {

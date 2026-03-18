@@ -1,7 +1,7 @@
 // app/_layout.tsx
 import { Stack } from 'expo-router';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { DataProvider } from '../contexts/DataContext';
 import { AuthProvider } from '../contexts/AuthContext';

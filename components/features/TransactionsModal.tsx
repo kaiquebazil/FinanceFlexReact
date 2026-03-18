@@ -7,8 +7,7 @@ import {
   Modal,
   TouchableOpacity,
   ScrollView,
-  TextInput,
-  Alert
+  TextInput
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
