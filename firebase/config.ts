@@ -24,24 +24,26 @@ const firebaseConfig = {
 // Evita reinicializar o app em hot reload
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// Configura a autenticação com persistência
+// ✅ SOLUÇÃO DEFINITIVA PARA PERSISTÊNCIA NO REACT NATIVE
+// O erro de resolução de módulo "firebase/auth/react-native" acontece quando o Metro 
+// tenta encontrar o arquivo físico, mas nas versões atuais do Firebase (v11+), 
+// o getReactNativePersistence deve ser importado diretamente de 'firebase/auth'.
+
 let auth;
 
 if (Platform.OS === 'web') {
-  // Para web, usa browserLocalPersistence padrão
   auth = getAuth(app);
-  setPersistence(auth, browserLocalPersistence).catch((error) => {
-    console.warn("[Firebase] Erro ao configurar persistência web:", error);
+  setPersistence(auth, browserLocalPersistence).catch(err => {
+    console.warn("[Firebase] Erro na persistência Web:", err);
   });
 } else {
-  // Para React Native (iOS/Android), usa AsyncStorage via getReactNativePersistence
-  // Importante: Importamos getReactNativePersistence de 'firebase/auth' para evitar erros de resolução
   try {
+    // Tenta inicializar com a persistência do AsyncStorage
     auth = initializeAuth(app, {
       persistence: getReactNativePersistence(AsyncStorage),
     });
   } catch (error) {
-    // Se já foi inicializado (hot reload), pega a instância existente
+    // Caso já tenha sido inicializado ou ocorra erro, usa a instância padrão
     auth = getAuth(app);
   }
 }
