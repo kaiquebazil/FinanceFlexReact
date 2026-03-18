@@ -188,9 +188,9 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.keyboardAvoid}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 32 : 0}
     >
       {/* Notificação fixa no topo */}
       {modalNotif.visible && (
@@ -506,6 +506,7 @@ const styles = StyleSheet.create({
   keyboardAvoid: {
     flex: 1,
     backgroundColor: theme.colors.dark,
+    justifyContent: 'flex-start', // Garante que o conteúdo suba com o teclado
   },
   modalNotification: {
     flexDirection: 'row',

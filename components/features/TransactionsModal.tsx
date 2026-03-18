@@ -142,6 +142,7 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
         transparent
         animationType="slide"
         onRequestClose={onClose}
+        statusBarTranslucent
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -153,7 +154,7 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
               </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="none">
               {/* Filtros */}
               <View style={styles.filtersContainer}>
                 {/* Filtro por tipo */}

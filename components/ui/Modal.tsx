@@ -8,6 +8,8 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
@@ -26,51 +28,59 @@ export function Modal({ visible, onClose, title, children }: ModalProps) {
       transparent
       animationType="fade"
       onRequestClose={onClose}
+      statusBarTranslucent
     >
-      <View style={styles.overlay}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.keyboardView}
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.header}>
-              <Text style={styles.title}>{title}</Text>
-              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
-              </TouchableOpacity>
-            </View>
-            <ScrollView
-              style={styles.content}
-              contentContainerStyle={styles.contentContainer}
-              showsVerticalScrollIndicator={false}
-            >
-              {children}
-            </ScrollView>
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.overlay}>
+            <TouchableWithoutFeedback onPress={() => {}}>
+              <View style={styles.modalContainer}>
+                <View style={styles.header}>
+                  <Text style={styles.title}>{title}</Text>
+                  <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                    <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
+                  </TouchableOpacity>
+                </View>
+                <ScrollView
+                  style={styles.content}
+                  contentContainerStyle={styles.contentContainer}
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                  keyboardDismissMode="none"
+                >
+                  {children}
+                </ScrollView>
+              </View>
+            </TouchableWithoutFeedback>
           </View>
-        </KeyboardAvoidingView>
-      </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </RNModal>
   );
 }
 
 const styles = StyleSheet.create({
+  keyboardView: {
+    flex: 1,
+  },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  keyboardView: {
-    width: '100%',
-    maxWidth: 500,
     padding: 20,
-    justifyContent: 'center',
   },
   modalContainer: {
     backgroundColor: theme.colors.dark,
-    borderRadius: 12,
+    borderRadius: 20,
     padding: 24,
-    maxHeight: Platform.OS === 'web' ? '85%' : '90%',
+    width: '100%',
+    maxWidth: 500,
+    maxHeight: '90%',
     borderWidth: 1,
     borderColor: theme.colors.border,
   },
