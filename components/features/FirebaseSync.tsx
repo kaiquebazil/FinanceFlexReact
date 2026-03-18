@@ -190,7 +190,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.keyboardAvoid}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
       {/* Notificação fixa no topo */}
       {modalNotif.visible && (
@@ -505,6 +505,7 @@ function parseFirebaseError(code?: string): string {
 const styles = StyleSheet.create({
   keyboardAvoid: {
     flex: 1,
+    backgroundColor: theme.colors.dark,
   },
   modalNotification: {
     flexDirection: 'row',
