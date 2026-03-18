@@ -35,7 +35,7 @@ if (Platform.OS === 'web') {
   });
 } else {
   // Para React Native (iOS/Android), usa AsyncStorage via getReactNativePersistence
-  // Importante: getReactNativePersistence agora é exportado diretamente de 'firebase/auth' em versões recentes
+  // Importante: Importamos getReactNativePersistence de 'firebase/auth' para evitar erros de resolução
   try {
     auth = initializeAuth(app, {
       persistence: getReactNativePersistence(AsyncStorage),

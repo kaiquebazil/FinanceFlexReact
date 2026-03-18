@@ -35,7 +35,11 @@
       "versionCode": 2,
       "softwareKeyboardLayoutMode": "pan"
     },
-    "extra": {},
+    "extra": {
+      "eas": {
+        "projectId": "33788232-54e6-4d42-a681-297f6acd2f97"
+      }
+    },
     "ios": {
       "bundleIdentifier": "com.kaiquebazil.financeflex"
     }
