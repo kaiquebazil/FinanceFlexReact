@@ -933,8 +933,8 @@ export function TransactionForm({
                   style={styles.confirmButton}
                 />
               </View>
-            </ScrollView>
-          </View>
+            </View>
+          </Modal>
         </KeyboardAvoidingView>
       </View>
     </Modal>
