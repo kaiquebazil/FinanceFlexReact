@@ -953,13 +953,15 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 500,
     padding: 20,
-    justifyContent: "center",
+    justifyContent: "flex-end", // Garante que o modal suba a partir de baixo
+    flex: 1,
   },
   modalContent: {
     backgroundColor: theme.colors.dark,
     borderRadius: 20,
     padding: 20,
-    maxHeight: Platform.OS === "web" ? "90%" : "95%",
+    maxHeight: "85%", // Limita a altura para não cobrir a tela toda
+    marginBottom: Platform.OS === "ios" ? 20 : 0, // Espaço extra no iOS
   },
   header: {
     flexDirection: "row",

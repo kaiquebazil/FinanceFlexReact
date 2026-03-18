@@ -64,15 +64,17 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 500,
     padding: 20,
-    justifyContent: 'center',
+    justifyContent: 'flex-end', // Garante que o modal suba a partir de baixo
+    flex: 1,
   },
   modalContainer: {
     backgroundColor: theme.colors.dark,
-    borderRadius: 12,
+    borderRadius: 20,
     padding: 24,
-    maxHeight: Platform.OS === 'web' ? '85%' : '90%',
+    maxHeight: '85%', // Limita a altura para não cobrir a tela toda
     borderWidth: 1,
     borderColor: theme.colors.border,
+    marginBottom: Platform.OS === 'ios' ? 20 : 0, // Espaço extra no iOS
   },
   header: {
     flexDirection: 'row',
