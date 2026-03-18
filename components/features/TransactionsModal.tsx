@@ -8,9 +8,7 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
+  Alert
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
@@ -144,28 +142,20 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
         transparent
         animationType="slide"
         onRequestClose={onClose}
-        hardwareAccelerated={true}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
-          style={styles.keyboardView}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              {/* Cabeçalho */}
-              <View style={styles.header}>
-                <Text style={styles.title}>Todas as Transações</Text>
-                <TouchableOpacity onPress={onClose}>
-                  <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
-                </TouchableOpacity>
-              </View>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {/* Cabeçalho */}
+            <View style={styles.header}>
+              <Text style={styles.title}>Todas as Transações</Text>
+              <TouchableOpacity onPress={onClose}>
+                <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
+              </TouchableOpacity>
+            </View>
 
-              <ScrollView
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-              >
-                {/* Filtros */}
-                <View style={styles.filtersContainer}>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {/* Filtros */}
+              <View style={styles.filtersContainer}>
                 {/* Filtro por tipo */}
                 <Text style={styles.filterLabel}>Filtrar por:</Text>
                 <View style={styles.filterRow}>
@@ -334,18 +324,17 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
                     </View>
                   ))
                 )}
-                </View>
-              </ScrollView>
+              </View>
+            </ScrollView>
 
-              {/* Botão Fechar */}
-              <Button
-                title="Fechar"
-                onPress={onClose}
-                style={styles.closeButton}
-              />
-            </View>
+            {/* Botão Fechar */}
+            <Button
+              title="Fechar"
+              onPress={onClose}
+              style={styles.closeButton}
+            />
           </View>
-        </KeyboardAvoidingView>
+        </View>
       </Modal>
 
       {/* Modal de Confirmação para Deletar */}
@@ -375,9 +364,6 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
 }
 
 const styles = StyleSheet.create({
-  keyboardView: {
-    flex: 1,
-  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',

@@ -33,7 +33,7 @@ import { Drawer } from "../components/ui/Drawer";
 import { FAB } from "../components/ui/FAB";
 import { Modal } from "../components/ui/Modal";
 import { Toast } from "../components/ui/Toast";
-import { ResponsiveContainer } from "../components/ui/ResponsiveContainer"; // NOVO COMPONENTE
+import { ResponsiveContainer } from "../components/ui/ResponsiveContainer";
 import { theme } from "../constants/theme";
 import { useData } from "../hooks/useData";
 import { useAuth } from "../contexts/AuthContext";

@@ -57,40 +57,40 @@ export function ConfirmModal({
       visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={onCancel}
-      hardwareAccelerated={true}
+      onRequestClose={onCancel} // Mantém o fechamento pelo botão "voltar" do Android
     >
+      {/* Removeu o TouchableWithoutFeedback */}
       <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+        style={styles.overlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View style={styles.overlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.iconContainer}>
-              <FontAwesome5
-                name={getIconName()}
-                size={50}
-                color={getIconColor()}
-              />
-            </View>
+        {/* A overlay agora é apenas uma View. O toque nela não faz nada. */}
+        <View style={styles.overlay} />
+        <View style={styles.modalContainer}>
+          <View style={styles.iconContainer}>
+            <FontAwesome5
+              name={getIconName()}
+              size={50}
+              color={getIconColor()}
+            />
+          </View>
 
-            <Text style={styles.title}>{title}</Text>
-            <Text style={styles.message}>{message}</Text>
+          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.message}>{message}</Text>
 
-            <View style={styles.buttonsContainer}>
-              <Button
-                title={cancelText}
-                onPress={onCancel}
-                variant="outline"
-                style={styles.button}
-              />
-              <Button
-                title={confirmText}
-                onPress={onConfirm}
-                variant={type === 'danger' ? 'danger' : 'primary'}
-                style={styles.button}
-              />
-            </View>
+          <View style={styles.buttonsContainer}>
+            <Button
+              title={cancelText}
+              onPress={onCancel}
+              variant="outline"
+              style={styles.button}
+            />
+            <Button
+              title={confirmText}
+              onPress={onConfirm}
+              variant={type === 'danger' ? 'danger' : 'primary'}
+              style={styles.button}
+            />
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -99,11 +99,8 @@ export function ConfirmModal({
 }
 
 const styles = StyleSheet.create({
-  keyboardView: {
-    flex: 1,
-  },
   overlay: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject, // Faz a view ocupar toda a tela
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -118,9 +115,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: theme.colors.border,
-    zIndex: 1000,
+    // Adiciona uma sombra para dar profundidade
     ...theme.shadows.medium,
   },
+  // ... resto dos estilos (iconContainer, title, message, buttonsContainer, button) permanecem iguais
   iconContainer: {
     marginBottom: 20,
   },

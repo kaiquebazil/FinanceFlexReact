@@ -12,7 +12,7 @@
       "backgroundColor": "#0a0a0a"
     },
     "web": {
-      "favicon": "./assets/images/icon.svg",
+      "favicon": "./assets/images/icon.png",
       "name": "Finance Flex",
       "shortName": "FinanceFlex",
       "description": "App de finanças pessoais",
@@ -32,18 +32,9 @@
     },
     "android": {
       "package": "com.kaiquebazil.financeflex",
-      "versionCode": 2,
-      "softwareKeyboardLayoutMode": "pan",
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundColor": "#0a0a0a"
-      }
+      "versionCode": 2
     },
-    "extra": {
-      "eas": {
-        "projectId": "82a866df-fc13-442a-9272-c0607158b96e"
-      }
-    },
+    "extra": {},
     "ios": {
       "bundleIdentifier": "com.kaiquebazil.financeflex"
     }

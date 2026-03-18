@@ -9,8 +9,6 @@ import {
   ScrollView,
   Modal,
   FlatList,
-  KeyboardAvoidingView,
-  Platform,
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { Button } from "../ui/Button";
@@ -298,32 +296,27 @@ export function TransactionForm({
       transparent
       animationType="slide"
       onRequestClose={handleCancel}
-      hardwareAccelerated={true}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
-        style={styles.keyboardView}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            {/* Cabeçalho */}
-            <View style={styles.header}>
-              <Text style={styles.title}>
-                {selectedType === "income" && "Nova Receita"}
-                {selectedType === "expense" && "Nova Despesa"}
-                {selectedType === "transfer" && "Nova Transferência"}
-              </Text>
-              <TouchableOpacity onPress={handleCancel} style={styles.closeButton}>
-                <FontAwesome5
-                  name="times"
-                  size={20}
-                  color={theme.colors.textDim}
-                />
-              </TouchableOpacity>
-            </View>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          {/* Cabeçalho */}
+          <View style={styles.header}>
+            <Text style={styles.title}>
+              {selectedType === "income" && "Nova Receita"}
+              {selectedType === "expense" && "Nova Despesa"}
+              {selectedType === "transfer" && "Nova Transferência"}
+            </Text>
+            <TouchableOpacity onPress={handleCancel} style={styles.closeButton}>
+              <FontAwesome5
+                name="times"
+                size={20}
+                color={theme.colors.textDim}
+              />
+            </TouchableOpacity>
+          </View>
 
-            {/* Seletor de Tipo - 3 BOTÕES LADO A LADO */}
-            <View style={styles.typeContainer}>
+          {/* Seletor de Tipo - 3 BOTÕES LADO A LADO */}
+          <View style={styles.typeContainer}>
             <TouchableOpacity
               style={[
                 styles.typeButton,
@@ -395,10 +388,7 @@ export function TransactionForm({
             </TouchableOpacity>
           </View>
 
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          >
+          <ScrollView showsVerticalScrollIndicator={false}>
             {/* Valor */}
             <View style={styles.field}>
               <Text style={styles.label}>Valor</Text>
@@ -935,16 +925,12 @@ export function TransactionForm({
           </Modal>
         </View>
       </View>
-      </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 // ESTILOS (mantidos os mesmos, sem alterações)
 const styles = StyleSheet.create({
-  keyboardView: {
-    flex: 1,
-  },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.8)",
