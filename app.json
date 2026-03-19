@@ -2,7 +2,7 @@
   "expo": {
     "name": "Finance Flex",
     "slug": "finance-flex",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
@@ -32,7 +32,7 @@
     },
     "android": {
       "package": "com.kaiquebazil.financeflex",
-      "versionCode": 2,
+      "versionCode": 3,
       "softwareKeyboardLayoutMode": "pan"
     },
     "extra": {
