@@ -16,8 +16,6 @@ export const theme = {
     textSecondary: '#b0b0b0',
     textMuted: '#808080',
     border: '#333333',
-    cardBg: '#1e1e1e',
-    inputBg: '#2a2a2a',
   },
   fonts: {
     regular: 'Inter-Regular',

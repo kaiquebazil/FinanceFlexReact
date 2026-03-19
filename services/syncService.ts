@@ -10,7 +10,6 @@
 
 import {
   doc,
-  getDoc,
   setDoc,
   onSnapshot,
   serverTimestamp,
@@ -61,14 +60,22 @@ export async function uploadToCloud(userId: string): Promise<void> {
 // Baixa os dados do Firestore e salva no AsyncStorage (sincronização manual)
 // ───────────────────────────────────────────────────────────────────────────────
 export async function downloadFromCloud(userId: string): Promise<CloudData | null> {
-  const docRef = getUserDocRef(userId);
-  const snap = await getDoc(docRef);
-  if (!snap.exists()) {
-    return null;
-  }
-  const data: CloudData = snap.data() as CloudData;
-  await storage.importData(data);
-  return data;
+  return new Promise((resolve, reject) => {
+    const docRef = getUserDocRef(userId);
+    const { getDoc } = require("firebase/firestore");
+
+    getDoc(docRef)
+      .then(async (snap: any) => {
+        if (!snap.exists()) {
+          resolve(null);
+          return;
+        }
+        const data: CloudData = snap.data();
+        await storage.importData(data);
+        resolve(data);
+      })
+      .catch(reject);
+  });
 }
 
 // ───────────────────────────────────────────────────────────────────────────────

@@ -188,7 +188,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.keyboardAvoid}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 32 : 0}
     >
