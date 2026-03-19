@@ -1,8 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, StatusBar, Animated, Dimensions } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useAppTheme } from '../../constants/theme';
+import { theme } from '../../constants/theme';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../hooks/useData';
 import { ConfirmModal } from './ConfirmModal';
@@ -16,8 +15,6 @@ interface DrawerProps {
 const { width } = Dimensions.get('window');
 
 export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
-  const router = useRouter();
-  const theme = useAppTheme();
   const { user, syncStatus, logOut } = useAuth();
   const { resetToDefaults } = useData();
   const isLoggedIn = !!user;
@@ -102,9 +99,14 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
     { id: 'piggyBanks', icon: 'piggy-bank', label: 'Cofrinhos', iconColor: '#FF8A65' },
   ];
 
+  const actionItems = [
+    { id: 'sync', icon: 'cloud', label: 'Sincronização em Nuvem', iconColor: '#64B5F6' },
+    { id: 'reset', icon: 'trash-alt', label: 'Apagar Todos os Dados', iconColor: '#fc2020', danger: false },
+  ];
+
   return (
     <>
-      <StatusBar barStyle={theme.isDark ? "light-content" : "dark-content"} />
+      <StatusBar barStyle="light-content" />
       <Modal
         visible={visible}
         transparent={true}
@@ -112,6 +114,7 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
         onRequestClose={onClose}
       >
         <View style={styles.overlay}>
+          {/* Fundo escuro com fade */}
           <Animated.View style={[styles.backdrop, { opacity: fadeAnim }]}>
             <TouchableOpacity
               style={StyleSheet.absoluteFillObject}
@@ -120,36 +123,37 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
             />
           </Animated.View>
 
+          {/* Drawer lateral com animação */}
           <Animated.View style={[
             styles.drawerContainer,
-            { transform: [{ translateX: slideAnim }], backgroundColor: theme.colors.surface }
+            { transform: [{ translateX: slideAnim }] }
           ]}>
             <View style={styles.drawer}>
               {/* Cabeçalho */}
               <View style={styles.header}>
                 <View style={styles.logoContainer}>
                   <FontAwesome5 name="wallet" size={24} color={theme.colors.primary} />
-                  <Text style={[styles.logoText, { color: theme.colors.text }]}>Finance Flex</Text>
+                  <Text style={styles.logoText}>Finance Flex</Text>
                 </View>
                 <TouchableOpacity onPress={onClose} style={styles.closeButton}>
                   <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
                 </TouchableOpacity>
               </View>
 
-              {/* Info do usuário */}
+              {/* Info do usuário com link para portfólio */}
               {isLoggedIn && (
                 <TouchableOpacity
                   style={styles.userSection}
                   onPress={() => {
-                    onNavigate('sync');
-                    onClose();
-                  }}
+                  onNavigate('sync');
+                  onClose();
+                }}
                 >
                   <View style={styles.userInfo}>
                     <FontAwesome5 name="user-circle" size={32} color={theme.colors.primary} />
                     <View style={styles.userDetails}>
-                      <Text style={[styles.userName, { color: theme.colors.text }]} numberOfLines={1}>{user.displayName || 'Usuário'}</Text>
-                      <Text style={[styles.userEmail, { color: theme.colors.textDim }]} numberOfLines={1}>{user.email}</Text>
+                      <Text style={styles.userName} numberOfLines={1}>{user.displayName || 'Usuário'}</Text>
+                      <Text style={styles.userEmail} numberOfLines={1}>{user.email}</Text>
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -181,7 +185,7 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
               >
                 {/* Menu Principal */}
                 <View style={styles.section}>
-                  <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>MENU PRINCIPAL</Text>
+                  <Text style={styles.sectionTitle}>MENU PRINCIPAL</Text>
                   {menuItems.map((item) => (
                     <TouchableOpacity
                       key={item.id}
@@ -199,64 +203,122 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
                           color={item.iconColor}
                           style={styles.menuItemIcon}
                         />
-                        <Text style={[styles.menuItemText, { color: theme.colors.text }]}>{item.label}</Text>
+                        <Text style={styles.menuItemText}>{item.label}</Text>
                       </View>
                       <FontAwesome5 name="chevron-right" size={16} color={theme.colors.textDim} />
                     </TouchableOpacity>
                   ))}
                 </View>
 
-                <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
+                {/* Divisor */}
+                <View style={styles.divider} />
 
-                {/* Configurações */}
+                {/* Ações Rápidas - AGORA COM O BOTÃO APAGAR */}
                 <View style={styles.section}>
-                  <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>SISTEMA</Text>
-                  <TouchableOpacity
-                    style={styles.menuItem}
-                    onPress={() => {
-                      onClose();
-                      router.push('/settings');
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.menuItemContent}>
-                      <FontAwesome5
-                        name="cog"
-                        size={18}
-                        color={theme.colors.textDim}
-                        style={styles.menuItemIcon}
-                      />
-                      <Text style={[styles.menuItemText, { color: theme.colors.text }]}>Configurações</Text>
+                  <Text style={styles.sectionTitle}>AÇÕES RÁPIDAS</Text>
+                  {actionItems.map((item) => (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={styles.menuItem}
+                      onPress={() => {
+                        if (item.id === 'reset') {
+                          setShowResetConfirm(true);
+                        } else {
+                          onNavigate(item.id);
+                          onClose();
+                        }
+                      }}
+                      activeOpacity={0.4}
+                    >
+                      <View style={styles.menuItemContent}>
+                        <FontAwesome5
+                          name={item.icon}
+                          size={18}
+                          color={item.iconColor}
+                          style={styles.menuItemIcon}
+                        />
+                        <Text style={styles.menuItemText}>{item.label}</Text>
+                      </View>
+                      <FontAwesome5 name="chevron-right" size={16} color={theme.colors.textDim} />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Seção de Usuário - SÓ APARECE QUANDO LOGADO */}
+                {isLoggedIn && (
+                  <>
+                    <View style={styles.divider} />
+                    
+                    <View style={styles.section}>
+                      <Text style={[styles.sectionTitle, styles.userSectionTitle]}>CONTA</Text>
+                      
+                      {/* Botão Sair */}
+                      <TouchableOpacity
+                        style={[styles.menuItem, styles.logoutItem]}
+                        onPress={() => setShowLogoutConfirm(true)}
+                        activeOpacity={0.7}
+                      >
+                        <View style={styles.menuItemContent}>
+                          <FontAwesome5
+                            name="sign-out-alt"
+                            size={18}
+                            color={theme.colors.danger}
+                            style={styles.menuItemIcon}
+                          />
+                          <Text style={[styles.menuItemText, styles.logoutText]}>
+                            Sair da Conta
+                          </Text>
+                        </View>
+                        <FontAwesome5 name="chevron-right" size={16} color={theme.colors.danger} />
+                      </TouchableOpacity>
                     </View>
-                    <FontAwesome5 name="chevron-right" size={16} color={theme.colors.textDim} />
+                  </>
+                )}
+
+                {/* Rodapé com informações do criador */}
+                <View style={styles.footer}>
+                  <Text style={styles.footerText}>© 2026 Finance Flex</Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      try {
+                        const Linking = require('react-native').Linking;
+                        Linking.openURL('https://kaiquebazil.github.io/portifolio/');
+                      } catch (e) {
+                        console.error('Erro ao abrir portfólio:', e);
+                      }
+                    }}
+                  >
+                    <Text style={styles.creatorText}>Criador: Kaique Bazil →</Text>
                   </TouchableOpacity>
                 </View>
               </ScrollView>
-
-              {/* Rodapé */}
-              <View style={styles.footer}>
-                <Text style={[styles.footerText, { color: theme.colors.textMuted }]}>FinanceFlex v1.0.0</Text>
-              </View>
             </View>
           </Animated.View>
         </View>
       </Modal>
 
-      <ConfirmModal
-        visible={showResetConfirm}
-        title="Apagar Tudo?"
-        message="Isso removerá permanentemente todos os seus dados locais."
-        type="danger"
-        onConfirm={handleResetData}
-        onCancel={() => setShowResetConfirm(false)}
-      />
-
+      {/* Modal de confirmação para logout */}
       <ConfirmModal
         visible={showLogoutConfirm}
         title="Sair da Conta"
-        message="Deseja realmente sair da sua conta?"
+        message="Tem certeza que deseja sair? Seus dados locais serão mantidos."
+        type="warning"
+        confirmText="Sair"
+        cancelText="Cancelar"
         onConfirm={handleLogout}
         onCancel={() => setShowLogoutConfirm(false)}
+      />
+
+      {/* Modal de confirmação para apagar dados - VERSÃO MELHORADA */}
+      <ConfirmModal
+        visible={showResetConfirm}
+        title="⚠️ Apagar Todos os Dados?"
+        message="Esta ação é irreversível e apagará TODOS os seus dados, incluindo transações, categorias, contas recorrentes, cartões de crédito e cofrinhos."
+        type="danger"
+        confirmText="Sim"
+        cancelText="Cancelar"
+        onConfirm={handleResetData}
+        onCancel={() => setShowResetConfirm(false)}
       />
     </>
   );
@@ -266,85 +328,117 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     flexDirection: 'row',
+    backgroundColor: 'transparent',
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
   },
   drawerContainer: {
-    width: width * 0.8,
-    height: '100%',
+    width: '80%',
     maxWidth: 320,
+    backgroundColor: theme.colors.dark,
+    borderRightWidth: 1,
+    borderRightColor: theme.colors.border,
   },
   drawer: {
     flex: 1,
+    backgroundColor: theme.colors.dark,
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 50,
-    paddingBottom: 20,
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
   },
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
   },
   logoText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginLeft: 12,
+    color: theme.colors.text,
   },
   closeButton: {
     padding: 8,
   },
   userSection: {
     paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingVertical: 12,
+    backgroundColor: theme.colors.darkLight,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
   },
   userInfo: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    gap: 12,
   },
   userDetails: {
-    marginLeft: 12,
     flex: 1,
+    justifyContent: 'center',
   },
   userName: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.text,
   },
   userEmail: {
     fontSize: 12,
+    color: theme.colors.textDim,
     marginTop: 2,
+  },
+  portfolioLink: {
+    fontSize: 11,
+    color: theme.colors.primary,
+    fontWeight: '600',
+    marginTop: 4,
   },
   syncStatusContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
     paddingHorizontal: 20,
-    paddingBottom: 15,
+    paddingVertical: 12,
+    backgroundColor: theme.colors.darkLight,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
   },
   syncStatusText: {
-    fontSize: 12,
-    marginLeft: 8,
+    fontSize: 14,
     fontWeight: '500',
+  },
+  syncEmail: {
+    flex: 1,
+    fontSize: 12,
+    color: theme.colors.textDim,
+    textAlign: 'right',
   },
   content: {
     flex: 1,
+    paddingHorizontal: 16,
   },
   scrollContent: {
-    paddingBottom: 30,
+    paddingBottom: 20,
   },
   section: {
-    paddingHorizontal: 20,
-    marginTop: 20,
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 12,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    letterSpacing: 1,
+    fontWeight: '600',
+    color: theme.colors.textDim,
+    marginBottom: 12,
+    marginTop: 16,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+  userSectionTitle: {
+    color: theme.colors.primary,
   },
   menuItem: {
     flexDirection: 'row',
@@ -352,32 +446,50 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 12,
     marginBottom: 4,
+    borderRadius: 8,
+    paddingHorizontal: 8,
   },
   menuItemContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
   menuItemIcon: {
-    width: 24,
+    width: 30,
     textAlign: 'center',
-    marginRight: 15,
   },
   menuItemText: {
-    fontSize: 16,
+    fontSize: 15,
+    color: theme.colors.text,
     fontWeight: '500',
+    marginLeft: 12,
+    flex: 1,
+  },
+  logoutText: {
+    color: theme.colors.danger,
+  },
+  logoutItem: {
+    backgroundColor: 'rgba(255, 61, 0, 0.05)',
   },
   divider: {
     height: 1,
-    marginHorizontal: 20,
-    marginTop: 20,
+    backgroundColor: theme.colors.border,
+    marginVertical: 8,
+    marginHorizontal: 16,
   },
   footer: {
-    padding: 20,
+    marginTop: 20,
     alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.05)',
+    paddingBottom: 20,
   },
   footerText: {
-    fontSize: 12,
+    fontSize: 11,
+    color: theme.colors.textDim,
+    marginBottom: 4,
+  },
+  creatorText: {
+    fontSize: 11,
+    color: theme.colors.textDim,
+    fontStyle: 'italic',
   },
 });
