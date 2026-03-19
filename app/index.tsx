@@ -12,6 +12,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Image,
 } from "react-native";
 import { BackupRestore } from "../components/features/BackupRestore";
 import { FirebaseSync } from "../components/features/FirebaseSync";
@@ -312,12 +313,11 @@ export default function HomeScreen() {
           >
             <View style={styles.headerContent}>
               <View style={styles.logoContainer}>
-                <FontAwesome5
-                  name="wallet"
-                  size={24}
-                  color={theme.colors.primary}
+                <Image
+                  source={require("../assets/images/icon.png")}
+                  style={{ width: 32, height: 32, resizeMode: "contain" }}
                 />
-                <Text style={styles.logoText}>Finance Flex</Text>
+                <Text style={styles.logoText}>FinanceFlex</Text>
               </View>
               <View style={styles.headerActions}>
                 {/* Indicador de sincronização em tempo real */}

@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, StatusBar, Animated, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, StatusBar, Animated, Dimensions, Image } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
 import { useAuth } from '../../contexts/AuthContext';
@@ -132,7 +132,10 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
               {/* Cabeçalho */}
               <View style={styles.header}>
                 <View style={styles.logoContainer}>
-                  <FontAwesome5 name="wallet" size={24} color={theme.colors.primary} />
+                  <Image
+                    source={require('../../assets/images/icon.png')}
+                    style={{ width: 32, height: 32, resizeMode: 'contain' }}
+                  />
                   <Text style={styles.logoText}>Finance Flex</Text>
                 </View>
                 <TouchableOpacity onPress={onClose} style={styles.closeButton}>
