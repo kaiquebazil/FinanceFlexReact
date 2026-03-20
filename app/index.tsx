@@ -218,7 +218,7 @@ export default function HomeScreen() {
   };
 
   // Função para salvar transação (unificada)
-  const handleSaveTransaction = (data: any) => {
+  const handleSaveTransaction = (data: any, stayOpen?: boolean) => {
     const newTransaction = {
       id: Date.now().toString(),
       type: data.type,
@@ -242,7 +242,9 @@ export default function HomeScreen() {
       "success",
     );
 
-    setShowTransactionModal(false);
+    if (!stayOpen) {
+      setShowTransactionModal(false);
+    }
   };
 
   // Funções para lidar com contas

@@ -25,7 +25,7 @@ type TransactionType = "income" | "expense" | "transfer";
 interface TransactionFormProps {
   visible: boolean;
   onClose: () => void;
-  onSave: (data: any) => void;
+  onSave: (data: any, stayOpen?: boolean) => void;
   initialType?: TransactionType;
 }
 
@@ -81,20 +81,25 @@ export function TransactionForm({
   // Estados de erro
   const [errors, setErrors] = useState<any>({});
 
+  // Função para resetar o formulário
+  const resetForm = () => {
+    const now = new Date();
+    setSelectedDay(now.getDate().toString());
+    setSelectedMonth(now.getMonth());
+    setSelectedYear(now.getFullYear().toString());
+    setAmount("");
+    setDescription("");
+    setSelectedCategory(null);
+    setSelectedAccount(null);
+    setSelectedToAccount(null);
+    setSelectedType(initialType);
+    setErrors({});
+  };
+
   // Resetar formulário quando o modal abrir, respeitando o initialType
   useEffect(() => {
     if (visible) {
-      const now = new Date();
-      setSelectedDay(now.getDate().toString());
-      setSelectedMonth(now.getMonth());
-      setSelectedYear(now.getFullYear().toString());
-      setAmount("");
-      setDescription("");
-      setSelectedCategory(null);
-      setSelectedAccount(null);
-      setSelectedToAccount(null);
-      setSelectedType(initialType);
-      setErrors({});
+      resetForm();
     }
   }, [visible, initialType]);
 
@@ -145,7 +150,7 @@ export function TransactionForm({
   }, [selectedMonth, selectedYear]);
 
   // Validar e salvar
-  const handleSave = () => {
+  const handleSave = (stayOpen = false) => {
     const newErrors: any = {};
 
     // Validar valor
@@ -233,7 +238,10 @@ export function TransactionForm({
       transaction.accountName = selectedAccount.name;
     }
 
-    onSave(transaction);
+    onSave(transaction, stayOpen);
+    if (stayOpen) {
+      resetForm();
+    }
   };
 
   // Cancelar
@@ -666,7 +674,13 @@ export function TransactionForm({
                     />
                     <Button
                       title="Salvar"
-                      onPress={handleSave}
+                      onPress={() => handleSave(false)}
+                      style={styles.saveButton}
+                    />
+                    <Button
+                      title="Lançar mais"
+                      onPress={() => handleSave(true)}
+                      variant="secondary"
                       style={styles.saveButton}
                     />
                   </View>
@@ -1135,15 +1149,18 @@ const styles = StyleSheet.create({
   },
   footer: {
     flexDirection: "row",
-    gap: 12,
+    flexWrap: "wrap",
+    gap: 10,
     marginTop: 20,
     marginBottom: 10,
   },
   cancelButton: {
     flex: 1,
+    minWidth: '28%',
   },
   saveButton: {
     flex: 1,
+    minWidth: '30%',
   },
   bottomSheetOverlay: {
     flex: 1,
