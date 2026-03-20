@@ -20,6 +20,7 @@ import { CategoryManager } from "../components/features/CategoryManager";
 import { CreditCardManager } from "../components/features/CreditCardManager";
 import { RecurringBillsManager } from "../components/features/RecurringBillsManager";
 import { TransactionsModal } from "../components/features/TransactionsModal";
+import { CalendarModal } from "../components/features/CalendarModal";
 import { AccountEditForm } from "../components/forms/AccountEditForm";
 import { AccountForm } from "../components/forms/AccountForm";
 import { PiggyBankEditForm } from "../components/forms/PiggyBankEditForm";
@@ -84,6 +85,7 @@ export default function HomeScreen() {
   // Estados para modais
   const [showDrawer, setShowDrawer] = useState(false);
   const [showTransactionsModal, setShowTransactionsModal] = useState(false);
+  const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showAccountEditModal, setShowAccountEditModal] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<any>(null);
@@ -511,9 +513,18 @@ export default function HomeScreen() {
 
           {/* Calendário de Pagamentos */}
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, styles.calendarTitle]}>
-              Contas do Mês
-            </Text>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, styles.calendarTitle]}>
+                Contas do Mês
+              </Text>
+              <TouchableOpacity onPress={() => setShowCalendarModal(true)}>
+                <FontAwesome5
+                  name="calendar-alt"
+                  size={16}
+                  color={theme.colors.primary}
+                />
+              </TouchableOpacity>
+            </View>
             <Calendar
               transactions={transactions}
               recurringBills={recurringBills}
@@ -1074,6 +1085,15 @@ export default function HomeScreen() {
       >
         <FirebaseSync onClose={() => setShowSyncModal(false)} />
       </Modal>
+
+      {/* Modal de Calendário Interativo */}
+      <CalendarModal
+        visible={showCalendarModal}
+        onClose={() => setShowCalendarModal(false)}
+        transactions={transactions}
+        recurringBills={recurringBills}
+        accounts={accounts}
+      />
 
       {/* Modal de Confirmação Global */}
       <ConfirmModal
