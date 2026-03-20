@@ -973,7 +973,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === "ios" ? 10 : 20,
+    paddingTop: Platform.OS === "ios" ? 10 : 30,
     paddingBottom: 20,
   },
   headerContent: {
