@@ -88,7 +88,11 @@ export function RecurringBillsManager({ onClose }: RecurringBillsManagerProps) {
   const paidBills = sortedBills.filter(bill => bill.isPaid);
   const unpaidBills = sortedBills.filter(bill => !bill.isPaid);
 
-  const renderBillItem = (bill: any) => (
+  const renderBillItem = (bill: any) => {
+    const category = categories.find(c => c.name === bill.category);
+    const categoryIcon = category?.icon || 'tag';
+
+    return (
     <View key={bill.id} style={styles.billItem}>
       <TouchableOpacity 
         onPress={() => toggleRecurringBillPaid(bill.id)} 
@@ -121,7 +125,7 @@ export function RecurringBillsManager({ onClose }: RecurringBillsManagerProps) {
           
           {bill.category && (
             <View style={styles.billDetail}>
-              <FontAwesome5 name="tag" size={12} color={theme.colors.textDim} />
+              <FontAwesome5 name={categoryIcon} size={12} color={theme.colors.textDim} />
               <Text style={styles.billDetailText}>
                 {bill.category}
               </Text>
@@ -137,7 +141,8 @@ export function RecurringBillsManager({ onClose }: RecurringBillsManagerProps) {
         <FontAwesome5 name="trash" size={16} color={theme.colors.danger} />
       </TouchableOpacity>
     </View>
-  );
+    );
+  };
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>

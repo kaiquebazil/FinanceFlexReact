@@ -18,10 +18,11 @@ interface CategoryManagerProps {
 }
 
 export function CategoryManager({ onClose }: CategoryManagerProps) {
-  const { categories, addCategory, deleteCategory } = useData();
+  const { categories, addCategory, updateCategory, deleteCategory } = useData();
   const [selectedType, setSelectedType] = useState<'income' | 'expense'>('expense');
   const [newCategoryName, setNewCategoryName] = useState('');
   const [selectedIcon, setSelectedIcon] = useState('tag');
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const incomeCategories = categories.filter(c => c.type === 'income');
   const expenseCategories = categories.filter(c => c.type === 'expense');
@@ -32,14 +33,30 @@ export function CategoryManager({ onClose }: CategoryManagerProps) {
       return;
     }
 
-    addCategory({
-      name: newCategoryName.trim(),
-      type: selectedType,
-      icon: selectedIcon
-    });
+    if (editingId) {
+      updateCategory(editingId, {
+        name: newCategoryName.trim(),
+        type: selectedType,
+        icon: selectedIcon
+      });
+      setEditingId(null);
+    } else {
+      addCategory({
+        name: newCategoryName.trim(),
+        type: selectedType,
+        icon: selectedIcon
+      });
+    }
 
     setNewCategoryName('');
     setSelectedIcon('tag');
+  };
+
+  const handleEditCategory = (category: any) => {
+    setEditingId(category.id);
+    setNewCategoryName(category.name);
+    setSelectedIcon(category.icon || 'tag');
+    setSelectedType(category.type);
   };
 
   return (
@@ -124,9 +141,24 @@ export function CategoryManager({ onClose }: CategoryManagerProps) {
           placeholder="Nome da categoria"
           placeholderTextColor={theme.colors.textMuted}
         />
-        <TouchableOpacity style={styles.addButton} onPress={handleAddCategory}>
-          <Text style={styles.addButtonText}>Adicionar</Text>
+        <TouchableOpacity 
+          style={[styles.addButton, editingId && { backgroundColor: theme.colors.success }]} 
+          onPress={handleAddCategory}
+        >
+          <Text style={styles.addButtonText}>{editingId ? 'Salvar' : 'Adicionar'}</Text>
         </TouchableOpacity>
+        {editingId && (
+          <TouchableOpacity 
+            style={[styles.addButton, { backgroundColor: theme.colors.textDim }]} 
+            onPress={() => {
+              setEditingId(null);
+              setNewCategoryName('');
+              setSelectedIcon('tag');
+            }}
+          >
+            <Text style={styles.addButtonText}>X</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Lista de categorias */}
@@ -141,9 +173,14 @@ export function CategoryManager({ onClose }: CategoryManagerProps) {
               />
               <Text style={styles.categoryName}>{category.name}</Text>
             </View>
-            <TouchableOpacity onPress={() => deleteCategory(category.id)}>
-              <FontAwesome5 name="trash" size={16} color={theme.colors.danger} />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', gap: 15 }}>
+              <TouchableOpacity onPress={() => handleEditCategory(category)}>
+                <FontAwesome5 name="edit" size={16} color={theme.colors.primary} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => deleteCategory(category.id)}>
+                <FontAwesome5 name="trash" size={16} color={theme.colors.danger} />
+              </TouchableOpacity>
+            </View>
           </View>
         ))}
       </ScrollView>
