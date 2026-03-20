@@ -94,7 +94,7 @@ export function PiggyBankForm({ onSave, onCancel }: PiggyBankFormProps) {
       <View style={styles.buttons}>
         <Button title="Cancelar" onPress={onCancel} variant="outline" style={styles.button} />
         <Button title="Salvar" onPress={() => handleSave(false)} style={styles.button} />
-        <Button title="Lançar mais" onPress={() => handleSave(true)} variant="secondary" style={styles.button} />
+        <Button title="Lançar mais" onPress={() => handleSave(true)} style={styles.button} />
       </View>
     </View>
   );

@@ -678,9 +678,8 @@ export function TransactionForm({
                       style={styles.saveButton}
                     />
                     <Button
-                      title="Lançar mais"
+                      title="Lançar Mais"
                       onPress={() => handleSave(true)}
-                      variant="secondary"
                       style={styles.saveButton}
                     />
                   </View>
