@@ -982,8 +982,10 @@ export default function HomeScreen() {
             );
           })}
           <PiggyBankForm
-            onSave={() => {
-              setShowPiggyBankModal(false);
+            onSave={(stayOpen) => {
+              if (!stayOpen) {
+                setShowPiggyBankModal(false);
+              }
               showToast("Cofrinho criado com sucesso!", "success");
             }}
             onCancel={() => setShowPiggyBankModal(false)}

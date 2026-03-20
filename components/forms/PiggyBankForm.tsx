@@ -5,7 +5,7 @@ import { Button } from '../ui/Button';
 import { useData } from '../../hooks/useData';
 
 interface PiggyBankFormProps {
-  onSave: () => void;
+  onSave: (stayOpen?: boolean) => void;
   onCancel: () => void;
 }
 
@@ -16,7 +16,14 @@ export function PiggyBankForm({ onSave, onCancel }: PiggyBankFormProps) {
   const [currentAmount, setCurrentAmount] = useState('0');
   const [selectedAccountId, setSelectedAccountId] = useState<string>('');
 
-  const handleSave = () => {
+  const resetForm = () => {
+    setName('');
+    setTargetAmount('');
+    setCurrentAmount('0');
+    setSelectedAccountId('');
+  };
+
+  const handleSave = (stayOpen = false) => {
     if (name.trim() && targetAmount) {
       addPiggyBank({
         name: name.trim(),
@@ -25,7 +32,10 @@ export function PiggyBankForm({ onSave, onCancel }: PiggyBankFormProps) {
         color: '#7c4dff',
         accountId: selectedAccountId || undefined,
       });
-      onSave();
+      onSave(stayOpen);
+      if (stayOpen) {
+        resetForm();
+      }
     }
   };
 
@@ -83,7 +93,8 @@ export function PiggyBankForm({ onSave, onCancel }: PiggyBankFormProps) {
 
       <View style={styles.buttons}>
         <Button title="Cancelar" onPress={onCancel} variant="outline" style={styles.button} />
-        <Button title="Salvar" onPress={handleSave} style={styles.button} />
+        <Button title="Salvar" onPress={() => handleSave(false)} style={styles.button} />
+        <Button title="Lançar mais" onPress={() => handleSave(true)} variant="secondary" style={styles.button} />
       </View>
     </View>
   );
