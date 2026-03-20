@@ -32,6 +32,7 @@ export interface CloudData {
   categories: any[];
   invoices: any[];
   invoicePayments: any[];
+  budgets: any[];
   updatedAt?: any;
 }
 

@@ -31,6 +31,7 @@ export interface PiggyBank {
   color: string;
   accountId?: string;        
   targetDate?: string;
+  monthlyContribution?: number; // contribuição mensal planejada
   createdAt: string;
 }
 
@@ -90,6 +91,17 @@ export interface Category {
   name: string;
   type: 'income' | 'expense';
   icon: string;
+  createdAt: string;
+}
+
+export interface Budget {
+  id: string;
+  categoryId: string;
+  categoryName: string;
+  categoryIcon: string;
+  limitAmount: number;
+  month: number; // 1-12
+  year: number;
   createdAt: string;
 }
 

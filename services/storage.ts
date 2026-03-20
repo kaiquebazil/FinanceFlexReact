@@ -12,6 +12,7 @@ export const KEYS = {
   VALUES_HIDDEN: 'valuesHidden',
   INVOICES: 'invoices',
   INVOICE_PAYMENTS: 'invoicePayments',
+  BUDGETS: 'financeBudgets',
 };
 
 export const storage = new class {
@@ -52,6 +53,7 @@ export const storage = new class {
       categories: await this.getItem(KEYS.CATEGORIES) ?? [],
       invoices: await this.getItem(KEYS.INVOICES) ?? [],
       invoicePayments: await this.getItem(KEYS.INVOICE_PAYMENTS) ?? [],
+      budgets: await this.getItem(KEYS.BUDGETS) ?? [],
     };
   }
 
@@ -65,6 +67,7 @@ export const storage = new class {
     if (data?.categories) await this.setItem(KEYS.CATEGORIES, data.categories);
     if (data?.invoices) await this.setItem(KEYS.INVOICES, data.invoices);
     if (data?.invoicePayments) await this.setItem(KEYS.INVOICE_PAYMENTS, data.invoicePayments);
+    if (data?.budgets) await this.setItem(KEYS.BUDGETS, data.budgets);
   }
 
   async clearAll() {

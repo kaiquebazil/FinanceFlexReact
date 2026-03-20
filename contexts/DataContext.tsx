@@ -16,6 +16,7 @@ import type {
   RecurringBill,
   Category,
   Invoice,
+  Budget,
   AccountType,
   Currency,
   TransactionType,
@@ -42,6 +43,7 @@ interface DataContextType {
   recurringBills: RecurringBill[];
   categories: Category[];
   invoices: Invoice[];
+  budgets: Budget[];
   valuesHidden: boolean;
 
   // Setters
@@ -53,7 +55,15 @@ interface DataContextType {
   setRecurringBills: (bills: RecurringBill[]) => void;
   setCategories: (categories: Category[]) => void;
   setInvoices: (invoices: Invoice[]) => void;
+  setBudgets: (budgets: Budget[]) => void;
   setValuesHidden: (hidden: boolean) => void;
+
+  // Funções de orçamento
+  addBudget: (data: Partial<Budget>) => void;
+  updateBudget: (id: string, data: Partial<Budget>) => void;
+  deleteBudget: (id: string) => void;
+  getBudgetProgress: (budget: Budget) => { spent: number; percentage: number; remaining: number };
+  getMonthlyBudgets: (month?: number, year?: number) => Budget[];
 
   // Funções de conta
   addAccount: (data: Partial<Account>) => Account;
@@ -152,6 +162,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   const [recurringBills, setRecurringBills] = useState<RecurringBill[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
   const [valuesHidden, setValuesHidden] = useState(false);
   const [isFirstLaunch, setIsFirstLaunch] = useState(false);
 
@@ -198,13 +209,14 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     setCreditCardTransactions([]);
     setRecurringBills([]);
     setInvoices([]);
+    setBudgets([]);
     setValuesHidden(false);
   }, []);
 
   // Carregar dados do storage
   const loadData = async () => {
     try {
-      const [acc, trans, piggy, cards, cardTrans, bills, cats, inv, hidden] =
+      const [acc, trans, piggy, cards, cardTrans, bills, cats, inv, hidden, bdgs] =
         await Promise.all([
           storage.getItem<Account[]>(KEYS.ACCOUNTS),
           storage.getItem<Transaction[]>(KEYS.TRANSACTIONS),
@@ -217,6 +229,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
           storage.getItem<Category[]>(KEYS.CATEGORIES),
           storage.getItem<Invoice[]>(KEYS.INVOICES),
           storage.getItem<boolean>(KEYS.VALUES_HIDDEN),
+          storage.getItem<Budget[]>(KEYS.BUDGETS),
         ]);
 
       // Se não houver contas, é o primeiro lançamento
@@ -235,6 +248,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       setCreditCardTransactions(cardTrans ?? []);
       setRecurringBills(bills ?? []);
       setInvoices(inv ?? []);
+      setBudgets(bdgs ?? []);
 
       // Se não houver categorias, carrega as padrão
       if (!cats || cats.length === 0) {
@@ -259,6 +273,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     if (data?.recurringBills) setRecurringBills(data.recurringBills);
     if (data?.categories) setCategories(data.categories);
     if (data?.invoices) setInvoices(data.invoices);
+    if (data?.budgets) setBudgets(data.budgets);
   }, []);
 
   // Carregar dados ao iniciar
@@ -304,6 +319,10 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     storage.setItem(KEYS.VALUES_HIDDEN, valuesHidden);
   }, [valuesHidden]);
+
+  useEffect(() => {
+    storage.setItem(KEYS.BUDGETS, budgets);
+  }, [budgets]);
 
   useEffect(() => {
     if (isFirstLaunch) {
@@ -914,6 +933,66 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // ==================== FUNÇÕES DE ORÇAMENTO ====================
+
+  const addBudget = (data: Partial<Budget>) => {
+    const now = new Date();
+    const newBudget: Budget = {
+      id: Date.now().toString(),
+      categoryId: data.categoryId || '',
+      categoryName: data.categoryName || '',
+      categoryIcon: data.categoryIcon || 'tag',
+      limitAmount: data.limitAmount || 0,
+      month: data.month ?? (now.getMonth() + 1),
+      year: data.year ?? now.getFullYear(),
+      createdAt: new Date().toISOString(),
+    };
+    setBudgets((prev) => [...prev, newBudget]);
+    if (uiCallbacks.showToast) {
+      uiCallbacks.showToast('Orçamento criado com sucesso!', 'success');
+    }
+  };
+
+  const updateBudget = (id: string, data: Partial<Budget>) => {
+    setBudgets((prev) =>
+      prev.map((b) => (b.id === id ? { ...b, ...data } : b)),
+    );
+    if (uiCallbacks.showToast) {
+      uiCallbacks.showToast('Orçamento atualizado!', 'success');
+    }
+  };
+
+  const deleteBudget = (id: string) => {
+    setBudgets((prev) => prev.filter((b) => b.id !== id));
+    if (uiCallbacks.showToast) {
+      uiCallbacks.showToast('Orçamento excluído!', 'success');
+    }
+  };
+
+  const getBudgetProgress = (budget: Budget): { spent: number; percentage: number; remaining: number } => {
+    const spent = transactions
+      .filter((t) => {
+        if (t.type !== 'expense') return false;
+        const date = new Date(t.date);
+        return (
+          t.category === budget.categoryName &&
+          date.getMonth() + 1 === budget.month &&
+          date.getFullYear() === budget.year
+        );
+      })
+      .reduce((sum, t) => sum + t.amount, 0);
+    const percentage = budget.limitAmount > 0 ? (spent / budget.limitAmount) * 100 : 0;
+    const remaining = budget.limitAmount - spent;
+    return { spent, percentage, remaining };
+  };
+
+  const getMonthlyBudgets = (month?: number, year?: number): Budget[] => {
+    const now = new Date();
+    const targetMonth = month ?? (now.getMonth() + 1);
+    const targetYear = year ?? now.getFullYear();
+    return budgets.filter((b) => b.month === targetMonth && b.year === targetYear);
+  };
+
   // ==================== UTILITÁRIOS ====================
 
   const getTotalBalance = (): number => {
@@ -957,6 +1036,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         recurringBills,
         categories,
         invoices,
+        budgets,
         valuesHidden,
 
         setAccounts,
@@ -967,7 +1047,14 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         setRecurringBills,
         setCategories,
         setInvoices,
+        setBudgets,
         setValuesHidden,
+
+        addBudget,
+        updateBudget,
+        deleteBudget,
+        getBudgetProgress,
+        getMonthlyBudgets,
 
         addAccount,
         updateAccount,

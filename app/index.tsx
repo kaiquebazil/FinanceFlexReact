@@ -16,11 +16,13 @@ import {
 } from "react-native";
 import { BackupRestore } from "../components/features/BackupRestore";
 import { FirebaseSync } from "../components/features/FirebaseSync";
+import { BudgetManager } from "../components/features/BudgetManager";
 import { CategoryManager } from "../components/features/CategoryManager";
 import { CreditCardManager } from "../components/features/CreditCardManager";
 import { RecurringBillsManager } from "../components/features/RecurringBillsManager";
 import { TransactionsModal } from "../components/features/TransactionsModal";
 import { CalendarModal } from "../components/features/CalendarModal";
+import { PiggyBankProjection } from "../components/features/PiggyBankProjection";
 import { AccountEditForm } from "../components/forms/AccountEditForm";
 import { AccountForm } from "../components/forms/AccountForm";
 import { PiggyBankEditForm } from "../components/forms/PiggyBankEditForm";
@@ -70,10 +72,13 @@ export default function HomeScreen() {
     categories,
     creditCards,
     recurringBills,
+    budgets,
     addTransaction,
     deleteAccount,
     getTotalBalance,
     getMonthlySummary,
+    getBudgetProgress,
+    getMonthlyBudgets,
     valuesHidden,
     setValuesHidden,
     setUICallbacks,
@@ -109,6 +114,7 @@ export default function HomeScreen() {
   const [showCreditCardsModal, setShowCreditCardsModal] = useState(false);
   const [showBackupModal, setShowBackupModal] = useState(false);
   const [showSyncModal, setShowSyncModal] = useState(false);
+  const [showBudgetsModal, setShowBudgetsModal] = useState(false);
 
   // Auth e status de sincronização
   const { user, syncStatus } = useAuth();
@@ -533,6 +539,71 @@ export default function HomeScreen() {
             />
           </View>
 
+          {/* Resumo de Orçamentos */}
+          {(() => {
+            const now = new Date();
+            const monthBudgets = getMonthlyBudgets(now.getMonth() + 1, now.getFullYear());
+            if (monthBudgets.length === 0) return null;
+            return (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>Orçamentos do Mês</Text>
+                  <TouchableOpacity onPress={() => setShowBudgetsModal(true)}>
+                    <FontAwesome5 name="chart-pie" size={16} color={theme.colors.primary} />
+                  </TouchableOpacity>
+                </View>
+                <Card style={styles.card}>
+                  {monthBudgets.slice(0, 4).map((budget) => {
+                    const { spent, percentage } = getBudgetProgress(budget);
+                    const cappedPct = Math.min(percentage, 100);
+                    const barColor =
+                      percentage >= 100
+                        ? theme.colors.danger
+                        : percentage >= 80
+                        ? theme.colors.warning
+                        : theme.colors.success;
+                    return (
+                      <View key={budget.id} style={{ marginBottom: 12 }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <FontAwesome5 name={budget.categoryIcon} size={12} color={barColor} />
+                            <Text style={{ color: theme.colors.text, fontSize: 13, fontFamily: 'Inter-Medium' }}>
+                              {budget.categoryName}
+                            </Text>
+                            {percentage >= 100 && (
+                              <View style={{ backgroundColor: theme.colors.danger + '25', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 8 }}>
+                                <Text style={{ color: theme.colors.danger, fontSize: 10, fontFamily: 'Inter-SemiBold' }}>Excedido</Text>
+                              </View>
+                            )}
+                            {percentage >= 80 && percentage < 100 && (
+                              <View style={{ backgroundColor: theme.colors.warning + '25', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 8 }}>
+                                <Text style={{ color: theme.colors.warning, fontSize: 10, fontFamily: 'Inter-SemiBold' }}>Atenção</Text>
+                              </View>
+                            )}
+                          </View>
+                          <Text style={{ color: theme.colors.textDim, fontSize: 11, fontFamily: 'Inter-Regular' }}>
+                            {valuesHidden ? '• • •' : `${percentage.toFixed(0)}%`}
+                          </Text>
+                        </View>
+                        <View style={{ height: 6, backgroundColor: theme.colors.dark, borderRadius: 3, overflow: 'hidden' }}>
+                          <View style={{ height: '100%', width: `${cappedPct}%` as any, backgroundColor: barColor, borderRadius: 3 }} />
+                        </View>
+                        <Text style={{ color: theme.colors.textMuted, fontSize: 11, marginTop: 3, fontFamily: 'Inter-Regular' }}>
+                          {valuesHidden ? '• • •' : `${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(spent)} de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(budget.limitAmount)}`}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                  {monthBudgets.length > 4 && (
+                    <TouchableOpacity style={styles.viewAllButton} onPress={() => setShowBudgetsModal(true)}>
+                      <Text style={styles.viewAllText}>Ver todos ({monthBudgets.length})</Text>
+                    </TouchableOpacity>
+                  )}
+                </Card>
+              </View>
+            );
+          })()}
+
           {/* Cofrinhos */}
           {piggyBanks.length > 0 && (
             <View style={styles.section}>
@@ -624,9 +695,16 @@ export default function HomeScreen() {
                           ]}
                         />
                       </View>
+                      {(piggy.monthlyContribution || piggy.targetDate) && (
+                        <PiggyBankProjection
+                          piggyBank={piggy}
+                          valuesHidden={valuesHidden}
+                        />
+                      )}
                     </View>
                   );
                 })}
+
                 {piggyBanks.length > 3 && (
                   <TouchableOpacity
                     style={styles.viewAllButton}
@@ -826,6 +904,9 @@ export default function HomeScreen() {
             case "transactions":
               setShowTransactionsModal(true);
               break;
+            case "budgets":
+              setShowBudgetsModal(true);
+              break;
             case "categories":
               setShowCategoriesModal(true);
               break;
@@ -978,9 +1059,16 @@ export default function HomeScreen() {
                     </TouchableOpacity>
                   </View>
                 </View>
+                {(piggy.monthlyContribution || piggy.targetDate) && (
+                  <PiggyBankProjection
+                    piggyBank={piggy}
+                    valuesHidden={valuesHidden}
+                  />
+                )}
               </View>
             );
           })}
+
           <PiggyBankForm
             onSave={(stayOpen) => {
               if (!stayOpen) {
@@ -1070,6 +1158,15 @@ export default function HomeScreen() {
         title="Cartões de Crédito"
       >
         <CreditCardManager onClose={() => setShowCreditCardsModal(false)} />
+      </Modal>
+
+      {/* Modal de Orçamentos */}
+      <Modal
+        visible={showBudgetsModal}
+        onClose={() => setShowBudgetsModal(false)}
+        title="Orçamentos"
+      >
+        <BudgetManager onClose={() => setShowBudgetsModal(false)} />
       </Modal>
 
       {/* Modal de Backup e Restauração */}

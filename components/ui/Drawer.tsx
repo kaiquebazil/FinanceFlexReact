@@ -93,6 +93,7 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
 
   const menuItems = [
     { id: 'transactions', icon: 'exchange-alt', label: 'Transações', iconColor: '#64B5F6' },
+    { id: 'budgets', icon: 'chart-pie', label: 'Orçamentos', iconColor: '#A5D6A7' },
     { id: 'categories', icon: 'list-ul', label: 'Categorias', iconColor: '#81C784' },
     { id: 'recurring', icon: 'redo', label: 'Contas Recorrentes', iconColor: '#FFB74D' },
     { id: 'creditCards', icon: 'credit-card', label: 'Cartões de Crédito', iconColor: '#BA68C8' },

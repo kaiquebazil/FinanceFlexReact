@@ -15,12 +15,16 @@ export function PiggyBankForm({ onSave, onCancel }: PiggyBankFormProps) {
   const [targetAmount, setTargetAmount] = useState('');
   const [currentAmount, setCurrentAmount] = useState('0');
   const [selectedAccountId, setSelectedAccountId] = useState<string>('');
+  const [targetDate, setTargetDate] = useState('');
+  const [monthlyContribution, setMonthlyContribution] = useState('');
 
   const resetForm = () => {
     setName('');
     setTargetAmount('');
     setCurrentAmount('0');
     setSelectedAccountId('');
+    setTargetDate('');
+    setMonthlyContribution('');
   };
 
   const handleSave = (stayOpen = false) => {
@@ -31,6 +35,8 @@ export function PiggyBankForm({ onSave, onCancel }: PiggyBankFormProps) {
         currentAmount: parseFloat(currentAmount) || 0,
         color: '#7c4dff',
         accountId: selectedAccountId || undefined,
+        targetDate: targetDate.trim() || undefined,
+        monthlyContribution: monthlyContribution ? parseFloat(monthlyContribution) : undefined,
       });
       onSave(stayOpen);
       if (stayOpen) {
@@ -62,6 +68,21 @@ export function PiggyBankForm({ onSave, onCancel }: PiggyBankFormProps) {
         onChangeText={setCurrentAmount} 
         placeholder="0.00" 
         keyboardType="numeric" 
+      />
+
+      <Input
+        label="Contribuição Mensal Planejada (R$) — opcional"
+        value={monthlyContribution}
+        onChangeText={setMonthlyContribution}
+        placeholder="Ex: 200.00"
+        keyboardType="numeric"
+      />
+
+      <Input
+        label="Data Alvo (DD/MM/AAAA) — opcional"
+        value={targetDate}
+        onChangeText={setTargetDate}
+        placeholder="Ex: 31/12/2025"
       />
 
       {accounts.length > 0 && (
