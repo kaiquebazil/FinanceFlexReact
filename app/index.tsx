@@ -391,26 +391,38 @@ export default function HomeScreen() {
               </Text>
             </View>
             <Card style={styles.card}>
-              {accounts.length === 0 ? (
-                <View style={styles.emptyState}>
-                  <FontAwesome5
-                    name="credit-card"
-                    size={32}
-                    color={theme.colors.textDim}
-                  />
-                  <Text style={styles.emptyText}>Nenhuma conta cadastrada</Text>
-                </View>
-              ) : (
-                accounts.map((account) => (
-                  <AccountItem
-                    key={account.id}
-                    account={account}
-                    onEdit={() => handleEditAccount(account)}
-                    onDelete={() => handleDeleteAccount(account.id)}
-                    formatValue={formatValue}
-                  />
-                ))
-              )}
+                {accounts.length === 0 ? (
+                  <View style={styles.emptyState}>
+                    <FontAwesome5
+                      name="credit-card"
+                      size={32}
+                      color={theme.colors.textDim}
+                    />
+                    <Text style={styles.emptyText}>Nenhuma conta cadastrada</Text>
+                  </View>
+                ) : (
+                  <>
+                    {accounts.slice(0, 3).map((account) => (
+                      <AccountItem
+                        key={account.id}
+                        account={account}
+                        onEdit={() => handleEditAccount(account)}
+                        onDelete={() => handleDeleteAccount(account.id)}
+                        formatValue={formatValue}
+                      />
+                    ))}
+                    {accounts.length > 3 && (
+                      <TouchableOpacity
+                        style={styles.viewAllButton}
+                        onPress={() => setShowAccountModal(true)}
+                      >
+                        <Text style={styles.viewAllText}>
+                          Ver todas ({accounts.length})
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </>
+                )}
               <Button
                 title="Adicionar Conta"
                 icon="plus"
@@ -500,14 +512,12 @@ export default function HomeScreen() {
           {/* Calendário de Pagamentos */}
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, styles.calendarTitle]}>
-              Calendário de Pagamentos
+              Contas do Mês
             </Text>
-            <Card style={styles.card}>
-              <Calendar
-                transactions={transactions}
-                recurringBills={recurringBills}
-              />
-            </Card>
+            <Calendar
+              recurringBills={recurringBills}
+              onTogglePaid={(id) => {}}
+            />
           </View>
 
           {/* Cofrinhos */}
@@ -517,8 +527,8 @@ export default function HomeScreen() {
                 <Text style={styles.sectionTitle}>Cofrinhos</Text>
                 <TouchableOpacity onPress={() => setShowPiggyBankModal(true)}>
                   <FontAwesome5
-                    name="plus-circle"
-                    size={20}
+                    name="plus"
+                    size={16}
                     color={theme.colors.primary}
                   />
                 </TouchableOpacity>
@@ -829,18 +839,32 @@ export default function HomeScreen() {
       <Modal
         visible={showAccountModal}
         onClose={() => setShowAccountModal(false)}
-        title="Nova Conta"
+        title="Contas"
       >
-        <AccountForm
-          onSave={() => setShowAccountModal(false)}
-          onCancel={() => setShowAccountModal(false)}
-        />
+        <ScrollView>
+          {accounts.map((account) => (
+            <AccountItem
+              key={account.id}
+              account={account}
+              onEdit={() => handleEditAccount(account)}
+              onDelete={() => handleDeleteAccount(account.id)}
+              formatValue={formatValue}
+            />
+          ))}
+          <AccountForm
+            onSave={() => setShowAccountModal(false)}
+            onCancel={() => setShowAccountModal(false)}
+          />
+        </ScrollView>
       </Modal>
 
       {/* Modal de Editar Conta */}
       <Modal
         visible={showAccountEditModal}
-        onClose={() => setShowAccountEditModal(false)}
+        onClose={() => {
+          setShowAccountEditModal(false);
+          setSelectedAccount(null);
+        }}
         title="Editar Conta"
       >
         {selectedAccount && (
@@ -873,73 +897,77 @@ export default function HomeScreen() {
         title="Cofrinhos"
       >
         <ScrollView>
-          {piggyBanks.map((piggy) => (
-            <View key={piggy.id} style={styles.modalPiggyItem}>
-              <View style={styles.modalPiggyHeader}>
-                <View
-                  style={[
-                    styles.modalPiggyIcon,
-                    { backgroundColor: piggy.color + "20" },
-                  ]}
-                >
-                  <FontAwesome5
-                    name="piggy-bank"
-                    size={20}
-                    color={piggy.color}
-                  />
-                </View>
-                <View style={styles.modalPiggyInfo}>
-                  <Text style={styles.modalPiggyName}>{piggy.name}</Text>
-                  <Text style={styles.modalPiggyProgress}>
-                    {formatValue(piggy.currentAmount)} /{" "}
-                    {formatValue(piggy.targetAmount)}
-                  </Text>
-                </View>
-                <View style={styles.piggyActions}>
-                  <TouchableOpacity
-                    onPress={() => handleDepositPiggyBank(piggy)}
-                    style={styles.actionButton}
+          {piggyBanks.map((piggy) => {
+            const progress = (piggy.currentAmount / piggy.targetAmount) * 100;
+            return (
+              <View key={piggy.id} style={styles.modalPiggyItem}>
+                <View style={styles.modalPiggyHeader}>
+                  <View
+                    style={[
+                      styles.modalPiggyIcon,
+                      { backgroundColor: piggy.color + "20" },
+                    ]}
                   >
                     <FontAwesome5
-                      name="plus-circle"
-                      size={18}
-                      color={theme.colors.success}
+                      name="piggy-bank"
+                      size={20}
+                      color={piggy.color}
                     />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => handleWithdrawPiggyBank(piggy)}
-                    style={styles.actionButton}
-                  >
-                    <FontAwesome5
-                      name="minus-circle"
-                      size={18}
-                      color={theme.colors.warning}
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => handleEditPiggyBank(piggy)}
-                    style={styles.actionButton}
-                  >
-                    <FontAwesome5
-                      name="edit"
-                      size={16}
-                      color={theme.colors.primary}
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => handleDeletePiggyBank(piggy)}
-                    style={styles.actionButton}
-                  >
-                    <FontAwesome5
-                      name="trash-alt"
-                      size={16}
-                      color={theme.colors.danger}
-                    />
-                  </TouchableOpacity>
+                  </View>
+                  <View style={styles.modalPiggyInfo}>
+                    <Text style={styles.modalPiggyName}>{piggy.name}</Text>
+                    <Text style={styles.modalPiggyProgress}>
+                      {formatValue(piggy.currentAmount)} /{" "}
+                      {formatValue(piggy.targetAmount)} (
+                      {progress.toFixed(0)}%)
+                    </Text>
+                  </View>
+                  <View style={styles.piggyActions}>
+                    <TouchableOpacity
+                      onPress={() => handleDepositPiggyBank(piggy)}
+                      style={styles.actionButton}
+                    >
+                      <FontAwesome5
+                        name="plus-circle"
+                        size={18}
+                        color={theme.colors.success}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleWithdrawPiggyBank(piggy)}
+                      style={styles.actionButton}
+                    >
+                      <FontAwesome5
+                        name="minus-circle"
+                        size={18}
+                        color={theme.colors.warning}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleEditPiggyBank(piggy)}
+                      style={styles.actionButton}
+                    >
+                      <FontAwesome5
+                        name="edit"
+                        size={16}
+                        color={theme.colors.primary}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleDeletePiggyBank(piggy)}
+                      style={styles.actionButton}
+                    >
+                      <FontAwesome5
+                        name="trash-alt"
+                        size={16}
+                        color={theme.colors.danger}
+                      />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
-            </View>
-          ))}
+            );
+          })}
           <PiggyBankForm
             onSave={() => {
               setShowPiggyBankModal(false);
@@ -1067,12 +1095,12 @@ export default function HomeScreen() {
         }}
       />
 
-      {/* Toast Global */}
+      {/* Toast de Notificação */}
       <Toast
         visible={toast.visible}
         message={toast.message}
         type={toast.type}
-        onHide={() => setToast((prev) => ({ ...prev, visible: false }))}
+        onHide={() => setToast({ ...toast, visible: false })}
       />
     </SafeAreaView>
   );
@@ -1090,9 +1118,9 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === "ios" ? 10 : 30,
+    paddingTop: Platform.OS === "ios" ? 10 : 40,
     paddingBottom: 20,
+    paddingHorizontal: 20,
   },
   headerContent: {
     flexDirection: "row",
@@ -1102,10 +1130,10 @@ const styles = StyleSheet.create({
   logoContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 8,
   },
   logoText: {
-    fontSize: 24,
+    fontSize: 20,
     fontFamily: "Inter-Bold",
     color: theme.colors.text,
   },
@@ -1114,7 +1142,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   iconButton: {
-    padding: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   section: {
     paddingHorizontal: 20,
