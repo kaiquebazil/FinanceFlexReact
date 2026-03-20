@@ -563,7 +563,7 @@ export default function HomeScreen() {
                         ? theme.colors.warning
                         : theme.colors.success;
                     return (
-                      <View key={budget.id} style={{ marginBottom: 20, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: theme.colors.border }}>
+                      <View key={budget.id} style={{ margin: 16, borderBottomWidth: 1, borderBottomColor: theme.colors.dark}}>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                             <FontAwesome5 name={budget.categoryIcon} size={12} color={barColor} />

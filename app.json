@@ -1,23 +1,24 @@
 {
   "expo": {
+    "sdkVersion": "54.0.0",
     "name": "Finance Flex",
     "slug": "finance-flex",
-    "version": "2.0.0",
+    "version": "2.1.1",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/icon1024x1024.png",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "transparent"
+      "backgroundColor": "#00000000"
     },
     "web": {
-      "favicon": "./assets/images/icon.png",
+      "favicon": "./assets/images/favicon.png",
       "name": "Finance Flex",
       "shortName": "FinanceFlex",
       "description": "App de finanças pessoais",
-      "themeColor": "transparent",
-      "backgroundColor": "transparent",
+      "themeColor": "#00000000",
+      "backgroundColor": "#00000000",
       "barStyle": "black-translucent",
       "lang": "pt-BR",
       "display": "standalone",
@@ -27,13 +28,17 @@
       "splash": {
         "image": "./assets/images/splash-icon.png",
         "resizeMode": "contain",
-        "backgroundColor": "transparent"
+        "backgroundColor": "#00000000"
       }
     },
     "android": {
       "package": "com.kaiquebazil.financeflex",
       "versionCode": 3,
-      "softwareKeyboardLayoutMode": "pan"
+      "softwareKeyboardLayoutMode": "pan",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon512x512.png",
+        "backgroundColor": "#00000000"
+      }
     },
     "extra": {
       "eas": {
