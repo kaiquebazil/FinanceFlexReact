@@ -24,6 +24,7 @@ import { AccountEditForm } from "../components/forms/AccountEditForm";
 import { AccountForm } from "../components/forms/AccountForm";
 import { PiggyBankEditForm } from "../components/forms/PiggyBankEditForm";
 import { PiggyBankForm } from "../components/forms/PiggyBankForm";
+import { PiggyBankActionForm } from "../components/forms/PiggyBankActionForm";
 import { TransactionForm } from "../components/forms/TransactionForm";
 import { AccountItem } from "../components/ui/AccountItem";
 import { Button } from "../components/ui/Button";
@@ -77,6 +78,7 @@ export default function HomeScreen() {
     setUICallbacks,
     depositToPiggyBank,
     withdrawFromPiggyBank,
+    deletePiggyBank,
   } = useData();
 
   // Estados para modais
@@ -96,6 +98,8 @@ export default function HomeScreen() {
   const [showPiggyBankModal, setShowPiggyBankModal] = useState(false);
   const [showPiggyBankEditModal, setShowPiggyBankEditModal] = useState(false);
   const [selectedPiggyBank, setSelectedPiggyBank] = useState<any>(null);
+  const [showPiggyBankActionModal, setShowPiggyBankActionModal] = useState(false);
+  const [piggyBankActionType, setPiggyBankActionType] = useState<"deposit" | "withdraw">("deposit");
 
   // Estados para outros modais
   const [showCategoriesModal, setShowCategoriesModal] = useState(false);
@@ -253,6 +257,30 @@ export default function HomeScreen() {
   const handleEditPiggyBank = (piggy: any) => {
     setSelectedPiggyBank(piggy);
     setShowPiggyBankEditModal(true);
+  };
+
+  const handleDepositPiggyBank = (piggy: any) => {
+    setSelectedPiggyBank(piggy);
+    setPiggyBankActionType("deposit");
+    setShowPiggyBankActionModal(true);
+  };
+
+  const handleWithdrawPiggyBank = (piggy: any) => {
+    setSelectedPiggyBank(piggy);
+    setPiggyBankActionType("withdraw");
+    setShowPiggyBankActionModal(true);
+  };
+
+  const handleDeletePiggyBank = (piggy: any) => {
+    showConfirm({
+      title: "Excluir Cofrinho",
+      message: `Tem certeza que deseja excluir o cofrinho "${piggy.name}"? O saldo atual não será devolvido automaticamente às contas.`,
+      type: "danger",
+      onConfirm: () => {
+        deletePiggyBank(piggy.id);
+        setShowConfirmModal(false);
+      },
+    });
   };
 
   // Filtrar transações
@@ -521,13 +549,43 @@ export default function HomeScreen() {
                             {progress.toFixed(0)}%
                           </Text>
                           <TouchableOpacity
+                            onPress={() => handleDepositPiggyBank(piggy)}
+                            style={styles.actionButton}
+                          >
+                            <FontAwesome5
+                              name="plus-circle"
+                              size={16}
+                              color={theme.colors.success}
+                            />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            onPress={() => handleWithdrawPiggyBank(piggy)}
+                            style={styles.actionButton}
+                          >
+                            <FontAwesome5
+                              name="minus-circle"
+                              size={16}
+                              color={theme.colors.warning}
+                            />
+                          </TouchableOpacity>
+                          <TouchableOpacity
                             onPress={() => handleEditPiggyBank(piggy)}
-                            style={styles.editButton}
+                            style={styles.actionButton}
                           >
                             <FontAwesome5
                               name="edit"
                               size={14}
                               color={theme.colors.primary}
+                            />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            onPress={() => handleDeletePiggyBank(piggy)}
+                            style={styles.actionButton}
+                          >
+                            <FontAwesome5
+                              name="trash-alt"
+                              size={14}
+                              color={theme.colors.danger}
                             />
                           </TouchableOpacity>
                         </View>
@@ -837,13 +895,48 @@ export default function HomeScreen() {
                     {formatValue(piggy.targetAmount)}
                   </Text>
                 </View>
-                <TouchableOpacity onPress={() => handleEditPiggyBank(piggy)}>
-                  <FontAwesome5
-                    name="edit"
-                    size={16}
-                    color={theme.colors.primary}
-                  />
-                </TouchableOpacity>
+                <View style={styles.piggyActions}>
+                  <TouchableOpacity
+                    onPress={() => handleDepositPiggyBank(piggy)}
+                    style={styles.actionButton}
+                  >
+                    <FontAwesome5
+                      name="plus-circle"
+                      size={18}
+                      color={theme.colors.success}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleWithdrawPiggyBank(piggy)}
+                    style={styles.actionButton}
+                  >
+                    <FontAwesome5
+                      name="minus-circle"
+                      size={18}
+                      color={theme.colors.warning}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleEditPiggyBank(piggy)}
+                    style={styles.actionButton}
+                  >
+                    <FontAwesome5
+                      name="edit"
+                      size={16}
+                      color={theme.colors.primary}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleDeletePiggyBank(piggy)}
+                    style={styles.actionButton}
+                  >
+                    <FontAwesome5
+                      name="trash-alt"
+                      size={16}
+                      color={theme.colors.danger}
+                    />
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           ))}
@@ -876,6 +969,31 @@ export default function HomeScreen() {
             }}
             onCancel={() => {
               setShowPiggyBankEditModal(false);
+              setSelectedPiggyBank(null);
+            }}
+          />
+        )}
+      </Modal>
+
+      {/* Modal de Ação no Cofrinho (Depósito/Retirada) */}
+      <Modal
+        visible={showPiggyBankActionModal}
+        onClose={() => {
+          setShowPiggyBankActionModal(false);
+          setSelectedPiggyBank(null);
+        }}
+        title={piggyBankActionType === "deposit" ? "Depositar" : "Retirar"}
+      >
+        {selectedPiggyBank && (
+          <PiggyBankActionForm
+            piggyBank={selectedPiggyBank}
+            type={piggyBankActionType}
+            onSave={() => {
+              setShowPiggyBankActionModal(false);
+              setSelectedPiggyBank(null);
+            }}
+            onCancel={() => {
+              setShowPiggyBankActionModal(false);
               setSelectedPiggyBank(null);
             }}
           />
@@ -1155,7 +1273,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  editButton: {
+  actionButton: {
     padding: 8,
   },
   progressBarContainer: {
