@@ -515,8 +515,8 @@ export default function HomeScreen() {
               Contas do Mês
             </Text>
             <Calendar
+              transactions={transactions}
               recurringBills={recurringBills}
-              onTogglePaid={(id) => {}}
             />
           </View>
 
