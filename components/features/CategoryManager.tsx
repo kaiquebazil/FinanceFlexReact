@@ -11,6 +11,7 @@ import {
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
 import { useData } from '../../hooks/useData';
+import { AVAILABLE_ICONS } from '../../constants/availableIcons';
 
 interface CategoryManagerProps {
   onClose: () => void;
@@ -20,6 +21,7 @@ export function CategoryManager({ onClose }: CategoryManagerProps) {
   const { categories, addCategory, deleteCategory } = useData();
   const [selectedType, setSelectedType] = useState<'income' | 'expense'>('expense');
   const [newCategoryName, setNewCategoryName] = useState('');
+  const [selectedIcon, setSelectedIcon] = useState('tag');
 
   const incomeCategories = categories.filter(c => c.type === 'income');
   const expenseCategories = categories.filter(c => c.type === 'expense');
@@ -33,10 +35,11 @@ export function CategoryManager({ onClose }: CategoryManagerProps) {
     addCategory({
       name: newCategoryName.trim(),
       type: selectedType,
-      icon: 'tag'
+      icon: selectedIcon
     });
 
     setNewCategoryName('');
+    setSelectedIcon('tag');
   };
 
   return (
@@ -85,6 +88,32 @@ export function CategoryManager({ onClose }: CategoryManagerProps) {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Seletor de ícones */}
+      <Text style={styles.sectionTitle}>Escolha um ícone</Text>
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false} 
+        style={styles.iconSelector}
+        contentContainerStyle={styles.iconSelectorContent}
+      >
+        {AVAILABLE_ICONS.map((icon) => (
+          <TouchableOpacity
+            key={icon}
+            style={[
+              styles.iconButton,
+              selectedIcon === icon && styles.iconButtonActive
+            ]}
+            onPress={() => setSelectedIcon(icon)}
+          >
+            <FontAwesome5 
+              name={icon} 
+              size={20} 
+              color={selectedIcon === icon ? '#fff' : theme.colors.textMuted} 
+            />
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
 
       {/* Input para nova categoria */}
       <View style={styles.inputContainer}>
@@ -219,5 +248,33 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter-Medium',
     color: theme.colors.text,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontFamily: 'Inter-SemiBold',
+    color: theme.colors.text,
+    marginBottom: 10,
+  },
+  iconSelector: {
+    maxHeight: 60,
+    marginBottom: 20,
+  },
+  iconSelectorContent: {
+    gap: 10,
+    paddingRight: 20,
+  },
+  iconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: theme.colors.darkLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  iconButtonActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
   },
 });
