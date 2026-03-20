@@ -733,7 +733,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   forgotInput: {
-    backgroundColor: theme.colors.inputBg,
+    backgroundColor: theme.colors.dark,
     borderRadius: 8,
     padding: 12,
     color: theme.colors.text,
@@ -741,7 +741,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    marginBottom: 12,
+    width: '100%',
   },
   benefitsBox: {
     backgroundColor: theme.colors.cardBg,

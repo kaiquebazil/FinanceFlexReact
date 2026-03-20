@@ -22,6 +22,7 @@ interface ConfirmModalProps {
   type?: 'info' | 'success' | 'warning' | 'danger';
   onConfirm: () => void;
   onCancel: () => void;
+  customContent?: React.ReactNode;
 }
 
 export function ConfirmModal({
@@ -33,6 +34,7 @@ export function ConfirmModal({
   type = 'info',
   onConfirm,
   onCancel,
+  customContent,
 }: ConfirmModalProps) {
   const getIconName = () => {
     switch (type) {
@@ -74,6 +76,12 @@ export function ConfirmModal({
 
               <Text style={styles.title}>{title}</Text>
               <Text style={styles.message}>{message}</Text>
+
+              {customContent && (
+                <View style={styles.customContent}>
+                  {customContent}
+                </View>
+              )}
 
               <View style={styles.buttonsContainer}>
                 {cancelText ? (
@@ -143,5 +151,9 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
+  },
+  customContent: {
+    width: '100%',
+    marginBottom: 20,
   },
 });
