@@ -98,8 +98,6 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
     { id: 'recurring', icon: 'redo', label: 'Contas Recorrentes', iconColor: '#FFB74D' },
     { id: 'creditCards', icon: 'credit-card', label: 'Cartões de Crédito', iconColor: '#BA68C8' },
     { id: 'piggyBanks', icon: 'piggy-bank', label: 'Cofrinhos', iconColor: '#FF8A65' },
-    { id: 'gym', icon: 'dumbbell', label: 'Academia', iconColor: '#9E9E9E' },
-    { id: 'stats', icon: 'chart-line', label: 'Stats', iconColor: '#FF5252' },
   ];
 
   const actionItems = [

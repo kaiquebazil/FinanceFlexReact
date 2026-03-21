@@ -919,12 +919,6 @@ export default function HomeScreen() {
             case "piggyBanks":
               setShowPiggyBankModal(true);
               break;
-            case "gym":
-              showToast("Módulo de Academia em breve!", "info");
-              break;
-            case "stats":
-              showToast("Módulo de Estatísticas em breve!", "info");
-              break;
             case "backup":
               setShowBackupModal(true);
               break;
