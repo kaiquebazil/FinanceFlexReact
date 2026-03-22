@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, StatusBar, Animated, Dimensions, Image } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../hooks/useData';
 import { ConfirmModal } from './ConfirmModal';
@@ -15,6 +16,7 @@ interface DrawerProps {
 const { width } = Dimensions.get('window');
 
 export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
+  const { colors, toggleTheme, isDark } = useTheme();
   const { user, syncStatus, logOut } = useAuth();
   const { resetToDefaults } = useData();
   const isLoggedIn = !!user;
@@ -72,12 +74,12 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
   };
 
   const getSyncColor = () => {
-    if (!user) return theme.colors.textDim;
+    if (!user) return colors.textDim;
     switch (syncStatus) {
       case 'synced': return '#4CAF50';
       case 'syncing': return theme.colors.primary;
       case 'error': return '#F44336';
-      default: return theme.colors.textDim;
+      default: return colors.textDim;
     }
   };
 
@@ -129,18 +131,18 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
             styles.drawerContainer,
             { transform: [{ translateX: slideAnim }] }
           ]}>
-            <View style={styles.drawer}>
+            <View style={[styles.drawer, { backgroundColor: colors.surface }]}>
               {/* Cabeçalho */}
-              <View style={styles.header}>
+              <View style={[styles.header, { borderBottomColor: colors.border }]}>
                 <View style={styles.logoContainer}>
                   <Image
                     source={require('../../assets/images/icon.png')}
                     style={{ width: 32, height: 32, resizeMode: 'contain' }}
                   />
-                  <Text style={styles.logoText}>Finance Flex</Text>
+                  <Text style={[styles.logoText, { color: colors.text }]}>Finance Flex</Text>
                 </View>
                 <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                  <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
+                  <FontAwesome5 name="times" size={20} color={colors.textDim} />
                 </TouchableOpacity>
               </View>
 
@@ -189,7 +191,28 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
               >
                 {/* Menu Principal */}
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>MENU PRINCIPAL</Text>
+                  <Text style={[styles.sectionTitle, { color: colors.textDim }]}>MENU PRINCIPAL</Text>
+                  
+                  {/* Toggle de Tema */}
+                  <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={toggleTheme}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.menuItemContent}>
+                      <FontAwesome5
+                        name={isDark ? "sun" : "moon"}
+                        size={18}
+                        color={isDark ? "#FFD700" : "#515151"}
+                        style={styles.menuItemIcon}
+                      />
+                      <Text style={[styles.menuItemText, { color: colors.text }]}>
+                        Tema {isDark ? 'Claro' : 'Escuro'}
+                      </Text>
+                    </View>
+                    <FontAwesome5 name="chevron-right" size={16} color={colors.textDim} />
+                  </TouchableOpacity>
+
                   {menuItems.map((item) => (
                     <TouchableOpacity
                       key={item.id}
@@ -207,9 +230,9 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
                           color={item.iconColor}
                           style={styles.menuItemIcon}
                         />
-                        <Text style={styles.menuItemText}>{item.label}</Text>
+                        <Text style={[styles.menuItemText, { color: colors.text }]}>{item.label}</Text>
                       </View>
-                      <FontAwesome5 name="chevron-right" size={16} color={theme.colors.textDim} />
+                      <FontAwesome5 name="chevron-right" size={16} color={colors.textDim} />
                     </TouchableOpacity>
                   ))}
                 </View>

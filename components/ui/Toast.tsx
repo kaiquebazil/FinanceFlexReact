@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface ToastProps {
   visible: boolean;
@@ -13,6 +14,7 @@ interface ToastProps {
 }
 
 export function Toast({ visible, message, type = 'info', onHide, duration = 3000 }: ToastProps) {
+  const { colors } = useTheme();
   const translateY = useRef(new Animated.Value(-100)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
@@ -106,7 +108,7 @@ export function Toast({ visible, message, type = 'info', onHide, duration = 3000
       ]}
     >
       <FontAwesome5 name={getIconName()} size={20} color={getIconColor()} />
-      <Text style={styles.message}>{message}</Text>
+      <Text style={[styles.message, { color: colors.text }]}>{message}</Text>
     </Animated.View>
   );
 }
@@ -134,6 +136,5 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontFamily: 'Inter-Medium',
-    color: theme.colors.text,
   },
 });

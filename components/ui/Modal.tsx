@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface ModalProps {
   visible: boolean;
@@ -22,6 +23,8 @@ interface ModalProps {
 }
 
 export function Modal({ visible, onClose, title, children }: ModalProps) {
+  const { colors } = useTheme();
+  
   return (
     <RNModal
       visible={visible}
@@ -38,11 +41,11 @@ export function Modal({ visible, onClose, title, children }: ModalProps) {
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.overlay}>
             <TouchableWithoutFeedback onPress={() => {}}>
-              <View style={styles.modalContainer}>
-                <View style={styles.header}>
-                  <Text style={styles.title}>{title}</Text>
+              <View style={[styles.modalContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <View style={[styles.header, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
                   <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                    <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
+                    <FontAwesome5 name="times" size={20} color={colors.textDim} />
                   </TouchableOpacity>
                 </View>
                 <ScrollView

@@ -40,6 +40,7 @@ import { Modal } from "../components/ui/Modal";
 import { Toast } from "../components/ui/Toast";
 import { ResponsiveContainer } from "../components/ui/ResponsiveContainer";
 import { theme } from "../constants/theme";
+import { useTheme } from "../contexts/ThemeContext";
 import { useData } from "../hooks/useData";
 import { useAuth } from "../contexts/AuthContext";
 import { formatCurrency } from "../utils/currency";
@@ -65,6 +66,8 @@ interface ConfirmCallbackOptions {
 }
 
 export default function HomeScreen() {
+  const { colors, toggleTheme, isDark } = useTheme();
+  const styles = getStyles(colors);
   const {
     accounts,
     transactions,
@@ -355,10 +358,21 @@ export default function HomeScreen() {
                   source={require("../assets/images/icon.png")}
                   style={{ width: 32, height: 32, resizeMode: "contain" }}
                 />
-                <Text style={styles.logoText}>FinanceFlex</Text>
+                <Text style={[styles.logoText, { color: colors.text }]}>FinanceFlex</Text>
               </View>
               <View style={styles.headerActions}>
                 {/* Indicador de sincronização em tempo real */}
+
+                <TouchableOpacity
+                  onPress={toggleTheme}
+                  style={styles.iconButton}
+                >
+                  <FontAwesome5
+                    name={isDark ? "sun" : "moon"}
+                    size={20}
+                    color={colors.text}
+                  />
+                </TouchableOpacity>
 
                 <TouchableOpacity
                   onPress={() => setValuesHidden(!valuesHidden)}
@@ -367,7 +381,7 @@ export default function HomeScreen() {
                   <FontAwesome5
                     name={valuesHidden ? "eye-slash" : "eye"}
                     size={20}
-                    color={theme.colors.text}
+                    color={colors.text}
                   />
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -377,7 +391,7 @@ export default function HomeScreen() {
                   <FontAwesome5
                     name="bars"
                     size={20}
-                    color={theme.colors.text}
+                    color={colors.text}
                   />
                 </TouchableOpacity>
               </View>
@@ -1227,10 +1241,10 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: theme.colors.darker,
+    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
@@ -1256,7 +1270,7 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 20,
     fontFamily: "Inter-Bold",
-    color: theme.colors.text,
+    color: colors.text,
   },
   headerActions: {
     flexDirection: "row",
@@ -1266,7 +1280,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    backgroundColor: colors.surfaceDark,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1283,7 +1297,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontFamily: "Inter-SemiBold",
-    color: theme.colors.text,
+    color: colors.text,
   },
   calendarTitle: {
     marginBottom: 10,
@@ -1291,7 +1305,7 @@ const styles = StyleSheet.create({
   sectionSubtitle: {
     fontSize: 14,
     fontFamily: "Inter-Medium",
-    color: theme.colors.textDim,
+    color: colors.textDim,
   },
   summaryGrid: {
     flexDirection: "row",
@@ -1302,7 +1316,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: "47%",
     padding: 16,
-    backgroundColor: theme.colors.darkLight,
+    backgroundColor: colors.surface,
   },
   summaryIconContainer: {
     marginBottom: 8,
@@ -1310,7 +1324,7 @@ const styles = StyleSheet.create({
   summaryLabel: {
     fontSize: 13,
     fontFamily: "Inter-Regular",
-    color: theme.colors.textDim,
+    color: colors.textDim,
     marginBottom: 4,
   },
   summaryValue: {
@@ -1330,7 +1344,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 14,
     fontFamily: "Inter-Regular",
-    color: theme.colors.textDim,
+    color: colors.textDim,
   },
   addButton: {
     margin: 20,
@@ -1341,7 +1355,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.05)",
+    borderBottomColor: colors.border,
   },
   transactionIcon: {
     width: 40,
@@ -1357,12 +1371,12 @@ const styles = StyleSheet.create({
   transactionName: {
     fontSize: 15,
     fontFamily: "Inter-Medium",
-    color: theme.colors.text,
+    color: colors.text,
   },
   transactionCategory: {
     fontSize: 12,
     fontFamily: "Inter-Regular",
-    color: theme.colors.textDim,
+    color: colors.textDim,
     marginTop: 2,
   },
   transactionAmount: {
@@ -1376,7 +1390,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 16,
     borderTopWidth: 1,
-    borderTopColor: "rgba(255, 255, 255, 0.05)",
+    borderTopColor: colors.border,
   },
   viewAllText: {
     fontSize: 14,
@@ -1387,7 +1401,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.05)",
+    borderBottomColor: colors.border,
   },
   piggyHeader: {
     flexDirection: "row",
@@ -1398,7 +1412,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: theme.colors.darkLight,
+    backgroundColor: colors.surfaceDark,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -1409,18 +1423,18 @@ const styles = StyleSheet.create({
   piggyName: {
     fontSize: 15,
     fontFamily: "Inter-Medium",
-    color: theme.colors.text,
+    color: colors.text,
   },
   piggyProgress: {
     fontSize: 12,
     fontFamily: "Inter-Regular",
-    color: theme.colors.textDim,
+    color: colors.textDim,
     marginTop: 2,
   },
   piggyPercentage: {
     fontSize: 16,
     fontFamily: "Inter-SemiBold",
-    color: theme.colors.text,
+    color: colors.text,
     marginRight: 8,
   },
   piggyActions: {
@@ -1432,7 +1446,7 @@ const styles = StyleSheet.create({
   },
   progressBarContainer: {
     height: 8,
-    backgroundColor: theme.colors.darkLight,
+    backgroundColor: colors.surfaceDark,
     borderRadius: 4,
     overflow: "hidden",
   },
@@ -1443,7 +1457,7 @@ const styles = StyleSheet.create({
   tabs: {
     flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.1)",
+    borderBottomColor: colors.border,
     paddingHorizontal: 20,
   },
   tab: {
@@ -1459,7 +1473,7 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 13,
     fontFamily: "Inter-Medium",
-    color: theme.colors.textDim,
+    color: colors.textDim,
   },
   tabTextActive: {
     color: theme.colors.primary,
@@ -1467,7 +1481,7 @@ const styles = StyleSheet.create({
   modalPiggyItem: {
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: colors.border,
   },
   modalPiggyHeader: {
     flexDirection: "row",
@@ -1487,12 +1501,12 @@ const styles = StyleSheet.create({
   modalPiggyName: {
     fontSize: 16,
     fontFamily: "Inter-Medium",
-    color: theme.colors.text,
+    color: colors.text,
     marginBottom: 4,
   },
   modalPiggyProgress: {
     fontSize: 13,
     fontFamily: "Inter-Regular",
-    color: theme.colors.textDim,
+    color: colors.textDim,
   },
 });

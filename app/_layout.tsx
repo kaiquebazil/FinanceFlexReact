@@ -7,6 +7,8 @@ import { DataProvider } from '../contexts/DataContext';
 import { AuthProvider } from '../contexts/AuthContext';
 import { useData } from '../hooks/useData';
 import { theme } from '../constants/theme';
+import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
+import { useNotifications } from '../hooks/useNotifications';
 import type { CloudData } from '../services/syncService';
 
 SplashScreen.preventAutoHideAsync();
@@ -28,6 +30,7 @@ function AppWithSync({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
+  useNotifications();
   const [loaded, error] = useFonts({
     'Inter-Regular': Inter_400Regular,
     'Inter-Medium': Inter_500Medium,
@@ -46,19 +49,29 @@ export default function RootLayout() {
   }
 
   return (
-    <DataProvider>
-      <AppWithSync>
-        <Stack
-          screenOptions={{
-            headerStyle: { backgroundColor: theme.colors.darker },
-            headerTintColor: theme.colors.text,
-            contentStyle: { backgroundColor: theme.colors.darker },
-            headerShown: false,
-          }}
-        >
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-        </Stack>
-      </AppWithSync>
-    </DataProvider>
+    <ThemeProvider>
+      <DataProvider>
+        <AppWithSync>
+          <ThemedStack />
+        </AppWithSync>
+      </DataProvider>
+    </ThemeProvider>
+  );
+}
+
+function ThemedStack() {
+  const { colors } = useTheme();
+
+  return (
+    <Stack
+      screenOptions={{
+        headerStyle: { backgroundColor: colors.surfaceDark },
+        headerTintColor: colors.text,
+        contentStyle: { backgroundColor: colors.background },
+        headerShown: false,
+      }}
+    >
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+    </Stack>
   );
 }

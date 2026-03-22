@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { Button } from './Button';
 
 interface ConfirmModalProps {
@@ -36,6 +37,7 @@ export function ConfirmModal({
   onCancel,
   customContent,
 }: ConfirmModalProps) {
+  const { colors } = useTheme();
   const getIconName = () => {
     switch (type) {
       case 'success': return 'check-circle';
@@ -65,7 +67,7 @@ export function ConfirmModal({
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.overlay}>
           <TouchableWithoutFeedback onPress={() => {}}>
-            <View style={styles.modalContainer}>
+            <View style={[styles.modalContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <View style={styles.iconContainer}>
                 <FontAwesome5
                   name={getIconName()}
@@ -74,8 +76,8 @@ export function ConfirmModal({
                 />
               </View>
 
-              <Text style={styles.title}>{title}</Text>
-              <Text style={styles.message}>{message}</Text>
+              <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+              <Text style={[styles.message, { color: colors.textDim }]}>{message}</Text>
 
               {customContent && (
                 <View style={styles.customContent}>
