@@ -186,8 +186,6 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
                 </View>
 
                 {/* Filtro por período */}
-                 {/* Filtros de Período (Estilo Chips/Botões) */}
-              <View style={styles.filtersContainer}>
                 <Text style={[styles.filterLabel, { color: colors.textDim }]}>Período</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
                   {(['all', 'today', 'week', 'month', 'year'] as const).map((period) => (
@@ -215,6 +213,7 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
                       </Text>
                     </TouchableOpacity>
                   ))}
+                </ScrollView>
 
                 {/* Filtro por categoria */}
                 <View style={styles.field}>
