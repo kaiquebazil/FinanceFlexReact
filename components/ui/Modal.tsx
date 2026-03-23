@@ -23,7 +23,7 @@ interface ModalProps {
 }
 
 export function Modal({ visible, onClose, title, children }: ModalProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   
   return (
     <RNModal
@@ -39,13 +39,24 @@ export function Modal({ visible, onClose, title, children }: ModalProps) {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles.overlay}>
+          <View style={[styles.overlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.5)' }]}>
             <TouchableWithoutFeedback onPress={() => {}}>
-              <View style={[styles.modalContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <View style={[
+                styles.modalContainer,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  shadowColor: isDark ? '#000' : '#888',
+                  shadowOpacity: isDark ? 0.5 : 0.15,
+                }
+              ]}>
                 <View style={[styles.header, { borderBottomColor: colors.border }]}>
                   <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
-                  <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                    <FontAwesome5 name="times" size={20} color={colors.textDim} />
+                  <TouchableOpacity
+                    onPress={onClose}
+                    style={[styles.closeButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}
+                  >
+                    <FontAwesome5 name="times" size={18} color={colors.textDim} />
                   </TouchableOpacity>
                 </View>
                 <ScrollView
@@ -72,20 +83,20 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   modalContainer: {
-    backgroundColor: theme.colors.dark,
     borderRadius: 20,
     padding: 24,
     width: '100%',
     maxWidth: 500,
     maxHeight: '90%',
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    shadowOffset: { width: 0, height: 8 },
+    shadowRadius: 24,
+    elevation: 12,
   },
   header: {
     flexDirection: 'row',
@@ -94,16 +105,18 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
   },
   title: {
     fontSize: 20,
     fontFamily: theme.fonts.semibold,
-    color: theme.colors.text,
   },
   closeButton: {
     padding: 8,
     borderRadius: 20,
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   content: {
     flexGrow: 0,

@@ -66,8 +66,8 @@ interface ConfirmCallbackOptions {
 }
 
 export default function HomeScreen() {
-  const { colors } = useTheme();
-  const styles = getStyles(colors);
+  const { colors, isDark, toggleTheme } = useTheme();
+  const styles = getStyles(colors, isDark);
   const {
     accounts,
     transactions,
@@ -334,8 +334,8 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar
-        barStyle="light-content"
-        backgroundColor={theme.colors.darker}
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={colors.background}
       />
 
       {/* Container Responsivo - APENAS ISSO FOI ADICIONADO */}
@@ -349,7 +349,7 @@ export default function HomeScreen() {
         >
           {/* Header */}
           <LinearGradient
-            colors={["rgba(124, 77, 255, 0.15)", "transparent"]}
+            colors={isDark ? ["rgba(124, 77, 255, 0.15)", "transparent"] : ["rgba(108, 63, 255, 0.08)", "transparent"]}
             style={styles.header}
           >
             <View style={styles.headerContent}>
@@ -361,7 +361,17 @@ export default function HomeScreen() {
                 <Text style={styles.logoText}>FinanceFlex</Text>
               </View>
               <View style={styles.headerActions}>
-                {/* Indicador de sincronização em tempo real */}
+                {/* Toggle de Tema Claro/Escuro */}
+                <TouchableOpacity
+                  onPress={toggleTheme}
+                  style={styles.iconButton}
+                >
+                  <FontAwesome5
+                    name={isDark ? "sun" : "moon"}
+                    size={20}
+                    color={isDark ? "#FFD700" : "#515151"}
+                  />
+                </TouchableOpacity>
 
                 <TouchableOpacity
                   onPress={() => setValuesHidden(!valuesHidden)}
@@ -370,7 +380,7 @@ export default function HomeScreen() {
                   <FontAwesome5
                     name={valuesHidden ? "eye-slash" : "eye"}
                     size={20}
-                    color={theme.colors.text}
+                    color={colors.text}
                   />
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -380,7 +390,7 @@ export default function HomeScreen() {
                   <FontAwesome5
                     name="bars"
                     size={20}
-                    color={theme.colors.text}
+                    color={colors.text}
                   />
                 </TouchableOpacity>
               </View>
@@ -409,7 +419,7 @@ export default function HomeScreen() {
                     <FontAwesome5
                       name="credit-card"
                       size={32}
-                      color={theme.colors.textDim}
+                      color={colors.textDim}
                     />
                     <Text style={styles.emptyText}>Nenhuma conta cadastrada</Text>
                   </View>
@@ -532,7 +542,7 @@ export default function HomeScreen() {
                 <FontAwesome5
                   name="calendar-alt"
                   size={16}
-                  color={theme.colors.primary}
+                  color={colors.primary}
                 />
               </TouchableOpacity>
             </View>
@@ -552,7 +562,7 @@ export default function HomeScreen() {
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>Orçamentos do Mês</Text>
                   <TouchableOpacity onPress={() => setShowBudgetsModal(true)}>
-                    <FontAwesome5 name="chart-pie" size={16} color={theme.colors.primary} />
+                    <FontAwesome5 name="chart-pie" size={16} color={colors.primary} />
                   </TouchableOpacity>
                 </View>
                 <Card style={styles.card}>
@@ -616,7 +626,7 @@ export default function HomeScreen() {
                   <FontAwesome5
                     name="plus"
                     size={16}
-                    color={theme.colors.primary}
+                    color={colors.primary}
                   />
                 </TouchableOpacity>
               </View>
@@ -730,7 +740,7 @@ export default function HomeScreen() {
                 <FontAwesome5
                   name="external-link-alt"
                   size={16}
-                  color={theme.colors.primary}
+                  color={colors.primary}
                 />
               </TouchableOpacity>
             </View>
@@ -806,7 +816,7 @@ export default function HomeScreen() {
                   <FontAwesome5
                     name="exchange-alt"
                     size={32}
-                    color={theme.colors.textDim}
+                    color={colors.textDim}
                   />
                   <Text style={styles.emptyText}>
                     Nenhuma transação encontrada
@@ -870,7 +880,7 @@ export default function HomeScreen() {
                   <FontAwesome5
                     name="arrow-right"
                     size={12}
-                    color={theme.colors.primary}
+                    color={colors.primary}
                   />
                 </TouchableOpacity>
               )}
@@ -1230,7 +1240,7 @@ export default function HomeScreen() {
   );
 }
 
-const getStyles = (colors: any) => StyleSheet.create({
+const getStyles = (colors: any, isDark: boolean = true) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
@@ -1269,7 +1279,7 @@ const getStyles = (colors: any) => StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.isDark ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)",
+    backgroundColor: isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.07)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1384,7 +1394,7 @@ const getStyles = (colors: any) => StyleSheet.create({
   viewAllText: {
     fontSize: 14,
     fontFamily: "Inter-Medium",
-    color: theme.colors.primary,
+    color: colors.primary,
   },
   piggyItem: {
     paddingVertical: 16,
@@ -1457,7 +1467,7 @@ const getStyles = (colors: any) => StyleSheet.create({
     borderBottomColor: "transparent",
   },
   tabActive: {
-    borderBottomColor: theme.colors.primary,
+    borderBottomColor: colors.primary,
   },
   tabText: {
     fontSize: 13,
@@ -1465,7 +1475,7 @@ const getStyles = (colors: any) => StyleSheet.create({
     color: colors.textDim,
   },
   tabTextActive: {
-    color: theme.colors.primary,
+    color: colors.primary,
   },
   modalPiggyItem: {
     paddingVertical: 12,

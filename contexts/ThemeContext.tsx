@@ -37,7 +37,28 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Retorna as cores do tema selecionado
   const getColors = () => {
     if (themeType === 'light') {
-      return lightThemeColors;
+      // Tema claro — cores completas com surface e surfaceDark bem definidos
+      return {
+        background: lightThemeColors.background,
+        surface: lightThemeColors.surface,
+        surfaceDark: lightThemeColors.surfaceDark,
+        text: lightThemeColors.text,
+        textDim: lightThemeColors.textDim,
+        textSecondary: lightThemeColors.textSecondary,
+        textMuted: lightThemeColors.textMuted,
+        border: lightThemeColors.border,
+        primary: lightThemeColors.primary,
+        primaryLight: lightThemeColors.primaryLight,
+        primaryDark: lightThemeColors.primaryDark,
+        secondary: lightThemeColors.secondary,
+        success: lightThemeColors.success,
+        danger: lightThemeColors.danger,
+        warning: lightThemeColors.warning,
+        info: lightThemeColors.info,
+        dark: lightThemeColors.dark,
+        darker: lightThemeColors.darker,
+        darkLight: lightThemeColors.darkLight,
+      };
     }
     
     // Tema escuro (padrão)

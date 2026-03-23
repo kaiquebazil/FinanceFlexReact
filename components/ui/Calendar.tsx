@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import type { Transaction, RecurringBill } from '../../types';
 
 interface CalendarProps {
@@ -10,6 +11,7 @@ interface CalendarProps {
 }
 
 export function Calendar({ transactions, recurringBills }: CalendarProps) {
+  const { colors, isDark } = useTheme();
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
@@ -73,16 +75,16 @@ export function Calendar({ transactions, recurringBills }: CalendarProps) {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={prevMonth} style={styles.navButton}>
-          <FontAwesome5 name="chevron-left" size={16} color={theme.colors.text} />
+          <FontAwesome5 name="chevron-left" size={16} color={colors.primary} />
         </TouchableOpacity>
-        <Text style={styles.monthText}>{monthNames[currentMonth]} {currentYear}</Text>
+        <Text style={[styles.monthText, { color: colors.text }]}>{monthNames[currentMonth]} {currentYear}</Text>
         <TouchableOpacity onPress={nextMonth} style={styles.navButton}>
-          <FontAwesome5 name="chevron-right" size={16} color={theme.colors.text} />
+          <FontAwesome5 name="chevron-right" size={16} color={colors.primary} />
         </TouchableOpacity>
       </View>
       <View style={styles.weekDays}>
         {dayNames.map(day => (
-          <Text key={day} style={styles.weekDay}>{day}</Text>
+          <Text key={day} style={[styles.weekDay, { color: colors.textDim }]}>{day}</Text>
         ))}
       </View>
       <View style={styles.days}>
@@ -90,7 +92,13 @@ export function Calendar({ transactions, recurringBills }: CalendarProps) {
           <View key={index} style={styles.dayCell}>
             {day && (
               <View style={[styles.day, isToday(day) && styles.today, hasTransactionOnDay(day) && styles.hasTransaction]}>
-                <Text style={[styles.dayText, isToday(day) && styles.todayText]}>{day.getDate()}</Text>
+                <Text style={[
+                  styles.dayText,
+                  { color: colors.text },
+                  isToday(day) && styles.todayText,
+                ]}>
+                  {day.getDate()}
+                </Text>
               </View>
             )}
           </View>
@@ -103,14 +111,14 @@ export function Calendar({ transactions, recurringBills }: CalendarProps) {
 const styles = StyleSheet.create({
   container: { padding: 20 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  monthText: { fontSize: 16, fontFamily: 'Inter-SemiBold', color: theme.colors.text },
+  monthText: { fontSize: 16, fontFamily: 'Inter-SemiBold' },
   navButton: { padding: 8 },
   weekDays: { flexDirection: 'row', marginBottom: 10 },
-  weekDay: { flex: 1, textAlign: 'center', fontSize: 12, fontFamily: 'Inter-Medium', color: theme.colors.textDim },
+  weekDay: { flex: 1, textAlign: 'center', fontSize: 12, fontFamily: 'Inter-Medium' },
   days: { flexDirection: 'row', flexWrap: 'wrap' },
   dayCell: { width: '14.28%', aspectRatio: 1, padding: 2 },
   day: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 8 },
-  dayText: { fontSize: 14, fontFamily: 'Inter-Regular', color: theme.colors.text },
+  dayText: { fontSize: 14, fontFamily: 'Inter-Regular' },
   today: { backgroundColor: theme.colors.primary },
   todayText: { color: '#fff', fontFamily: 'Inter-Bold' },
   hasTransaction: { borderWidth: 2, borderColor: theme.colors.success },

@@ -4,6 +4,7 @@ import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { useData } from '../../hooks/useData';
 import { theme } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { formatCurrency } from '../../utils/currency';
 
 interface PiggyBankActionFormProps {
@@ -14,6 +15,7 @@ interface PiggyBankActionFormProps {
 }
 
 export function PiggyBankActionForm({ piggyBank, type, onSave, onCancel }: PiggyBankActionFormProps) {
+  const { colors } = useTheme();
   const { depositToPiggyBank, withdrawFromPiggyBank, accounts } = useData();
   const [amount, setAmount] = useState('');
   const [selectedAccountId, setSelectedAccountId] = useState<string>(piggyBank.accountId || (accounts.length > 0 ? accounts[0].id : ''));
@@ -33,10 +35,10 @@ export function PiggyBankActionForm({ piggyBank, type, onSave, onCancel }: Piggy
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>
+      <Text style={[styles.title, { color: colors.text }]}>
         {type === 'deposit' ? 'Depositar no Cofrinho' : 'Retirar do Cofrinho'}
       </Text>
-      <Text style={styles.subtitle}>{piggyBank.name}</Text>
+      <Text style={[styles.subtitle, { color: colors.primary }]}>{piggyBank.name}</Text>
 
       <Input 
         label="Valor (R$)" 
@@ -47,7 +49,7 @@ export function PiggyBankActionForm({ piggyBank, type, onSave, onCancel }: Piggy
         autoFocus
       />
 
-      <Text style={styles.label}>Selecione a conta</Text>
+      <Text style={[styles.label, { color: colors.text }]}>Selecione a conta</Text>
       <View style={styles.accountListContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountList}>
           {accounts.map(account => (
@@ -55,18 +57,21 @@ export function PiggyBankActionForm({ piggyBank, type, onSave, onCancel }: Piggy
               key={account.id}
               style={[
                 styles.accountOption, 
-                selectedAccountId === account.id && styles.accountOptionSelected
+                { backgroundColor: colors.surfaceDark, borderColor: colors.border },
+                selectedAccountId === account.id && { backgroundColor: colors.primary, borderColor: colors.primary },
               ]}
               onPress={() => setSelectedAccountId(account.id)}
             >
               <Text style={[
                 styles.accountText, 
+                { color: colors.textDim },
                 selectedAccountId === account.id && styles.accountTextSelected
               ]}>
                 {account.name}
               </Text>
               <Text style={[
                 styles.accountBalance,
+                { color: colors.text },
                 selectedAccountId === account.id && styles.accountTextSelected
               ]}>
                 {formatCurrency(account.balance, 'BRL')}
@@ -94,19 +99,16 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontFamily: 'Inter-Bold',
-    color: theme.colors.text,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 14,
     fontFamily: 'Inter-Medium',
-    color: theme.colors.primary,
     textAlign: 'center',
     marginTop: -12,
     marginBottom: 8,
   },
   label: {
-    color: theme.colors.text,
     fontSize: 14,
     fontFamily: 'Inter-Medium',
     marginBottom: 4,
@@ -124,22 +126,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 12,
-    backgroundColor: theme.colors.darkLight,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
     minWidth: 120,
   },
-  accountOptionSelected: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
-  },
   accountText: {
-    color: theme.colors.textDim,
     fontSize: 13,
     fontFamily: 'Inter-Medium',
   },
   accountBalance: {
-    color: theme.colors.text,
     fontSize: 14,
     fontFamily: 'Inter-Bold',
     marginTop: 4,

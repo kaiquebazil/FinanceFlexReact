@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { theme } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { useData } from '../../hooks/useData';
 import { validateAccount } from '../../utils/validation';
 import type { AccountType, Currency } from '../../types';
@@ -16,6 +17,7 @@ const accountTypes: AccountType[] = ['Dinheiro', 'Banco', 'Crédito', 'Investime
 const currencies: Currency[] = ['BRL', 'USD', 'EUR', 'GBP', 'JPY'];
 
 export const AccountForm = ({ onSave, onCancel }: AccountFormProps) => {
+  const { colors } = useTheme();
   const { addAccount } = useData();
   const [name, setName] = useState('');
   const [type, setType] = useState<AccountType>('Banco');
@@ -43,7 +45,7 @@ export const AccountForm = ({ onSave, onCancel }: AccountFormProps) => {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.surface }]}>
       <Input
         label="Nome da Conta"
         value={name}
@@ -52,28 +54,44 @@ export const AccountForm = ({ onSave, onCancel }: AccountFormProps) => {
         placeholder="Ex: Nubank, Itaú, Carteira"
       />
 
-      <Text style={styles.label}>Tipo de Conta</Text>
+      <Text style={[styles.label, { color: colors.text }]}>Tipo de Conta</Text>
       <View style={styles.chipContainer}>
         {accountTypes.map((t) => (
           <TouchableOpacity
             key={t}
-            style={[styles.chip, type === t && styles.chipActive]}
+            style={[
+              styles.chip,
+              { backgroundColor: colors.surfaceDark, borderColor: colors.border },
+              type === t && { backgroundColor: colors.primary, borderColor: colors.primary },
+            ]}
             onPress={() => setType(t)}
           >
-            <Text style={[styles.chipText, type === t && styles.chipTextActive]}>{t}</Text>
+            <Text style={[
+              styles.chipText,
+              { color: colors.textSecondary },
+              type === t && styles.chipTextActive,
+            ]}>{t}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      <Text style={styles.label}>Moeda</Text>
+      <Text style={[styles.label, { color: colors.text }]}>Moeda</Text>
       <View style={styles.chipContainer}>
         {currencies.map((c) => (
           <TouchableOpacity
             key={c}
-            style={[styles.chip, currency === c && styles.chipActive]}
+            style={[
+              styles.chip,
+              { backgroundColor: colors.surfaceDark, borderColor: colors.border },
+              currency === c && { backgroundColor: colors.primary, borderColor: colors.primary },
+            ]}
             onPress={() => setCurrency(c)}
           >
-            <Text style={[styles.chipText, currency === c && styles.chipTextActive]}>{c}</Text>
+            <Text style={[
+              styles.chipText,
+              { color: colors.textSecondary },
+              currency === c && styles.chipTextActive,
+            ]}>{c}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -100,7 +118,6 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
   },
   label: {
-    color: theme.colors.text,
     fontSize: 14,
     fontWeight: '500',
     marginBottom: theme.spacing.sm,
@@ -115,16 +132,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
     borderRadius: 20,
-    backgroundColor: theme.colors.darkLight,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  chipActive: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
   },
   chipText: {
-    color: theme.colors.textSecondary,
     fontSize: 14,
   },
   chipTextActive: {

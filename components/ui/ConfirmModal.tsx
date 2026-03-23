@@ -37,7 +37,8 @@ export function ConfirmModal({
   onCancel,
   customContent,
 }: ConfirmModalProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+
   const getIconName = () => {
     switch (type) {
       case 'success': return 'check-circle';
@@ -49,10 +50,10 @@ export function ConfirmModal({
 
   const getIconColor = () => {
     switch (type) {
-      case 'success': return theme.colors.success;
-      case 'warning': return theme.colors.warning;
-      case 'danger': return theme.colors.danger;
-      default: return theme.colors.info;
+      case 'success': return colors.success;
+      case 'warning': return colors.warning;
+      case 'danger': return colors.danger;
+      default: return colors.info;
     }
   };
 
@@ -65,13 +66,21 @@ export function ConfirmModal({
       statusBarTranslucent
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.overlay}>
+        <View style={[styles.overlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.5)' }]}>
           <TouchableWithoutFeedback onPress={() => {}}>
-            <View style={[styles.modalContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <View style={styles.iconContainer}>
+            <View style={[
+              styles.modalContainer,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+                shadowColor: isDark ? '#000' : '#888',
+                shadowOpacity: isDark ? 0.5 : 0.15,
+              }
+            ]}>
+              <View style={[styles.iconContainer, { backgroundColor: `${getIconColor()}18`, borderColor: `${getIconColor()}30` }]}>
                 <FontAwesome5
                   name={getIconName()}
-                  size={50}
+                  size={40}
                   color={getIconColor()}
                 />
               </View>
@@ -112,36 +121,39 @@ export function ConfirmModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   modalContainer: {
-    backgroundColor: theme.colors.darkLight,
     borderRadius: 20,
-    padding: 24,
+    padding: 28,
     width: '100%',
     maxWidth: 400,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    ...theme.shadows.medium,
+    shadowOffset: { width: 0, height: 8 },
+    shadowRadius: 24,
+    elevation: 12,
   },
   iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 20,
+    borderWidth: 1,
   },
   title: {
     fontSize: 20,
     fontFamily: 'Inter-Bold',
-    color: theme.colors.text,
     marginBottom: 12,
     textAlign: 'center',
   },
   message: {
     fontSize: 14,
     fontFamily: 'Inter-Regular',
-    color: theme.colors.textDim,
     marginBottom: 24,
     textAlign: 'center',
     lineHeight: 20,

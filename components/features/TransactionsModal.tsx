@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { useData } from '../../hooks/useData';
 import { formatCurrency } from '../../utils/currency';
 import { Button } from '../ui/Button';
@@ -28,6 +29,7 @@ type FilterType = 'all' | 'income' | 'expense' | 'transfer';
 type PeriodType = 'today' | 'week' | 'month' | 'year';
 
 export function TransactionsModal({ visible, onClose }: TransactionsModalProps) {
+  const { colors, isDark } = useTheme();
   const { transactions, accounts, categories, deleteTransaction } = useData();
   const { toast, showToast, hideToast } = useToast();
   
@@ -111,10 +113,10 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
 
   const getColorForType = (type: string) => {
     switch (type) {
-      case 'income': return theme.colors.success;
-      case 'expense': return theme.colors.danger;
-      case 'transfer': return theme.colors.info;
-      default: return theme.colors.textDim;
+      case 'income': return colors.success;
+      case 'expense': return colors.danger;
+      case 'transfer': return colors.info;
+      default: return colors.textDim;
     }
   };
 
@@ -144,13 +146,13 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
         onRequestClose={onClose}
         statusBarTranslucent
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+        <View style={[styles.modalOverlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.5)' }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
             {/* Cabeçalho */}
-            <View style={styles.header}>
-              <Text style={styles.title}>Todas as Transações</Text>
+            <View style={[styles.header, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.title, { color: colors.text }]}>Todas as Transações</Text>
               <TouchableOpacity onPress={onClose}>
-                <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
+                <FontAwesome5 name="times" size={20} color={colors.textDim} />
               </TouchableOpacity>
             </View>
 
@@ -158,19 +160,21 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
               {/* Filtros */}
               <View style={styles.filtersContainer}>
                 {/* Filtro por tipo */}
-                <Text style={styles.filterLabel}>Filtrar por:</Text>
+                <Text style={[styles.filterLabel, { color: colors.textDim }]}>Filtrar por:</Text>
                 <View style={styles.filterRow}>
                   {(['all', 'income', 'expense', 'transfer'] as const).map((filter) => (
                     <TouchableOpacity
                       key={filter}
                       style={[
                         styles.filterChip,
+                        { backgroundColor: colors.surfaceDark, borderColor: colors.border },
                         selectedFilter === filter && styles.filterChipActive
                       ]}
                       onPress={() => setSelectedFilter(filter)}
                     >
                       <Text style={[
                         styles.filterChipText,
+                        { color: colors.text },
                         selectedFilter === filter && styles.filterChipTextActive
                       ]}>
                         {filter === 'all' ? 'Todas' :
@@ -182,19 +186,21 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
                 </View>
 
                 {/* Filtro por período */}
-                <Text style={styles.filterLabel}>Período:</Text>
+                <Text style={[styles.filterLabel, { color: colors.textDim }]}>Período:</Text>
                 <View style={styles.filterRow}>
                   {(['today', 'week', 'month', 'year'] as const).map((period) => (
                     <TouchableOpacity
                       key={period}
                       style={[
                         styles.filterChip,
+                        { backgroundColor: colors.surfaceDark, borderColor: colors.border },
                         selectedPeriod === period && styles.filterChipActive
                       ]}
                       onPress={() => setSelectedPeriod(period)}
                     >
                       <Text style={[
                         styles.filterChipText,
+                        { color: colors.text },
                         selectedPeriod === period && styles.filterChipTextActive
                       ]}>
                         {period === 'today' ? 'Hoje' :
@@ -206,42 +212,42 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
                 </View>
 
                 {/* Filtro por categoria */}
-                <Text style={styles.filterLabel}>Categoria:</Text>
+                <Text style={[styles.filterLabel, { color: colors.textDim }]}>Categoria:</Text>
                 <TouchableOpacity
-                  style={styles.categorySelector}
+                  style={[styles.categorySelector, { backgroundColor: colors.surfaceDark, borderColor: colors.border }]}
                   onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}
                 >
-                  <Text style={styles.categorySelectorText}>
+                  <Text style={[styles.categorySelectorText, { color: colors.text }]}>
                     {selectedCategory === 'all' ? 'Todas' : selectedCategory}
                   </Text>
                   <FontAwesome5 
                     name={showCategoryDropdown ? 'chevron-up' : 'chevron-down'} 
                     size={14} 
-                    color={theme.colors.textDim} 
+                    color={colors.textDim} 
                   />
                 </TouchableOpacity>
 
                 {showCategoryDropdown && (
-                  <View style={styles.dropdown}>
+                  <View style={[styles.dropdown, { backgroundColor: colors.surfaceDark, borderColor: colors.border }]}>
                     <TouchableOpacity
-                      style={styles.dropdownItem}
+                      style={[styles.dropdownItem, { borderBottomColor: colors.border }]}
                       onPress={() => {
                         setSelectedCategory('all');
                         setShowCategoryDropdown(false);
                       }}
                     >
-                      <Text style={styles.dropdownItemText}>Todas</Text>
+                      <Text style={[styles.dropdownItemText, { color: colors.text }]}>Todas</Text>
                     </TouchableOpacity>
                     {uniqueCategories.map(cat => (
                       <TouchableOpacity
                         key={cat}
-                        style={styles.dropdownItem}
+                        style={[styles.dropdownItem, { borderBottomColor: colors.border }]}
                         onPress={() => {
                           setSelectedCategory(cat);
                           setShowCategoryDropdown(false);
                         }}
                       >
-                        <Text style={styles.dropdownItemText}>{cat}</Text>
+                        <Text style={[styles.dropdownItemText, { color: colors.text }]}>{cat}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
@@ -249,22 +255,22 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
               </View>
 
               {/* Resumo dos totais */}
-              <View style={styles.summaryContainer}>
+              <View style={[styles.summaryContainer, { backgroundColor: colors.surfaceDark }]}>
                 <View style={styles.summaryItem}>
-                  <Text style={styles.summaryLabel}>Receitas</Text>
-                  <Text style={[styles.summaryValue, { color: theme.colors.success }]}>
+                  <Text style={[styles.summaryLabel, { color: colors.textDim }]}>Receitas</Text>
+                  <Text style={[styles.summaryValue, { color: colors.success }]}>
                     {formatCurrency(totals.income, 'BRL')}
                   </Text>
                 </View>
                 <View style={styles.summaryItem}>
-                  <Text style={styles.summaryLabel}>Despesas</Text>
-                  <Text style={[styles.summaryValue, { color: theme.colors.danger }]}>
+                  <Text style={[styles.summaryLabel, { color: colors.textDim }]}>Despesas</Text>
+                  <Text style={[styles.summaryValue, { color: colors.danger }]}>
                     {formatCurrency(totals.expense, 'BRL')}
                   </Text>
                 </View>
                 <View style={styles.summaryItem}>
-                  <Text style={styles.summaryLabel}>Saldo</Text>
-                  <Text style={[styles.summaryValue, { color: theme.colors.info }]}>
+                  <Text style={[styles.summaryLabel, { color: colors.textDim }]}>Saldo</Text>
+                  <Text style={[styles.summaryValue, { color: colors.info }]}>
                     {formatCurrency(totals.income - totals.expense, 'BRL')}
                   </Text>
                 </View>
@@ -274,26 +280,26 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
               <View style={styles.transactionsList}>
                 {Object.keys(groupedTransactions).length === 0 ? (
                   <View style={styles.emptyState}>
-                    <FontAwesome5 name="exchange-alt" size={40} color={theme.colors.textDim} />
-                    <Text style={styles.emptyText}>Nenhuma transação encontrada</Text>
+                    <FontAwesome5 name="exchange-alt" size={40} color={colors.textDim} />
+                    <Text style={[styles.emptyText, { color: colors.textDim }]}>Nenhuma transação encontrada</Text>
                   </View>
                 ) : (
                   Object.entries(groupedTransactions).map(([date, dateTransactions]) => (
                     <View key={date}>
-                      <Text style={styles.dateHeader}>{date}</Text>
+                      <Text style={[styles.dateHeader, { color: colors.primary }]}>{date}</Text>
                       {dateTransactions.map(t => {
                         const icon = getIconForType(t.type);
                         const color = getColorForType(t.type);
                         
                         return (
-                          <View key={t.id} style={styles.transactionItem}>
+                          <View key={t.id} style={[styles.transactionItem, { backgroundColor: colors.surfaceDark }]}>
                             <View style={[styles.transactionIcon, { backgroundColor: `${color}20` }]}>
                               <FontAwesome5 name={icon} size={16} color={color} />
                             </View>
                             
                             <View style={styles.transactionContent}>
                               <View style={styles.transactionHeader}>
-                                <Text style={styles.transactionDescription}>
+                                <Text style={[styles.transactionDescription, { color: colors.text }]}>
                                   {t.description || (t.type === 'income' ? 'Receita' : 
                                    t.type === 'expense' ? 'Despesa' : 'Transferência')}
                                 </Text>
@@ -304,8 +310,8 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
                               </View>
                               
                               <View style={styles.transactionDetails}>
-                                <Text style={styles.transactionCategory}>{t.category}</Text>
-                                <Text style={styles.transactionAccount}>
+                                <Text style={[styles.transactionCategory, { color: colors.textDim }]}>{t.category}</Text>
+                                <Text style={[styles.transactionAccount, { color: colors.textDim }]}>
                                   {getAccountName(t.accountId)}
                                   {t.toAccountId && ` → ${getAccountName(t.toAccountId)}`}
                                 </Text>
@@ -317,7 +323,7 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
                               style={styles.deleteButton}
                               onPress={() => handleDeletePress(t)}
                             >
-                              <FontAwesome5 name="trash" size={16} color={theme.colors.danger} />
+                              <FontAwesome5 name="trash" size={16} color={colors.danger} />
                             </TouchableOpacity>
                           </View>
                         );
@@ -367,11 +373,9 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: theme.colors.dark,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
@@ -384,12 +388,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingBottom: 15,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
   },
   title: {
     fontSize: 24,
     fontFamily: 'Inter-Bold',
-    color: theme.colors.text,
   },
   filtersContainer: {
     marginBottom: 20,
@@ -397,7 +399,6 @@ const styles = StyleSheet.create({
   filterLabel: {
     fontSize: 14,
     fontFamily: 'Inter-Medium',
-    color: theme.colors.textDim,
     marginBottom: 10,
     marginTop: 5,
   },
@@ -411,9 +412,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: theme.colors.darkLight,
     borderWidth: 1,
-    borderColor: theme.colors.border,
   },
   filterChipActive: {
     backgroundColor: theme.colors.primary,
@@ -421,7 +420,6 @@ const styles = StyleSheet.create({
   },
   filterChipText: {
     fontSize: 13,
-    color: theme.colors.text,
   },
   filterChipTextActive: {
     color: '#fff',
@@ -430,38 +428,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: theme.colors.darkLight,
     borderRadius: 8,
     padding: 12,
     borderWidth: 1,
-    borderColor: theme.colors.border,
     marginBottom: 5,
   },
   categorySelectorText: {
     fontSize: 14,
-    color: theme.colors.text,
   },
   dropdown: {
-    backgroundColor: theme.colors.darkLight,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: theme.colors.border,
     marginBottom: 15,
     maxHeight: 200,
   },
   dropdownItem: {
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
   },
   dropdownItemText: {
     fontSize: 14,
-    color: theme.colors.text,
   },
   summaryContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: theme.colors.darkLight,
     borderRadius: 12,
     padding: 15,
     marginBottom: 20,
@@ -471,7 +461,6 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 12,
-    color: theme.colors.textDim,
     marginBottom: 5,
   },
   summaryValue: {
@@ -484,13 +473,11 @@ const styles = StyleSheet.create({
   dateHeader: {
     fontSize: 14,
     fontFamily: 'Inter-SemiBold',
-    color: theme.colors.primary,
     marginVertical: 10,
   },
   transactionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.darkLight,
     borderRadius: 10,
     padding: 12,
     marginBottom: 8,
@@ -515,7 +502,6 @@ const styles = StyleSheet.create({
   transactionDescription: {
     fontSize: 15,
     fontFamily: 'Inter-Medium',
-    color: theme.colors.text,
     flex: 1,
   },
   transactionAmount: {
@@ -528,11 +514,9 @@ const styles = StyleSheet.create({
   },
   transactionCategory: {
     fontSize: 12,
-    color: theme.colors.textDim,
   },
   transactionAccount: {
     fontSize: 12,
-    color: theme.colors.textDim,
   },
   deleteButton: {
     padding: 8,
@@ -545,7 +529,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    color: theme.colors.textDim,
     marginTop: 10,
   },
   closeButton: {

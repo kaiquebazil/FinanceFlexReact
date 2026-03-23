@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import type { Transaction, RecurringBill } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 
@@ -28,6 +29,7 @@ export function CalendarModal({
   recurringBills,
   accounts,
 }: CalendarModalProps) {
+  const { colors, isDark } = useTheme();
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
@@ -150,13 +152,13 @@ export function CalendarModal({
   const getColorForType = (type: string) => {
     switch (type) {
       case 'income':
-        return theme.colors.success;
+        return colors.success;
       case 'expense':
-        return theme.colors.danger;
+        return colors.danger;
       case 'transfer':
-        return theme.colors.info;
+        return colors.info;
       default:
-        return theme.colors.textDim;
+        return colors.textDim;
     }
   };
 
@@ -178,16 +180,16 @@ export function CalendarModal({
       onRequestClose={onClose}
       statusBarTranslucent
     >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
+      <View style={[styles.modalOverlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.4)' }]}>
+        <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
           {/* Cabeçalho */}
-          <View style={styles.header}>
-            <Text style={styles.title}>Calendário de Transações</Text>
+          <View style={[styles.header, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.title, { color: colors.text }]}>Calendário de Transações</Text>
             <TouchableOpacity onPress={onClose}>
               <FontAwesome5
                 name="times"
                 size={20}
-                color={theme.colors.textDim}
+                color={colors.textDim}
               />
             </TouchableOpacity>
           </View>
@@ -198,24 +200,24 @@ export function CalendarModal({
             keyboardDismissMode="none"
           >
             {/* Seção do Calendário */}
-            <View style={styles.calendarSection}>
+            <View style={[styles.calendarSection, { borderBottomColor: colors.border }]}>
               {/* Navegação de Mês */}
               <View style={styles.monthNavigation}>
                 <TouchableOpacity onPress={prevMonth} style={styles.navButton}>
                   <FontAwesome5
                     name="chevron-left"
                     size={16}
-                    color={theme.colors.primary}
+                    color={colors.primary}
                   />
                 </TouchableOpacity>
-                <Text style={styles.monthText}>
+                <Text style={[styles.monthText, { color: colors.text }]}>
                   {monthNames[currentMonth]} {currentYear}
                 </Text>
                 <TouchableOpacity onPress={nextMonth} style={styles.navButton}>
                   <FontAwesome5
                     name="chevron-right"
                     size={16}
-                    color={theme.colors.primary}
+                    color={colors.primary}
                   />
                 </TouchableOpacity>
               </View>
@@ -223,7 +225,7 @@ export function CalendarModal({
               {/* Dias da Semana */}
               <View style={styles.weekDays}>
                 {dayNames.map((day) => (
-                  <Text key={day} style={styles.weekDay}>
+                  <Text key={day} style={[styles.weekDay, { color: colors.textDim }]}>
                     {day}
                   </Text>
                 ))}
@@ -252,6 +254,7 @@ export function CalendarModal({
                         <Text
                           style={[
                             styles.dayText,
+                            { color: colors.text },
                             (isToday(day) || isSelected(day)) &&
                               styles.selectedDayText,
                           ]}
@@ -270,11 +273,11 @@ export function CalendarModal({
 
             {/* Seção de Transações */}
             <View style={styles.transactionsSection}>
-              <Text style={styles.transactionsSectionTitle}>
+              <Text style={[styles.transactionsSectionTitle, { color: colors.text }]}>
                 Transações do dia
               </Text>
               {selectedDate && (
-                <Text style={styles.selectedDateText}>{selectedDateString}</Text>
+                <Text style={[styles.selectedDateText, { color: colors.textDim }]}>{selectedDateString}</Text>
               )}
 
               {filteredTransactions.length === 0 ? (
@@ -282,14 +285,14 @@ export function CalendarModal({
                   <FontAwesome5
                     name="calendar-times"
                     size={32}
-                    color={theme.colors.textDim}
+                    color={colors.textDim}
                   />
-                  <Text style={styles.emptyText}>
+                  <Text style={[styles.emptyText, { color: colors.textDim }]}>
                     Nenhuma transação neste dia
                   </Text>
                 </View>
               ) : (
-                <View style={styles.transactionsList}>
+                <View style={[styles.transactionsList, { backgroundColor: colors.surfaceDark }]}>
                   {filteredTransactions.map((transaction) => {
                     const icon = getIconForType(transaction.type);
                     const color = getColorForType(transaction.type);
@@ -297,7 +300,7 @@ export function CalendarModal({
                     return (
                       <View
                         key={transaction.id}
-                        style={styles.transactionItem}
+                        style={[styles.transactionItem, { borderBottomColor: colors.border }]}
                       >
                         <View
                           style={[
@@ -308,7 +311,7 @@ export function CalendarModal({
                           <FontAwesome5 name={icon} size={16} color={color} />
                         </View>
                         <View style={styles.transactionInfo}>
-                          <Text style={styles.transactionName}>
+                          <Text style={[styles.transactionName, { color: colors.text }]}>
                             {transaction.description ||
                               (transaction.type === 'income'
                                 ? 'Receita'
@@ -316,7 +319,7 @@ export function CalendarModal({
                                   ? 'Despesa'
                                   : 'Transferência')}
                           </Text>
-                          <Text style={styles.transactionDetails}>
+                          <Text style={[styles.transactionDetails, { color: colors.textDim }]}>
                             {transaction.category} •{' '}
                             {getAccountName(transaction.accountId)}
                           </Text>
@@ -345,7 +348,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: theme.colors.dark,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '90%',
@@ -358,18 +360,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
   },
   title: {
     fontSize: 18,
     fontFamily: theme.fonts.semibold,
-    color: theme.colors.text,
   },
   calendarSection: {
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
   },
   monthNavigation: {
     flexDirection: 'row',
@@ -383,7 +382,6 @@ const styles = StyleSheet.create({
   monthText: {
     fontSize: 16,
     fontFamily: theme.fonts.semibold,
-    color: theme.colors.text,
   },
   weekDays: {
     flexDirection: 'row',
@@ -394,7 +392,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 12,
     fontFamily: theme.fonts.medium,
-    color: theme.colors.textDim,
     paddingVertical: 8,
   },
   days: {
@@ -416,7 +413,6 @@ const styles = StyleSheet.create({
   dayText: {
     fontSize: 14,
     fontFamily: theme.fonts.regular,
-    color: theme.colors.text,
   },
   today: {
     backgroundColor: theme.colors.primary,
@@ -425,7 +421,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.secondary,
   },
   selectedDayText: {
-    color: theme.colors.dark,
+    color: '#121212',
     fontFamily: theme.fonts.bold,
   },
   hasTransaction: {
@@ -447,13 +443,11 @@ const styles = StyleSheet.create({
   transactionsSectionTitle: {
     fontSize: 16,
     fontFamily: theme.fonts.semibold,
-    color: theme.colors.text,
     marginBottom: 4,
   },
   selectedDateText: {
     fontSize: 13,
     fontFamily: theme.fonts.regular,
-    color: theme.colors.textDim,
     marginBottom: 12,
     textTransform: 'capitalize',
   },
@@ -465,10 +459,8 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 14,
     fontFamily: theme.fonts.regular,
-    color: theme.colors.textDim,
   },
   transactionsList: {
-    backgroundColor: theme.colors.darkLight,
     borderRadius: 12,
     overflow: 'hidden',
   },
@@ -478,7 +470,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
   },
   transactionIcon: {
     width: 40,
@@ -494,12 +485,10 @@ const styles = StyleSheet.create({
   transactionName: {
     fontSize: 15,
     fontFamily: theme.fonts.medium,
-    color: theme.colors.text,
   },
   transactionDetails: {
     fontSize: 12,
     fontFamily: theme.fonts.regular,
-    color: theme.colors.textDim,
     marginTop: 2,
   },
   transactionAmount: {

@@ -2,6 +2,7 @@ import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, View, ViewStyle } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface ButtonProps {
   title: string;
@@ -14,17 +15,18 @@ interface ButtonProps {
 }
 
 export const Button = ({ title, onPress, variant = 'primary', disabled, loading, icon, style }: ButtonProps) => {
+  const { colors } = useTheme();
   const isOutline = variant === 'outline';
   const backgroundColor = isOutline
     ? 'transparent'
     : variant === 'primary'
-    ? theme.colors.primary
+    ? colors.primary
     : variant === 'secondary'
-    ? theme.colors.secondary
-    : theme.colors.danger;
+    ? colors.secondary
+    : colors.danger;
 
-  const textColor = isOutline ? theme.colors.primary : '#fff';
-  const borderStyle = isOutline ? { borderWidth: 1, borderColor: theme.colors.primary } : {};
+  const textColor = isOutline ? colors.primary : '#fff';
+  const borderStyle = isOutline ? { borderWidth: 1, borderColor: colors.primary } : {};
 
   return (
     <TouchableOpacity
