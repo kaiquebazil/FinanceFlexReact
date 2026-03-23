@@ -88,14 +88,6 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
     groupedTransactions[date].push(t);
   });
 
-  // Calcular totais
-  const totals = filteredTransactions.reduce((acc, t) => {
-    if (t.type === 'income') acc.income += t.amount;
-    if (t.type === 'expense') acc.expense += t.amount;
-    if (t.type === 'transfer') acc.transfer += t.amount;
-    return acc;
-  }, { income: 0, expense: 0, transfer: 0 });
-
   const getAccountName = (accountId: string) => {
     const account = accounts.find(a => a.id === accountId);
     return account?.name || 'Conta desconhecida';
@@ -164,40 +156,33 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="none">
-              {/* Filtros */}
-              <View style={styles.filtersContainer}>
-                {/* Filtro por tipo */}
-                <Text style={[styles.filterLabel, { color: colors.textDim }]}>Filtrar por:</Text>
-                <View style={styles.filterRow}>
-                  {(['all', 'income', 'expense', 'transfer'] as const).map((filter) => (
-                    <TouchableOpacity
-                      key={filter}
-                      style={[
-                        styles.filterChip,
-                        { 
-                          backgroundColor: isDark ? colors.darkLight : colors.surfaceDark, 
-                          borderColor: colors.border 
-                        },
-                        selectedFilter === filter && [styles.filterChipActive, { backgroundColor: colors.primary, borderColor: colors.primary }]
-                      ]}
-                      onPress={() => setSelectedFilter(filter)}
-                    >
-                      <Text style={[
-                        styles.filterChipText,
-                        { color: colors.text },
-                        selectedFilter === filter && styles.filterChipTextActive
-                      ]}>
-                        {filter === 'all' ? 'Todas' :
-                         filter === 'income' ? 'Receitas' :
-                         filter === 'expense' ? 'Despesas' : 'Transferências'}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+              {/* Filtros de Tipo (Estilo Abas da Home) */}
+              <View style={styles.tabs}>
+                {(['all', 'income', 'expense', 'transfer'] as const).map((filter) => (
+                  <TouchableOpacity
+                    key={filter}
+                    style={[
+                      styles.tab,
+                      selectedFilter === filter && styles.tabActive,
+                    ]}
+                    onPress={() => setSelectedFilter(filter)}
+                  >
+                    <Text style={[
+                      styles.tabText,
+                      selectedFilter === filter && styles.tabTextActive,
+                    ]}>
+                      {filter === 'all' ? 'Todas' :
+                       filter === 'income' ? 'Receitas' :
+                       filter === 'expense' ? 'Despesas' : 'Trocas'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
 
-                {/* Filtro por período */}
-                <Text style={[styles.filterLabel, { color: colors.textDim }]}>Período:</Text>
-                <View style={styles.filterRow}>
+              {/* Filtros de Período (Estilo Chips/Botões) */}
+              <View style={styles.filtersContainer}>
+                <Text style={[styles.filterLabel, { color: colors.textDim }]}>Período</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
                   {(['today', 'week', 'month', 'year'] as const).map((period) => (
                     <TouchableOpacity
                       key={period}
@@ -207,14 +192,14 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
                           backgroundColor: isDark ? colors.darkLight : colors.surfaceDark, 
                           borderColor: colors.border 
                         },
-                        selectedPeriod === period && [styles.filterChipActive, { backgroundColor: colors.primary, borderColor: colors.primary }]
+                        selectedPeriod === period && { backgroundColor: colors.primary, borderColor: colors.primary }
                       ]}
                       onPress={() => setSelectedPeriod(period)}
                     >
                       <Text style={[
                         styles.filterChipText,
-                        { color: colors.text },
-                        selectedPeriod === period && styles.filterChipTextActive
+                        { color: colors.textDim },
+                        selectedPeriod === period && { color: '#fff', fontFamily: 'Inter-SemiBold' }
                       ]}>
                         {period === 'today' ? 'Hoje' :
                          period === 'week' ? 'Semana' :
@@ -222,28 +207,28 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
                       </Text>
                     </TouchableOpacity>
                   ))}
-                </View>
+                </ScrollView>
 
-                {/* Filtro por categoria - BOTÕES EM GRADE */}
+                {/* Filtro por categoria (Estilo Chips) */}
                 {filteredCategoriesForType.length > 0 && (
                   <>
-                    <Text style={[styles.filterLabel, { color: colors.textDim }]}>Categoria:</Text>
-                    <View style={styles.categoryGrid}>
+                    <Text style={[styles.filterLabel, { color: colors.textDim }]}>Categoria</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
                       <TouchableOpacity
                         style={[
-                          styles.categoryFilterButton,
+                          styles.filterChip,
                           { 
                             backgroundColor: isDark ? colors.darkLight : colors.surfaceDark, 
                             borderColor: colors.border 
                           },
-                          selectedCategory === 'all' && [styles.categoryFilterButtonActive, { backgroundColor: colors.primary, borderColor: colors.primary }]
+                          selectedCategory === 'all' && { backgroundColor: colors.primary, borderColor: colors.primary }
                         ]}
                         onPress={() => setSelectedCategory('all')}
                       >
                         <Text style={[
-                          styles.categoryFilterButtonText,
-                          { color: colors.text },
-                          selectedCategory === 'all' && styles.categoryFilterButtonTextActive
+                          styles.filterChipText,
+                          { color: colors.textDim },
+                          selectedCategory === 'all' && { color: '#fff', fontFamily: 'Inter-SemiBold' }
                         ]}>
                           Todas
                         </Text>
@@ -252,30 +237,32 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
                         <TouchableOpacity
                           key={cat.id}
                           style={[
-                            styles.categoryFilterButton,
-                            {
-                              backgroundColor: selectedCategory === cat.name ? cat.color : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)'),
-                              borderColor: selectedCategory === cat.name ? cat.color : (isDark ? `${cat.color}40` : `${cat.color}60`),
+                            styles.filterChip,
+                            { 
+                              backgroundColor: isDark ? colors.darkLight : colors.surfaceDark, 
+                              borderColor: colors.border 
                             },
-                            selectedCategory === cat.name && styles.categoryFilterButtonActive
+                            selectedCategory === cat.name && { backgroundColor: cat.color, borderColor: cat.color }
                           ]}
                           onPress={() => setSelectedCategory(cat.name)}
                         >
-                          <FontAwesome5
-                            name={cat.icon || 'tag'}
-                            size={12}
-                            color={selectedCategory === cat.name ? '#fff' : cat.color}
-                          />
-                          <Text style={[
-                            styles.categoryFilterButtonText,
-                            { color: selectedCategory === cat.name ? '#fff' : colors.text },
-                            selectedCategory === cat.name && styles.categoryFilterButtonTextActive
-                          ]}>
-                            {cat.name}
-                          </Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <FontAwesome5
+                              name={cat.icon || 'tag'}
+                              size={12}
+                              color={selectedCategory === cat.name ? '#fff' : cat.color}
+                            />
+                            <Text style={[
+                              styles.filterChipText,
+                              { color: colors.textDim },
+                              selectedCategory === cat.name && { color: '#fff', fontFamily: 'Inter-SemiBold' }
+                            ]}>
+                              {cat.name}
+                            </Text>
+                          </View>
                         </TouchableOpacity>
                       ))}
-                    </View>
+                    </ScrollView>
                   </>
                 )}
               </View>
@@ -283,7 +270,7 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
               {/* Lista de transações */}
               {Object.keys(groupedTransactions).length === 0 ? (
                 <View style={styles.emptyState}>
-                  <FontAwesome5 name="receipt" size={48} color={colors.textDim} />
+                  <FontAwesome5 name="exchange-alt" size={32} color={colors.textDim} />
                   <Text style={[styles.emptyText, { color: colors.textDim }]}>Nenhuma transação encontrada</Text>
                 </View>
               ) : (
@@ -296,7 +283,7 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
                         style={[styles.transactionItem, { borderBottomColor: colors.border }]}
                         onLongPress={() => handleDeletePress(t)}
                       >
-                        <View style={[styles.transactionIcon, { backgroundColor: `${getColorForType(t.type)}15` }]}>
+                        <View style={[styles.transactionIcon, { backgroundColor: `${getColorForType(t.type)}20` }]}>
                           <FontAwesome5 name={getIconForType(t.type)} size={16} color={getColorForType(t.type)} />
                         </View>
                         <View style={styles.transactionContent}>
@@ -361,85 +348,60 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 15,
     borderBottomWidth: 1,
-    marginBottom: 20,
+    marginBottom: 10,
   },
   title: {
     fontSize: 18,
     fontFamily: 'Inter-Bold',
   },
+  tabs: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    marginBottom: 20,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  tabActive: {
+    borderBottomColor: theme.colors.primary,
+  },
+  tabText: {
+    fontSize: 13,
+    fontFamily: 'Inter-Medium',
+    color: theme.colors.textDim,
+  },
+  tabTextActive: {
+    color: theme.colors.primary,
+  },
   filtersContainer: {
     marginBottom: 20,
   },
   filterLabel: {
-    fontSize: 12,
-    fontFamily: 'Inter-SemiBold',
-    marginBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    marginBottom: 10,
   },
   filterRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 20,
+    marginBottom: 15,
   },
   filterChip: {
-    paddingVertical: 8,
     paddingHorizontal: 16,
-    borderRadius: 12,
+    paddingVertical: 8,
+    marginRight: 10,
+    borderRadius: 20,
     borderWidth: 1,
-    marginRight: 8,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 80,
-  },
-  filterChipActive: {
-    shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
   },
   filterChipText: {
     fontSize: 13,
     fontFamily: 'Inter-Medium',
-  },
-  filterChipTextActive: {
-    color: '#fff',
-    fontFamily: 'Inter-SemiBold',
-  },
-  categoryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 20,
-  },
-  categoryFilterButton: {
-    width: '31%',
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: 'transparent',
-  },
-  categoryFilterButtonActive: {
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  categoryFilterButtonText: {
-    fontSize: 11,
-    fontFamily: 'Inter-Medium',
-    textAlign: 'center',
-  },
-  categoryFilterButtonTextActive: {
-    color: '#fff',
-    fontFamily: 'Inter-SemiBold',
   },
   dateGroup: {
     marginBottom: 20,
