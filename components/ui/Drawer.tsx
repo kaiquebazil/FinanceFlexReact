@@ -133,7 +133,7 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
           ]}>
             <View style={[styles.drawer, { backgroundColor: colors.surface }]}>
               {/* Cabeçalho */}
-              <View style={[styles.header, { borderBottomColor: colors.border }]}>
+              <View style={[styles.header, { borderBottomColor: colors.border, borderBottomWidth: 1 }]}>
                 <View style={styles.logoContainer}>
                   <Image
                     source={require('../../assets/images/icon.png')}
@@ -364,21 +364,16 @@ const styles = StyleSheet.create({
   drawerContainer: {
     width: '80%',
     maxWidth: 320,
-    backgroundColor: theme.colors.dark,
     borderRightWidth: 1,
-    borderRightColor: theme.colors.border,
   },
   drawer: {
     flex: 1,
-    backgroundColor: theme.colors.dark,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
   },
   logoContainer: {
     flexDirection: 'row',
@@ -388,7 +383,6 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: theme.colors.text,
   },
   closeButton: {
     padding: 8,
@@ -396,9 +390,7 @@ const styles = StyleSheet.create({
   userSection: {
     paddingHorizontal: 20,
     paddingVertical: 12,
-    backgroundColor: theme.colors.darkLight,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
   },
   userInfo: {
     flexDirection: 'row',
@@ -412,11 +404,9 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 14,
     fontWeight: '600',
-    color: theme.colors.text,
   },
   userEmail: {
     fontSize: 12,
-    color: theme.colors.textDim,
     marginTop: 2,
   },
   portfolioLink: {

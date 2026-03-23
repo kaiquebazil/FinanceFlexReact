@@ -1,5 +1,6 @@
 export const theme = {
   colors: {
+    // Cores do tema escuro (padrão)
     primary: '#7c4dff',
     primaryLight: '#b47cff',
     primaryDark: '#3f1dcb',
@@ -16,17 +17,6 @@ export const theme = {
     textSecondary: '#b0b0b0',
     textMuted: '#808080',
     border: '#333333',
-    
-    light: {
-      background: '#f5f5f5',
-      surface: '#ffffff',
-      surfaceDark: '#e0e0e0',
-      text: '#121212',
-      textDim: '#424242',
-      textSecondary: '#616161',
-      textMuted: '#9e9e9e',
-      border: '#e0e0e0',
-    }
   },
   fonts: {
     regular: 'Inter-Regular',
@@ -62,4 +52,27 @@ export const theme = {
       elevation: 8,
     },
   },
+};
+
+// Cores do tema claro
+export const lightThemeColors = {
+  primary: '#7c4dff',
+  primaryLight: '#b47cff',
+  primaryDark: '#3f1dcb',
+  secondary: '#00e5ff',
+  success: '#00c853',
+  danger: '#ff3d00',
+  warning: '#ffab00',
+  info: '#00b0ff',
+  background: '#f5f5f5',
+  surface: '#ffffff',
+  surfaceDark: '#e8e8e8',
+  text: '#121212',
+  textDim: '#424242',
+  textSecondary: '#616161',
+  textMuted: '#9e9e9e',
+  border: '#e0e0e0',
+  dark: '#f5f5f5',
+  darker: '#eeeeee',
+  darkLight: '#f9f9f9',
 };

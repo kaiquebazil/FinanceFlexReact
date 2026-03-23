@@ -1,14 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { theme } from '../constants/theme';
+import { theme, lightThemeColors } from '../constants/theme';
 
 type ThemeType = 'light' | 'dark';
 
 interface ThemeContextType {
   themeType: ThemeType;
   toggleTheme: () => void;
-  colors: typeof theme.colors.light | typeof theme.colors.dark;
+  colors: any;
   isDark: boolean;
 }
 
@@ -35,21 +34,34 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     await AsyncStorage.setItem('user-theme', newTheme);
   };
 
-  // Retorna as cores do tema dark (originais) ou light
+  // Retorna as cores do tema selecionado
   const getColors = () => {
-    if (themeType === 'dark') {
-      return {
-        background: theme.colors.darker,
-        surface: theme.colors.darkLight,
-        surfaceDark: theme.colors.dark,
-        text: theme.colors.text,
-        textDim: theme.colors.textDim,
-        textSecondary: theme.colors.textSecondary,
-        textMuted: theme.colors.textMuted,
-        border: theme.colors.border,
-      };
+    if (themeType === 'light') {
+      return lightThemeColors;
     }
-    return theme.colors.light;
+    
+    // Tema escuro (padrão)
+    return {
+      background: theme.colors.darker,
+      surface: theme.colors.darkLight,
+      surfaceDark: theme.colors.dark,
+      text: theme.colors.text,
+      textDim: theme.colors.textDim,
+      textSecondary: theme.colors.textSecondary,
+      textMuted: theme.colors.textMuted,
+      border: theme.colors.border,
+      primary: theme.colors.primary,
+      primaryLight: theme.colors.primaryLight,
+      primaryDark: theme.colors.primaryDark,
+      secondary: theme.colors.secondary,
+      success: theme.colors.success,
+      danger: theme.colors.danger,
+      warning: theme.colors.warning,
+      info: theme.colors.info,
+      dark: theme.colors.dark,
+      darker: theme.colors.darker,
+      darkLight: theme.colors.darkLight,
+    };
   };
 
   const colors = getColors();
