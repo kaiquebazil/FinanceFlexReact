@@ -3,7 +3,7 @@
     "sdkVersion": "54.0.0",
     "name": "Finance Flex",
     "slug": "finance-flex",
-    "version": "5.0.1",
+    "version": "5.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
@@ -33,8 +33,8 @@
     },
     "android": {
       "package": "com.kaiquebazil.financeflex",
-      "versionCode": 18,
-      "versionName": "5.0.1",
+      "versionCode": 19,
+      "versionName": "5.0.2",
       "softwareKeyboardLayoutMode": "pan",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon-foreground.png",
