@@ -51,6 +51,8 @@ interface AuthContextType {
 
   // Sincronização manual
   manualSync: () => Promise<void>;
+  uploadData: () => Promise<void>;
+  downloadData: () => Promise<void>;
 }
 
 // ─────────────────────────────────────────────
@@ -189,6 +191,37 @@ export function AuthProvider({
     }
   };
 
+  const uploadData = async () => {
+    if (!user) return;
+    try {
+      setSyncStatus("syncing");
+      await uploadToCloud(user.uid);
+      setSyncStatus("synced");
+      setLastSyncedAt(new Date());
+    } catch (err) {
+      console.error("[AuthContext] Erro no upload de dados:", err);
+      setSyncStatus("error");
+      throw err;
+    }
+  };
+
+  const downloadData = async () => {
+    if (!user) return;
+    try {
+      setSyncStatus("syncing");
+      const data = await downloadFromCloud(user.uid);
+      if (data && onRemoteDataReceived) {
+        onRemoteDataReceived(data);
+      }
+      setSyncStatus("synced");
+      setLastSyncedAt(new Date());
+    } catch (err) {
+      console.error("[AuthContext] Erro no download de dados:", err);
+      setSyncStatus("error");
+      throw err;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -201,6 +234,8 @@ export function AuthProvider({
         logOut,
         resetPassword,
         manualSync,
+        uploadData,
+        downloadData,
       }}
     >
       {children}
