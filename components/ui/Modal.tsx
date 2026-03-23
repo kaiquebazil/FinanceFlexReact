@@ -40,6 +40,10 @@ export function Modal({ visible, onClose, title, children }: ModalProps) {
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={[styles.overlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.5)' }]}>
+            {/* 
+              TouchableWithoutFeedback no container do modal impede que toques 
+              no conteúdo propaguem para o overlay (que fecharia o modal).
+            */}
             <TouchableWithoutFeedback onPress={() => {}}>
               <View style={[
                 styles.modalContainer,

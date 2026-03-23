@@ -26,7 +26,7 @@ interface TransactionsModalProps {
 }
 
 type FilterType = 'all' | 'income' | 'expense' | 'transfer';
-type PeriodType = 'today' | 'week' | 'month' | 'year';
+type PeriodType = 'all' | 'today' | 'week' | 'month' | 'year';
 
 export function TransactionsModal({ visible, onClose }: TransactionsModalProps) {
   const { colors, isDark } = useTheme();
@@ -35,13 +35,21 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
   
   // Estados de filtro
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('all');
-  const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('month');
+  const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
   // Estados para confirmação de deleção
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<any>(null);
+
+  // Resetar filtros ao abrir o modal
+  React.useEffect(() => {
+    if (visible) {
+      setSelectedFilter('all');
+      setSelectedPeriod('all');
+      setSelectedCategory('all');
+    }
+  }, [visible]);
 
   // Filtrar transações
   const getFilteredTransactions = () => {
@@ -66,6 +74,8 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
         if (tDate.getMonth() !== now.getMonth() || tDate.getFullYear() !== now.getFullYear()) return false;
       } else if (selectedPeriod === 'year') {
         if (tDate.getFullYear() !== now.getFullYear()) return false;
+      } else if (selectedPeriod === 'all') {
+        // Não filtra por período, mostra todas
       }
 
       // Filtro por categoria
@@ -88,14 +98,6 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
     }
     groupedTransactions[date].push(t);
   });
-
-  // Calcular totais
-  const totals = filteredTransactions.reduce((acc, t) => {
-    if (t.type === 'income') acc.income += t.amount;
-    if (t.type === 'expense') acc.expense += t.amount;
-    if (t.type === 'transfer') acc.transfer += t.amount;
-    return acc;
-  }, { income: 0, expense: 0, transfer: 0 });
 
   const getAccountName = (accountId: string) => {
     const account = accounts.find(a => a.id === accountId);
@@ -120,7 +122,15 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
     }
   };
 
-  const uniqueCategories = [...new Set(transactions.map(t => t.category))].filter(Boolean);
+  // Obter categorias filtradas por tipo de transação
+  const getCategoriesByType = () => {
+    if (selectedFilter === 'all' || selectedFilter === 'transfer') {
+      return [];
+    }
+    return categories.filter(cat => cat.type === selectedFilter);
+  };
+
+  const filteredCategoriesForType = getCategoriesByType();
 
   // Handler para deletar transação
   const handleDeletePress = (transaction: any) => {
@@ -157,215 +167,178 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="none">
-              {/* Filtros */}
-              <View style={styles.filtersContainer}>
-                {/* Filtro por tipo */}
-                <Text style={[styles.filterLabel, { color: colors.textDim }]}>Filtrar por:</Text>
-                <View style={styles.filterRow}>
-                  {(['all', 'income', 'expense', 'transfer'] as const).map((filter) => (
-                    <TouchableOpacity
-                      key={filter}
-                      style={[
-                        styles.filterChip,
-                        { backgroundColor: colors.surfaceDark, borderColor: colors.border },
-                        selectedFilter === filter && styles.filterChipActive
-                      ]}
-                      onPress={() => setSelectedFilter(filter)}
-                    >
-                      <Text style={[
-                        styles.filterChipText,
-                        { color: colors.text },
-                        selectedFilter === filter && styles.filterChipTextActive
-                      ]}>
-                        {filter === 'all' ? 'Todas' :
-                         filter === 'income' ? 'Receitas' :
-                         filter === 'expense' ? 'Despesas' : 'Transferências'}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+              {/* Filtros de Tipo (Estilo Abas da Home) */}
+              <View style={styles.tabs}>
+                {(['all', 'income', 'expense', 'transfer'] as const).map((filter) => (
+                  <TouchableOpacity
+                    key={filter}
+                    style={[
+                      styles.tab,
+                      selectedFilter === filter && styles.tabActive,
+                    ]}
+                    onPress={() => setSelectedFilter(filter)}
+                  >
+                    <Text style={[
+                      styles.tabText,
+                      selectedFilter === filter && styles.tabTextActive,
+                    ]}>
+                      {filter === 'all' ? 'Todas' :
+                       filter === 'income' ? 'Receitas' :
+                       filter === 'expense' ? 'Despesas' : 'Transferências'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
 
-                {/* Filtro por período */}
-                <Text style={[styles.filterLabel, { color: colors.textDim }]}>Período:</Text>
-                <View style={styles.filterRow}>
-                  {(['today', 'week', 'month', 'year'] as const).map((period) => (
+              {/* Filtros de Período (Estilo Chips/Botões) */}
+              <View style={styles.filtersContainer}>
+                <Text style={[styles.filterLabel, { color: colors.textDim }]}>Período</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
+                  {(['all', 'today', 'week', 'month', 'year'] as const).map((period) => (
                     <TouchableOpacity
                       key={period}
                       style={[
                         styles.filterChip,
-                        { backgroundColor: colors.surfaceDark, borderColor: colors.border },
-                        selectedPeriod === period && styles.filterChipActive
+                        { 
+                          backgroundColor: isDark ? colors.darkLight : colors.surfaceDark, 
+                          borderColor: colors.border 
+                        },
+                        selectedPeriod === period && { backgroundColor: colors.primary, borderColor: colors.primary }
                       ]}
                       onPress={() => setSelectedPeriod(period)}
                     >
                       <Text style={[
                         styles.filterChipText,
-                        { color: colors.text },
-                        selectedPeriod === period && styles.filterChipTextActive
+                        { color: colors.textDim },
+                        selectedPeriod === period && { color: '#fff', fontFamily: 'Inter-SemiBold' }
                       ]}>
-                        {period === 'today' ? 'Hoje' :
+                        {period === 'all' ? 'Tudo' :
+                         period === 'today' ? 'Hoje' :
                          period === 'week' ? 'Semana' :
                          period === 'month' ? 'Mês' : 'Ano'}
                       </Text>
                     </TouchableOpacity>
                   ))}
-                </View>
+                </ScrollView>
 
-                {/* Filtro por categoria */}
-                <Text style={[styles.filterLabel, { color: colors.textDim }]}>Categoria:</Text>
-                <TouchableOpacity
-                  style={[styles.categorySelector, { backgroundColor: colors.surfaceDark, borderColor: colors.border }]}
-                  onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                >
-                  <Text style={[styles.categorySelectorText, { color: colors.text }]}>
-                    {selectedCategory === 'all' ? 'Todas' : selectedCategory}
-                  </Text>
-                  <FontAwesome5 
-                    name={showCategoryDropdown ? 'chevron-up' : 'chevron-down'} 
-                    size={14} 
-                    color={colors.textDim} 
-                  />
-                </TouchableOpacity>
-
-                {showCategoryDropdown && (
-                  <View style={[styles.dropdown, { backgroundColor: colors.surfaceDark, borderColor: colors.border }]}>
-                    <TouchableOpacity
-                      style={[styles.dropdownItem, { borderBottomColor: colors.border }]}
-                      onPress={() => {
-                        setSelectedCategory('all');
-                        setShowCategoryDropdown(false);
-                      }}
-                    >
-                      <Text style={[styles.dropdownItemText, { color: colors.text }]}>Todas</Text>
-                    </TouchableOpacity>
-                    {uniqueCategories.map(cat => (
+                {/* Filtro por categoria (Estilo Chips) */}
+                {filteredCategoriesForType.length > 0 && (
+                  <>
+                    <Text style={[styles.filterLabel, { color: colors.textDim }]}>Categoria</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
                       <TouchableOpacity
-                        key={cat}
-                        style={[styles.dropdownItem, { borderBottomColor: colors.border }]}
-                        onPress={() => {
-                          setSelectedCategory(cat);
-                          setShowCategoryDropdown(false);
-                        }}
+                        style={[
+                          styles.filterChip,
+                          { 
+                            backgroundColor: isDark ? colors.darkLight : colors.surfaceDark, 
+                            borderColor: colors.border 
+                          },
+                          selectedCategory === 'all' && { backgroundColor: colors.primary, borderColor: colors.primary }
+                        ]}
+                        onPress={() => setSelectedCategory('all')}
                       >
-                        <Text style={[styles.dropdownItemText, { color: colors.text }]}>{cat}</Text>
+                        <Text style={[
+                          styles.filterChipText,
+                          { color: colors.textDim },
+                          selectedCategory === 'all' && { color: '#fff', fontFamily: 'Inter-SemiBold' }
+                        ]}>
+                          Todas
+                        </Text>
                       </TouchableOpacity>
-                    ))}
-                  </View>
+                      {filteredCategoriesForType.map((cat) => (
+                        <TouchableOpacity
+                          key={cat.id}
+                          style={[
+                            styles.filterChip,
+                            { 
+                              backgroundColor: isDark ? colors.darkLight : colors.surfaceDark, 
+                              borderColor: colors.border 
+                            },
+                            selectedCategory === cat.name && { backgroundColor: "rgb(124, 77, 255)" }
+                          ]}
+                          onPress={() => setSelectedCategory(cat.name)}
+                        >
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <FontAwesome5
+                              name={cat.icon || 'tag'}
+                              size={12}
+                              color={'#fff'} 
+                            />
+                            <Text style={[
+                              styles.filterChipText,
+                              { color: colors.textDim },
+                              selectedCategory === cat.name && { color: '#fff', fontFamily: 'Inter-SemiBold' }
+                            ]}>
+                              {cat.name}
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </>
                 )}
-              </View>
-
-              {/* Resumo dos totais */}
-              <View style={[styles.summaryContainer, { backgroundColor: colors.surfaceDark }]}>
-                <View style={styles.summaryItem}>
-                  <Text style={[styles.summaryLabel, { color: colors.textDim }]}>Receitas</Text>
-                  <Text style={[styles.summaryValue, { color: colors.success }]}>
-                    {formatCurrency(totals.income, 'BRL')}
-                  </Text>
-                </View>
-                <View style={styles.summaryItem}>
-                  <Text style={[styles.summaryLabel, { color: colors.textDim }]}>Despesas</Text>
-                  <Text style={[styles.summaryValue, { color: colors.danger }]}>
-                    {formatCurrency(totals.expense, 'BRL')}
-                  </Text>
-                </View>
-                <View style={styles.summaryItem}>
-                  <Text style={[styles.summaryLabel, { color: colors.textDim }]}>Saldo</Text>
-                  <Text style={[styles.summaryValue, { color: colors.info }]}>
-                    {formatCurrency(totals.income - totals.expense, 'BRL')}
-                  </Text>
-                </View>
               </View>
 
               {/* Lista de transações */}
-              <View style={styles.transactionsList}>
-                {Object.keys(groupedTransactions).length === 0 ? (
-                  <View style={styles.emptyState}>
-                    <FontAwesome5 name="exchange-alt" size={40} color={colors.textDim} />
-                    <Text style={[styles.emptyText, { color: colors.textDim }]}>Nenhuma transação encontrada</Text>
-                  </View>
-                ) : (
-                  Object.entries(groupedTransactions).map(([date, dateTransactions]) => (
-                    <View key={date}>
-                      <Text style={[styles.dateHeader, { color: colors.primary }]}>{date}</Text>
-                      {dateTransactions.map(t => {
-                        const icon = getIconForType(t.type);
-                        const color = getColorForType(t.type);
-                        
-                        return (
-                          <View key={t.id} style={[styles.transactionItem, { backgroundColor: colors.surfaceDark }]}>
-                            <View style={[styles.transactionIcon, { backgroundColor: `${color}20` }]}>
-                              <FontAwesome5 name={icon} size={16} color={color} />
-                            </View>
-                            
-                            <View style={styles.transactionContent}>
-                              <View style={styles.transactionHeader}>
-                                <Text style={[styles.transactionDescription, { color: colors.text }]}>
-                                  {t.description || (t.type === 'income' ? 'Receita' : 
-                                   t.type === 'expense' ? 'Despesa' : 'Transferência')}
-                                </Text>
-                                <Text style={[styles.transactionAmount, { color }]}>
-                                  {t.type === 'expense' ? '- ' : '+ '}
-                                  {formatCurrency(t.amount, 'BRL')}
-                                </Text>
-                              </View>
-                              
-                              <View style={styles.transactionDetails}>
-                                <Text style={[styles.transactionCategory, { color: colors.textDim }]}>{t.category}</Text>
-                                <Text style={[styles.transactionAccount, { color: colors.textDim }]}>
-                                  {getAccountName(t.accountId)}
-                                  {t.toAccountId && ` → ${getAccountName(t.toAccountId)}`}
-                                </Text>
-                              </View>
-                            </View>
-
-                            {/* Botão de deletar */}
-                            <TouchableOpacity
-                              style={styles.deleteButton}
-                              onPress={() => handleDeletePress(t)}
-                            >
-                              <FontAwesome5 name="trash" size={16} color={colors.danger} />
-                            </TouchableOpacity>
+              {Object.keys(groupedTransactions).length === 0 ? (
+                <View style={styles.emptyState}>
+                  <FontAwesome5 name="exchange-alt" size={32} color={colors.textDim} />
+                  <Text style={[styles.emptyText, { color: colors.textDim }]}>Nenhuma transação encontrada</Text>
+                </View>
+              ) : (
+                Object.entries(groupedTransactions).map(([date, items]) => (
+                  <View key={date} style={styles.dateGroup}>
+                    <Text style={[styles.dateHeader, { color: colors.textDim }]}>{date}</Text>
+                    {items.map((t) => (
+                      <TouchableOpacity 
+                        key={t.id} 
+                        style={[styles.transactionItem, { borderBottomColor: colors.border }]}
+                        onLongPress={() => handleDeletePress(t)}
+                      >
+                        <View style={[styles.transactionIcon, { backgroundColor: `${getColorForType(t.type)}20` }]}>
+                          <FontAwesome5 name={getIconForType(t.type)} size={16} color={getColorForType(t.type)} />
+                        </View>
+                        <View style={styles.transactionContent}>
+                          <View style={styles.transactionHeader}>
+                            <Text style={[styles.transactionDescription, { color: colors.text }]} numberOfLines={1}>
+                              {t.description}
+                            </Text>
+                            <Text style={[
+                              styles.transactionAmount, 
+                              { color: t.type === 'income' ? colors.success : (t.type === 'expense' ? colors.danger : colors.info) }
+                            ]}>
+                              {t.type === 'expense' ? '-' : (t.type === 'income' ? '+' : '')} {formatCurrency(t.amount)}
+                            </Text>
                           </View>
-                        );
-                      })}
-                    </View>
-                  ))
-                )}
-              </View>
+                          <View style={styles.transactionDetails}>
+                            <Text style={[styles.transactionCategory, { color: colors.textDim }]}>{t.category}</Text>
+                            <Text style={[styles.transactionAccount, { color: colors.textDim }]}>
+                              {t.type === 'transfer' ? `${getAccountName(t.fromAccountId)} → ${getAccountName(t.toAccountId)}` : getAccountName(t.accountId)}
+                            </Text>
+                          </View>
+                        </View>
+                        <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeletePress(t)}>
+                          <FontAwesome5 name="trash-alt" size={14} color={colors.danger} />
+                        </TouchableOpacity>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                ))
+              )}
             </ScrollView>
-
-            {/* Botão Fechar */}
-            <Button
-              title="Fechar"
-              onPress={onClose}
-              style={styles.closeButton}
-            />
           </View>
         </View>
       </Modal>
 
-      {/* Modal de Confirmação para Deletar */}
       <ConfirmModal
         visible={showDeleteConfirm}
-        title="Excluir Transferência"
-        message={`Tem certeza que deseja excluir esta transferência?\n\n${transactionToDelete?.description || 'Transferência'} - ${formatCurrency(transactionToDelete?.amount || 0, 'BRL')}`}
-        type="danger"
-        confirmText="Excluir"
-        cancelText="Cancelar"
+        title="Excluir Transação"
+        message="Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita."
         onConfirm={confirmDelete}
-        onCancel={() => {
-          setShowDeleteConfirm(false);
-          setTransactionToDelete(null);
-        }}
+        onCancel={() => setShowDeleteConfirm(false)}
       />
 
-      {/* Toast para feedback */}
-      <Toast
-        visible={toast.visible}
-        message={toast.message}
-        type={toast.type}
-        onHide={hideToast}
-      />
+      <Toast {...toast} onHide={hideToast} />
     </>
   );
 }
@@ -376,22 +349,46 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    height: '90%',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     padding: 20,
-    maxHeight: '90%',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
     paddingBottom: 15,
     borderBottomWidth: 1,
+    marginBottom: 10,
   },
   title: {
-    fontSize: 24,
+    fontSize: 18,
     fontFamily: 'Inter-Bold',
+  },
+  tabs: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    marginBottom: 20,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  tabActive: {
+    borderBottomColor: theme.colors.primary,
+  },
+  tabText: {
+    fontSize: 13,
+    fontFamily: 'Inter-Medium',
+    color: theme.colors.textDim,
+  },
+  tabTextActive: {
+    color: theme.colors.primary,
   },
   filtersContainer: {
     marginBottom: 20,
@@ -400,86 +397,38 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter-Medium',
     marginBottom: 10,
-    marginTop: 5,
   },
   filterRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
     marginBottom: 15,
   },
   filterChip: {
     paddingHorizontal: 16,
     paddingVertical: 8,
+    marginRight: 10,
     borderRadius: 20,
     borderWidth: 1,
-  },
-  filterChipActive: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   filterChipText: {
     fontSize: 13,
+    fontFamily: 'Inter-Medium',
   },
-  filterChipTextActive: {
-    color: '#fff',
-  },
-  categorySelector: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderRadius: 8,
-    padding: 12,
-    borderWidth: 1,
-    marginBottom: 5,
-  },
-  categorySelectorText: {
-    fontSize: 14,
-  },
-  dropdown: {
-    borderRadius: 8,
-    borderWidth: 1,
-    marginBottom: 15,
-    maxHeight: 200,
-  },
-  dropdownItem: {
-    padding: 12,
-    borderBottomWidth: 1,
-  },
-  dropdownItemText: {
-    fontSize: 14,
-  },
-  summaryContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 20,
-  },
-  summaryItem: {
-    alignItems: 'center',
-  },
-  summaryLabel: {
-    fontSize: 12,
-    marginBottom: 5,
-  },
-  summaryValue: {
-    fontSize: 16,
-    fontFamily: 'Inter-Bold',
-  },
-  transactionsList: {
+  dateGroup: {
     marginBottom: 20,
   },
   dateHeader: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: 'Inter-SemiBold',
-    marginVertical: 10,
+    marginBottom: 10,
+    textTransform: 'uppercase',
   },
   transactionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 10,
-    padding: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
     marginBottom: 8,
   },
   transactionIcon: {
@@ -529,9 +478,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    marginTop: 10,
-  },
-  closeButton: {
     marginTop: 10,
   },
 });

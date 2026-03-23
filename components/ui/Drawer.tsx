@@ -1,11 +1,22 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, StatusBar, Animated, Dimensions, Image } from 'react-native';
-import { FontAwesome5 } from '@expo/vector-icons';
-import { theme } from '../../constants/theme';
-import { useTheme } from '../../contexts/ThemeContext';
-import { useAuth } from '../../contexts/AuthContext';
-import { useData } from '../../hooks/useData';
-import { ConfirmModal } from './ConfirmModal';
+import React, { useRef, useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  ScrollView,
+  StatusBar,
+  Animated,
+  Dimensions,
+  Image,
+} from "react-native";
+import { FontAwesome5 } from "@expo/vector-icons";
+import { theme } from "../../constants/theme";
+import { useTheme } from "../../contexts/ThemeContext";
+import { useAuth } from "../../contexts/AuthContext";
+import { useData } from "../../hooks/useData";
+import { ConfirmModal } from "./ConfirmModal";
 
 interface DrawerProps {
   visible: boolean;
@@ -13,7 +24,7 @@ interface DrawerProps {
   onNavigate: (screen: string) => void;
 }
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
   const { colors, toggleTheme, isDark } = useTheme();
@@ -22,7 +33,7 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
   const isLoggedIn = !!user;
   const slideAnim = useRef(new Animated.Value(-width)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  
+
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -39,7 +50,7 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
           toValue: 1,
           duration: 300,
           useNativeDriver: true,
-        })
+        }),
       ]).start();
     } else {
       Animated.parallel([
@@ -52,7 +63,7 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
           toValue: 0,
           duration: 200,
           useNativeDriver: true,
-        })
+        }),
       ]).start();
     }
   }, [visible]);
@@ -69,42 +80,91 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
       setShowLogoutConfirm(false);
       onClose();
     } catch (error) {
-      console.error('Erro ao deslogar:', error);
+      console.error("Erro ao deslogar:", error);
     }
   };
 
   const getSyncColor = () => {
     if (!user) return colors.textDim;
     switch (syncStatus) {
-      case 'synced': return '#4CAF50';
-      case 'syncing': return theme.colors.primary;
-      case 'error': return '#F44336';
-      default: return colors.textDim;
+      case "synced":
+        return "#4CAF50";
+      case "syncing":
+        return theme.colors.primary;
+      case "error":
+        return "#F44336";
+      default:
+        return colors.textDim;
     }
   };
 
   const getSyncText = () => {
-    if (!user) return 'Não conectado';
+    if (!user) return "Não conectado";
     switch (syncStatus) {
-      case 'synced': return 'Sincronizado';
-      case 'syncing': return 'Sincronizando...';
-      case 'error': return 'Erro na sincronização';
-      default: return 'Aguardando...';
+      case "synced":
+        return "Sincronizado";
+      case "syncing":
+        return "Sincronizando...";
+      case "error":
+        return "Erro na sincronização";
+      default:
+        return "Aguardando...";
     }
   };
 
   const menuItems = [
-    { id: 'transactions', icon: 'exchange-alt', label: 'Transações', iconColor: '#64B5F6' },
-    { id: 'budgets', icon: 'chart-pie', label: 'Orçamentos', iconColor: '#A5D6A7' },
-    { id: 'categories', icon: 'list-ul', label: 'Categorias', iconColor: '#81C784' },
-    { id: 'recurring', icon: 'redo', label: 'Contas Recorrentes', iconColor: '#FFB74D' },
-    { id: 'creditCards', icon: 'credit-card', label: 'Cartões de Crédito', iconColor: '#BA68C8' },
-    { id: 'piggyBanks', icon: 'piggy-bank', label: 'Cofrinhos', iconColor: '#FF8A65' },
+    {
+      id: "transactions",
+      icon: "exchange-alt",
+      label: "Transações",
+      iconColor: "#64B5F6",
+    },
+    {
+      id: "budgets",
+      icon: "chart-pie",
+      label: "Orçamentos",
+      iconColor: "#A5D6A7",
+    },
+    {
+      id: "categories",
+      icon: "list-ul",
+      label: "Categorias",
+      iconColor: "#81C784",
+    },
+    {
+      id: "recurring",
+      icon: "redo",
+      label: "Contas Recorrentes",
+      iconColor: "#FFB74D",
+    },
+    {
+      id: "creditCards",
+      icon: "credit-card",
+      label: "Cartões de Crédito",
+      iconColor: "#BA68C8",
+    },
+    {
+      id: "piggyBanks",
+      icon: "piggy-bank",
+      label: "Cofrinhos",
+      iconColor: "#FF8A65",
+    },
   ];
 
   const actionItems = [
-    { id: 'sync', icon: 'cloud', label: 'Sincronização em Nuvem', iconColor: '#64B5F6' },
-    { id: 'reset', icon: 'trash-alt', label: 'Apagar Todos os Dados', iconColor: '#fc2020', danger: false },
+    {
+      id: "sync",
+      icon: "cloud",
+      label: "Sincronização em Nuvem",
+      iconColor: "#64B5F6",
+    },
+    {
+      id: "reset",
+      icon: "trash-alt",
+      label: "Apagar Todos os Dados",
+      iconColor: "#fc2020",
+      danger: false,
+    },
   ];
 
   return (
@@ -127,21 +187,43 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
           </Animated.View>
 
           {/* Drawer lateral com animação */}
-          <Animated.View style={[
-            styles.drawerContainer,
-            { transform: [{ translateX: slideAnim }], borderRightColor: colors.border }
-          ]}>
+          <Animated.View
+            style={[
+              styles.drawerContainer,
+              {
+                transform: [{ translateX: slideAnim }],
+                borderRightColor: colors.border,
+              },
+            ]}
+          >
             <View style={[styles.drawer, { backgroundColor: colors.surface }]}>
               {/* Cabeçalho */}
-              <View style={[styles.header, { borderBottomColor: colors.border, borderBottomWidth: 1 }]}>
+              <View
+                style={[
+                  styles.header,
+                  { borderBottomColor: colors.border, borderBottomWidth: 1 },
+                ]}
+              >
                 <View style={styles.logoContainer}>
                   <Image
-                    source={require('../../assets/images/icon.png')}
-                    style={{ width: 32, height: 32, resizeMode: 'contain' }}
+                    source={require("../../assets/images/icon.png")}
+                    style={{ width: 32, height: 32, resizeMode: "contain" }}
                   />
-                  <Text style={[styles.logoText, { color: colors.text }]}>Finance Flex</Text>
+                  <Text style={[styles.logoText, { color: colors.text }]}>
+                    Finance Flex
+                  </Text>
                 </View>
-                <TouchableOpacity onPress={onClose} style={[styles.closeButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
+                <TouchableOpacity
+                  onPress={onClose}
+                  style={[
+                    styles.closeButton,
+                    {
+                      backgroundColor: isDark
+                        ? "rgba(255,255,255,0.08)"
+                        : "rgba(0,0,0,0.06)",
+                    },
+                  ]}
+                >
                   <FontAwesome5 name="times" size={18} color={colors.textDim} />
                 </TouchableOpacity>
               </View>
@@ -149,36 +231,57 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
               {/* Info do usuário com link para portfólio */}
               {isLoggedIn && (
                 <TouchableOpacity
-                  style={[styles.userSection, { borderBottomColor: colors.border }]}
+                  style={[
+                    styles.userSection,
+                    { borderBottomColor: colors.border },
+                  ]}
                   onPress={() => {
-                  onNavigate('sync');
-                  onClose();
-                }}
+                    onNavigate("sync");
+                    onClose();
+                  }}
                 >
                   <View style={styles.userInfo}>
-                    <FontAwesome5 name="user-circle" size={32} color={colors.primary} />
+                    <FontAwesome5
+                      name="user-circle"
+                      size={32}
+                      color={colors.primary}
+                    />
                     <View style={styles.userDetails}>
-                      <Text style={[styles.userName, { color: colors.text }]} numberOfLines={1}>{user.displayName || 'Usuário'}</Text>
-                      <Text style={[styles.userEmail, { color: colors.textDim }]} numberOfLines={1}>{user.email}</Text>
+                      <Text
+                        style={[styles.userName, { color: colors.text }]}
+                        numberOfLines={1}
+                      >
+                        {user.displayName || "Usuário"}
+                      </Text>
+                      <Text
+                        style={[styles.userEmail, { color: colors.textDim }]}
+                        numberOfLines={1}
+                      >
+                        {user.email}
+                      </Text>
                     </View>
                   </View>
                 </TouchableOpacity>
               )}
 
               {/* Status de sincronização */}
-              <TouchableOpacity 
-                style={[styles.syncStatusContainer, { backgroundColor: colors.surfaceDark, borderBottomColor: colors.border }]}
+              <TouchableOpacity
+                style={[
+                  styles.syncStatusContainer,
+                  {
+                    backgroundColor: colors.surfaceDark,
+                    borderBottomColor: colors.border,
+                  },
+                ]}
                 onPress={() => {
-                  onNavigate('sync');
+                  onNavigate("sync");
                   onClose();
                 }}
               >
-                <FontAwesome5
-                  name="cloud"
-                  size={14}
-                  color={getSyncColor()}
-                />
-                <Text style={[styles.syncStatusText, { color: getSyncColor() }]}>
+                <FontAwesome5 name="cloud" size={14} color={getSyncColor()} />
+                <Text
+                  style={[styles.syncStatusText, { color: getSyncColor() }]}
+                >
                   {getSyncText()}
                 </Text>
               </TouchableOpacity>
@@ -191,27 +294,11 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
               >
                 {/* Menu Principal */}
                 <View style={styles.section}>
-                  <Text style={[styles.sectionTitle, { color: colors.textDim }]}>MENU PRINCIPAL</Text>
-                  
-                  {/* Toggle de Tema */}
-                  <TouchableOpacity
-                    style={[styles.menuItem, { backgroundColor: isDark ? 'rgba(255,215,0,0.06)' : 'rgba(81,81,81,0.06)' }]}
-                    onPress={toggleTheme}
-                    activeOpacity={0.7}
+                  <Text
+                    style={[styles.sectionTitle, { color: colors.textDim }]}
                   >
-                    <View style={styles.menuItemContent}>
-                      <FontAwesome5
-                        name={isDark ? "sun" : "moon"}
-                        size={18}
-                        color={isDark ? "#FFD700" : "#515151"}
-                        style={styles.menuItemIcon}
-                      />
-                      <Text style={[styles.menuItemText, { color: colors.text }]}>
-                        Tema {isDark ? 'Claro' : 'Escuro'}
-                      </Text>
-                    </View>
-                    <FontAwesome5 name="chevron-right" size={16} color={colors.textDim} />
-                  </TouchableOpacity>
+                    MENU PRINCIPAL
+                  </Text>
 
                   {menuItems.map((item) => (
                     <TouchableOpacity
@@ -230,25 +317,39 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
                           color={item.iconColor}
                           style={styles.menuItemIcon}
                         />
-                        <Text style={[styles.menuItemText, { color: colors.text }]}>{item.label}</Text>
+                        <Text
+                          style={[styles.menuItemText, { color: colors.text }]}
+                        >
+                          {item.label}
+                        </Text>
                       </View>
-                      <FontAwesome5 name="chevron-right" size={16} color={colors.textDim} />
+                      <FontAwesome5
+                        name="chevron-right"
+                        size={16}
+                        color={colors.textDim}
+                      />
                     </TouchableOpacity>
                   ))}
                 </View>
 
                 {/* Divisor */}
-                <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                <View
+                  style={[styles.divider, { backgroundColor: colors.border }]}
+                />
 
                 {/* Ações Rápidas */}
                 <View style={styles.section}>
-                  <Text style={[styles.sectionTitle, { color: colors.textDim }]}>AÇÕES RÁPIDAS</Text>
+                  <Text
+                    style={[styles.sectionTitle, { color: colors.textDim }]}
+                  >
+                    AÇÕES RÁPIDAS
+                  </Text>
                   {actionItems.map((item) => (
                     <TouchableOpacity
                       key={item.id}
                       style={styles.menuItem}
                       onPress={() => {
-                        if (item.id === 'reset') {
+                        if (item.id === "reset") {
                           setShowResetConfirm(true);
                         } else {
                           onNavigate(item.id);
@@ -264,9 +365,17 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
                           color={item.iconColor}
                           style={styles.menuItemIcon}
                         />
-                        <Text style={[styles.menuItemText, { color: colors.text }]}>{item.label}</Text>
+                        <Text
+                          style={[styles.menuItemText, { color: colors.text }]}
+                        >
+                          {item.label}
+                        </Text>
                       </View>
-                      <FontAwesome5 name="chevron-right" size={16} color={colors.textDim} />
+                      <FontAwesome5
+                        name="chevron-right"
+                        size={16}
+                        color={colors.textDim}
+                      />
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -274,11 +383,20 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
                 {/* Seção de Usuário - SÓ APARECE QUANDO LOGADO */}
                 {isLoggedIn && (
                   <>
-                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                    
+                    <View
+                      style={[
+                        styles.divider,
+                        { backgroundColor: colors.border },
+                      ]}
+                    />
+
                     <View style={styles.section}>
-                      <Text style={[styles.sectionTitle, { color: colors.primary }]}>CONTA</Text>
-                      
+                      <Text
+                        style={[styles.sectionTitle, { color: colors.primary }]}
+                      >
+                        CONTA
+                      </Text>
+
                       {/* Botão Sair */}
                       <TouchableOpacity
                         style={[styles.menuItem, styles.logoutItem]}
@@ -292,11 +410,20 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
                             color={colors.danger}
                             style={styles.menuItemIcon}
                           />
-                          <Text style={[styles.menuItemText, { color: colors.danger }]}>
+                          <Text
+                            style={[
+                              styles.menuItemText,
+                              { color: colors.danger },
+                            ]}
+                          >
                             Sair da Conta
                           </Text>
                         </View>
-                        <FontAwesome5 name="chevron-right" size={16} color={colors.danger} />
+                        <FontAwesome5
+                          name="chevron-right"
+                          size={16}
+                          color={colors.danger}
+                        />
                       </TouchableOpacity>
                     </View>
                   </>
@@ -304,18 +431,28 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
 
                 {/* Rodapé com informações do criador */}
                 <View style={styles.footer}>
-                  <Text style={[styles.footerText, { color: colors.textMuted }]}>© 2026 Finance Flex</Text>
+                  <Text
+                    style={[styles.footerText, { color: colors.textMuted }]}
+                  >
+                    © 2026 Finance Flex
+                  </Text>
                   <TouchableOpacity
                     onPress={() => {
                       try {
-                        const Linking = require('react-native').Linking;
-                        Linking.openURL('https://kaiquebazil.github.io/portifolio/');
+                        const Linking = require("react-native").Linking;
+                        Linking.openURL(
+                          "https://kaiquebazil.github.io/portifolio/",
+                        );
                       } catch (e) {
-                        console.error('Erro ao abrir portfólio:', e);
+                        console.error("Erro ao abrir portfólio:", e);
                       }
                     }}
                   >
-                    <Text style={[styles.creatorText, { color: colors.textMuted }]}>Criador: Kaique Bazil →</Text>
+                    <Text
+                      style={[styles.creatorText, { color: colors.textMuted }]}
+                    >
+                      Criador: Kaique Bazil →
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </ScrollView>
@@ -354,15 +491,15 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    flexDirection: 'row',
-    backgroundColor: 'transparent',
+    flexDirection: "row",
+    backgroundColor: "transparent",
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
   },
   drawerContainer: {
-    width: '80%',
+    width: "80%",
     maxWidth: 320,
     borderRightWidth: 1,
   },
@@ -370,27 +507,27 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 20,
   },
   logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
   },
   logoText: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   closeButton: {
     padding: 8,
     borderRadius: 20,
     width: 36,
     height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   userSection: {
     paddingHorizontal: 20,
@@ -398,17 +535,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   userInfo: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     gap: 12,
   },
   userDetails: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   userName: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   userEmail: {
     fontSize: 12,
@@ -417,12 +554,12 @@ const styles = StyleSheet.create({
   portfolioLink: {
     fontSize: 11,
     color: theme.colors.primary,
-    fontWeight: '600',
+    fontWeight: "600",
     marginTop: 4,
   },
   syncStatusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
     paddingHorizontal: 20,
     paddingVertical: 12,
@@ -430,12 +567,12 @@ const styles = StyleSheet.create({
   },
   syncStatusText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   syncEmail: {
     flex: 1,
     fontSize: 12,
-    textAlign: 'right',
+    textAlign: "right",
   },
   content: {
     flex: 1,
@@ -449,33 +586,33 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 12,
     marginTop: 16,
     letterSpacing: 1.2,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
   },
   menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: 12,
     marginBottom: 4,
     borderRadius: 8,
     paddingHorizontal: 8,
   },
   menuItemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
   },
   menuItemIcon: {
     width: 30,
-    textAlign: 'center',
+    textAlign: "center",
   },
   menuItemText: {
     fontSize: 15,
-    fontWeight: '500',
+    fontWeight: "500",
     marginLeft: 12,
     flex: 1,
   },
@@ -483,7 +620,7 @@ const styles = StyleSheet.create({
     color: theme.colors.danger,
   },
   logoutItem: {
-    backgroundColor: 'rgba(255, 61, 0, 0.05)',
+    backgroundColor: "rgba(255, 61, 0, 0.05)",
   },
   divider: {
     height: 1,
@@ -492,7 +629,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     marginTop: 20,
-    alignItems: 'center',
+    alignItems: "center",
     paddingBottom: 20,
   },
   footerText: {
@@ -501,6 +638,6 @@ const styles = StyleSheet.create({
   },
   creatorText: {
     fontSize: 11,
-    fontStyle: 'italic',
+    fontStyle: "italic",
   },
 });

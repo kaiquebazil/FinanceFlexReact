@@ -15,7 +15,6 @@ import {
   Platform,
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
-import { theme } from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth, SyncStatus } from '../../contexts/AuthContext';
 import { Button } from '../ui/Button';
@@ -37,13 +36,13 @@ function statusLabel(status: SyncStatus): string {
   }
 }
 
-function statusColor(status: SyncStatus): string {
+function statusColor(status: SyncStatus, primaryColor: string): string {
   switch (status) {
-    case 'syncing': return '#7c4dff';
+    case 'syncing': return primaryColor;
     case 'synced':  return '#4CAF50';
     case 'error':   return '#F44336';
     case 'offline': return '#FF9800';
-    default:        return '#888';
+    default:        return '#888888';
   }
 }
 
@@ -202,6 +201,10 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
     }
   };
 
+  // Cores dinâmicas derivadas do tema
+  const cardBg = isDark ? 'rgba(255,255,255,0.05)' : colors.surface;
+  const currentStatusColor = statusColor(syncStatus, colors.primary);
+
   // ─── Render ───────────────────────────────────────────────────────────────
 
   if (loading) {
@@ -246,7 +249,9 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
       >
         {/* Cabeçalho */}
         <View style={styles.header}>
-          <FontAwesome5 name="cloud" size={48} color={colors.primary} />
+          <View style={[styles.headerIconWrap, { backgroundColor: isDark ? 'rgba(124,77,255,0.15)' : 'rgba(108,63,255,0.1)' }]}>
+            <FontAwesome5 name="cloud" size={36} color={colors.primary} />
+          </View>
           <Text style={[styles.title, { color: colors.text }]}>Sincronização na Nuvem</Text>
           <Text style={[styles.subtitle, { color: colors.textDim }]}>
             Mantenha seus dados seguros e sincronizados entre todos os seus dispositivos.
@@ -257,14 +262,14 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
           // ─── Usuário logado ──────────────────────────────────────────────
           <>
             {/* Card de status */}
-            <View style={[styles.statusCard, { backgroundColor: colors.surface, borderLeftColor: colors.primary }]}>
+            <View style={[styles.statusCard, { backgroundColor: cardBg, borderLeftColor: colors.primary }]}>
               <View style={styles.statusRow}>
                 <FontAwesome5
                   name={statusIcon(syncStatus)}
                   size={20}
-                  color={statusColor(syncStatus)}
+                  color={currentStatusColor}
                 />
-                <Text style={[styles.statusText, { color: statusColor(syncStatus) }]}>
+                <Text style={[styles.statusText, { color: currentStatusColor }]}>
                   {statusLabel(syncStatus)}
                 </Text>
                 {syncStatus === 'syncing' && (
@@ -288,7 +293,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
             </View>
 
             {/* Info do usuário */}
-            <View style={[styles.userCard, { backgroundColor: colors.surface }]}>
+            <View style={[styles.userCard, { backgroundColor: cardBg }]}>
               <View style={styles.userAvatar}>
                 <FontAwesome5 name="user-circle" size={32} color={colors.primary} />
               </View>
@@ -303,7 +308,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
             
             <View style={styles.syncOptionsGrid}>
               <TouchableOpacity 
-                style={[styles.syncOptionCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                style={[styles.syncOptionCard, { backgroundColor: cardBg, borderColor: colors.border }]}
                 onPress={() => setShowUploadConfirm(true)}
               >
                 <View style={[styles.syncOptionIcon, { backgroundColor: 'rgba(124, 77, 255, 0.1)' }]}>
@@ -314,7 +319,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
               </TouchableOpacity>
 
               <TouchableOpacity 
-                style={[styles.syncOptionCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                style={[styles.syncOptionCard, { backgroundColor: cardBg, borderColor: colors.border }]}
                 onPress={() => setShowDownloadConfirm(true)}
               >
                 <View style={[styles.syncOptionIcon, { backgroundColor: 'rgba(76, 175, 80, 0.1)' }]}>
@@ -348,14 +353,14 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
           </>
         ) : (
           // ─── Usuário deslogado ───────────────────────────────────────────
-          <View style={[styles.formCard, { backgroundColor: colors.surface }]}>
+          <View style={[styles.formCard, { backgroundColor: cardBg }]}>
             <Text style={[styles.formTitle, { color: colors.text }]}>
               {isSignUp ? 'Criar Nova Conta' : 'Acesse sua Conta'}
             </Text>
 
             {isSignUp && (
               <TextInput
-                style={[styles.input, { backgroundColor: colors.surfaceDark, color: colors.text, borderColor: colors.border }]}
+                style={[styles.input, { backgroundColor: isDark ? colors.surfaceDark : colors.background, color: colors.text, borderColor: colors.border }]}
                 placeholder="Seu Nome"
                 placeholderTextColor={colors.textDim}
                 value={displayName}
@@ -364,7 +369,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
             )}
 
             <TextInput
-              style={[styles.input, { backgroundColor: colors.surfaceDark, color: colors.text, borderColor: colors.border }]}
+              style={[styles.input, { backgroundColor: isDark ? colors.surfaceDark : colors.background, color: colors.text, borderColor: colors.border }]}
               placeholder="E-mail"
               placeholderTextColor={colors.textDim}
               value={email}
@@ -374,7 +379,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
             />
 
             <TextInput
-              style={[styles.input, { backgroundColor: colors.surfaceDark, color: colors.text, borderColor: colors.border }]}
+              style={[styles.input, { backgroundColor: isDark ? colors.surfaceDark : colors.background, color: colors.text, borderColor: colors.border }]}
               placeholder="Senha"
               placeholderTextColor={colors.textDim}
               value={password}
@@ -449,7 +454,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
         onCancel={() => setShowForgotPassword(false)}
         customContent={
           <TextInput
-            style={[styles.forgotInput, { backgroundColor: colors.surfaceDark, color: colors.text, borderColor: colors.border }]}
+            style={[styles.forgotInput, { backgroundColor: isDark ? colors.surfaceDark : colors.background, color: colors.text, borderColor: colors.border }]}
             placeholder="seu@email.com"
             placeholderTextColor={colors.textDim}
             value={forgotEmail}
@@ -517,10 +522,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 28,
   },
+  headerIconWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
   title: {
     fontSize: 20,
     fontFamily: 'Inter-Bold',
-    marginTop: 12,
     textAlign: 'center',
   },
   subtitle: {
@@ -634,11 +646,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   formTitle: {
     fontSize: 18,

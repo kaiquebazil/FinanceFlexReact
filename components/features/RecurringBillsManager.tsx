@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { useData } from '../../hooks/useData';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -12,6 +13,7 @@ interface RecurringBillsManagerProps {
 }
 
 export function RecurringBillsManager({ onClose }: RecurringBillsManagerProps) {
+  const { colors, isDark } = useTheme();
   const { recurringBills, addRecurringBill, deleteRecurringBill, toggleRecurringBillPaid, categories } = useData();
   
   // Estados para o formulário
@@ -93,7 +95,7 @@ export function RecurringBillsManager({ onClose }: RecurringBillsManagerProps) {
     const categoryIcon = category?.icon || 'tag';
 
     return (
-    <View key={bill.id} style={styles.billItem}>
+    <View key={bill.id} style={[styles.billItem, { backgroundColor: isDark ? colors.surfaceDark : '#fff', borderColor: colors.border }]}>
       <TouchableOpacity 
         onPress={() => toggleRecurringBillPaid(bill.id)} 
         style={styles.checkbox}
@@ -101,32 +103,32 @@ export function RecurringBillsManager({ onClose }: RecurringBillsManagerProps) {
         <FontAwesome5 
           name={bill.isPaid ? 'check-circle' : 'circle'} 
           size={24} 
-          color={bill.isPaid ? theme.colors.success : theme.colors.textDim} 
+          color={bill.isPaid ? colors.success : colors.textDim} 
         />
       </TouchableOpacity>
       
       <View style={styles.billInfo}>
         <View style={styles.billHeader}>
-          <Text style={[styles.billName, bill.isPaid && styles.billNamePaid]}>
+          <Text style={[styles.billName, { color: colors.text }, bill.isPaid && styles.billNamePaid]}>
             {bill.name}
           </Text>
-          <Text style={[styles.billAmount, bill.isPaid && styles.billAmountPaid]}>
+          <Text style={[styles.billAmount, { color: colors.text }, bill.isPaid && styles.billAmountPaid]}>
             {formatCurrency(bill.amount, 'BRL')}
           </Text>
         </View>
         
         <View style={styles.billDetails}>
           <View style={styles.billDetail}>
-            <FontAwesome5 name="calendar-alt" size={12} color={theme.colors.textDim} />
-            <Text style={styles.billDetailText}>
+            <FontAwesome5 name="calendar-alt" size={12} color={colors.textDim} />
+            <Text style={[styles.billDetailText, { color: colors.textDim }]}>
               Dia {bill.dueDay}
             </Text>
           </View>
           
           {bill.category && (
             <View style={styles.billDetail}>
-              <FontAwesome5 name={categoryIcon} size={12} color={theme.colors.textDim} />
-              <Text style={styles.billDetailText}>
+              <FontAwesome5 name={categoryIcon} size={12} color={colors.textDim} />
+              <Text style={[styles.billDetailText, { color: colors.textDim }]}>
                 {bill.category}
               </Text>
             </View>
@@ -138,14 +140,14 @@ export function RecurringBillsManager({ onClose }: RecurringBillsManagerProps) {
         onPress={() => handleDeleteBill(bill.id, bill.name)} 
         style={styles.deleteButton}
       >
-        <FontAwesome5 name="trash" size={16} color={theme.colors.danger} />
+        <FontAwesome5 name="trash" size={16} color={colors.danger} />
       </TouchableOpacity>
     </View>
     );
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
       {/* Botão para adicionar nova conta */}
       {!showForm ? (
         <Button
@@ -155,8 +157,8 @@ export function RecurringBillsManager({ onClose }: RecurringBillsManagerProps) {
           style={styles.addButton}
         />
       ) : (
-        <View style={styles.formContainer}>
-          <Text style={styles.formTitle}>Nova Conta Recorrente</Text>
+        <View style={[styles.formContainer, { backgroundColor: isDark ? colors.surfaceDark : '#f8f8f8', borderColor: colors.border }]}>
+          <Text style={[styles.formTitle, { color: colors.text }]}>Nova Conta Recorrente</Text>
           
           <Input
             label="Nome da conta"
@@ -185,7 +187,7 @@ export function RecurringBillsManager({ onClose }: RecurringBillsManagerProps) {
             error={errors.dueDay}
           />
 
-          <Text style={styles.label}>Categoria</Text>
+          <Text style={[styles.label, { color: colors.textDim }]}>Categoria</Text>
           <ScrollView 
             horizontal 
             showsHorizontalScrollIndicator={false}
@@ -195,13 +197,15 @@ export function RecurringBillsManager({ onClose }: RecurringBillsManagerProps) {
               <TouchableOpacity
                 style={[
                   styles.categoryChip,
-                  newBillCategory === 'Outros' && styles.categoryChipActive
+                  { backgroundColor: isDark ? colors.surface : '#eee', borderColor: colors.border },
+                  newBillCategory === 'Outros' && { backgroundColor: colors.primary, borderColor: colors.primary }
                 ]}
                 onPress={() => setNewBillCategory('Outros')}
               >
                 <Text style={[
                   styles.categoryChipText,
-                  newBillCategory === 'Outros' && styles.categoryChipTextActive
+                  { color: colors.text },
+                  newBillCategory === 'Outros' && { color: '#fff' }
                 ]}>
                   Outros
                 </Text>
@@ -212,13 +216,15 @@ export function RecurringBillsManager({ onClose }: RecurringBillsManagerProps) {
                   key={cat.id}
                   style={[
                     styles.categoryChip,
-                    newBillCategory === cat.name && styles.categoryChipActive
+                    { backgroundColor: isDark ? colors.surface : '#eee', borderColor: colors.border },
+                    newBillCategory === cat.name && { backgroundColor: colors.primary, borderColor: colors.primary }
                   ]}
                   onPress={() => setNewBillCategory(cat.name)}
                 >
                   <Text style={[
                     styles.categoryChipText,
-                    newBillCategory === cat.name && styles.categoryChipTextActive
+                    { color: colors.text },
+                    newBillCategory === cat.name && { color: '#fff' }
                   ]}>
                     {cat.name}
                   </Text>
@@ -254,8 +260,10 @@ export function RecurringBillsManager({ onClose }: RecurringBillsManagerProps) {
       {unpaidBills.length > 0 && (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>A Pagar</Text>
-            <Text style={styles.sectionCount}>{unpaidBills.length}</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>A Pagar</Text>
+            <View style={[styles.sectionCountBadge, { backgroundColor: colors.danger + '20' }]}>
+              <Text style={[styles.sectionCount, { color: colors.danger }]}>{unpaidBills.length}</Text>
+            </View>
           </View>
           <View style={styles.billsList}>
             {unpaidBills.map(renderBillItem)}
@@ -267,8 +275,10 @@ export function RecurringBillsManager({ onClose }: RecurringBillsManagerProps) {
       {paidBills.length > 0 && (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Pagas</Text>
-            <Text style={styles.sectionCount}>{paidBills.length}</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Pagas</Text>
+            <View style={[styles.sectionCountBadge, { backgroundColor: colors.success + '20' }]}>
+              <Text style={[styles.sectionCount, { color: colors.success }]}>{paidBills.length}</Text>
+            </View>
           </View>
           <View style={styles.billsList}>
             {paidBills.map(renderBillItem)}
@@ -279,9 +289,9 @@ export function RecurringBillsManager({ onClose }: RecurringBillsManagerProps) {
       {/* Mensagem quando não há contas */}
       {recurringBills.length === 0 && !showForm && (
         <View style={styles.emptyState}>
-          <FontAwesome5 name="calendar-alt" size={48} color={theme.colors.textDim} />
-          <Text style={styles.emptyStateTitle}>Nenhuma conta recorrente</Text>
-          <Text style={styles.emptyStateText}>
+          <FontAwesome5 name="calendar-alt" size={48} color={colors.textDim} />
+          <Text style={[styles.emptyStateTitle, { color: colors.text }]}>Nenhuma conta recorrente</Text>
+          <Text style={[styles.emptyStateText, { color: colors.textDim }]}>
             Adicione contas fixas como aluguel, internet ou streaming para acompanhar seus gastos mensais.
           </Text>
         </View>
@@ -289,36 +299,23 @@ export function RecurringBillsManager({ onClose }: RecurringBillsManagerProps) {
 
       {/* Resumo mensal */}
       {recurringBills.length > 0 && (
-        <View style={styles.summaryContainer}>
-          <Text style={styles.summaryTitle}>Resumo Mensal</Text>
+        <View style={[styles.summaryContainer, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' }]}>
+          <Text style={[styles.summaryTitle, { color: colors.primary }]}>Resumo Mensal</Text>
           
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Total de contas:</Text>
-            <Text style={styles.summaryValue}>{recurringBills.length}</Text>
+            <Text style={[styles.summaryLabel, { color: colors.textDim }]}>Total de contas:</Text>
+            <Text style={[styles.summaryValue, { color: colors.text }]}>{recurringBills.length}</Text>
           </View>
           
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Total a pagar:</Text>
-            <Text style={[styles.summaryValue, { color: theme.colors.danger }]}>
-              {formatCurrency(
-                unpaidBills.reduce((sum, bill) => sum + bill.amount, 0),
-                'BRL'
-              )}
-            </Text>
-          </View>
-          
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Total pago:</Text>
-            <Text style={[styles.summaryValue, { color: theme.colors.success }]}>
-              {formatCurrency(
-                paidBills.reduce((sum, bill) => sum + bill.amount, 0),
-                'BRL'
-              )}
+            <Text style={[styles.summaryLabel, { color: colors.textDim }]}>Total a pagar:</Text>
+            <Text style={[styles.summaryValue, { color: colors.danger }]}>
+              {formatCurrency(unpaidBills.reduce((acc, b) => acc + b.amount, 0), 'BRL')}
             </Text>
           </View>
         </View>
       )}
-    </ScrollView>
+    </View>
   );
 }
 
@@ -330,50 +327,39 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   formContainer: {
-    backgroundColor: theme.colors.darkLight,
-    borderRadius: 12,
     padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
     marginBottom: 20,
   },
   formTitle: {
     fontSize: 18,
-    fontFamily: 'Inter-SemiBold',
-    color: theme.colors.text,
+    fontFamily: 'Inter-Bold',
     marginBottom: 16,
   },
   label: {
-    color: theme.colors.text,
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: 'Inter-Medium',
     marginBottom: 8,
+    marginTop: 8,
   },
   categoryScroll: {
     marginBottom: 16,
   },
   categoryContainer: {
     flexDirection: 'row',
-    gap: 8,
     paddingVertical: 4,
   },
   categoryChip: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: theme.colors.dark,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  categoryChipActive: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
+    marginRight: 8,
   },
   categoryChipText: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'Inter-Medium',
-    color: theme.colors.textDim,
-  },
-  categoryChipTextActive: {
-    color: '#fff',
   },
   formButtons: {
     flexDirection: 'row',
@@ -388,37 +374,35 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+    gap: 8,
   },
   sectionTitle: {
     fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: theme.colors.text,
+    fontFamily: 'Inter-Bold',
+  },
+  sectionCountBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
   },
   sectionCount: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: theme.colors.textDim,
-    backgroundColor: theme.colors.darkLight,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    fontSize: 12,
+    fontFamily: 'Inter-Bold',
   },
   billsList: {
-    gap: 12,
+    gap: 10,
   },
   billItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    backgroundColor: theme.colors.darkLight,
     borderRadius: 12,
-    gap: 12,
+    borderWidth: 1,
   },
   checkbox: {
-    padding: 4,
+    marginRight: 12,
   },
   billInfo: {
     flex: 1,
@@ -430,27 +414,23 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   billName: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    color: theme.colors.text,
-    flex: 1,
-    marginRight: 8,
+    fontSize: 15,
+    fontFamily: 'Inter-SemiBold',
   },
   billNamePaid: {
     textDecorationLine: 'line-through',
-    color: theme.colors.textDim,
+    opacity: 0.6,
   },
   billAmount: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: theme.colors.text,
+    fontSize: 15,
+    fontFamily: 'Inter-Bold',
   },
   billAmountPaid: {
-    color: theme.colors.textDim,
+    opacity: 0.6,
   },
   billDetails: {
     flexDirection: 'row',
-    gap: 16,
+    gap: 12,
   },
   billDetail: {
     flexDirection: 'row',
@@ -460,57 +440,52 @@ const styles = StyleSheet.create({
   billDetailText: {
     fontSize: 12,
     fontFamily: 'Inter-Regular',
-    color: theme.colors.textDim,
   },
   deleteButton: {
     padding: 8,
+    marginLeft: 8,
   },
   emptyState: {
     alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 40,
     paddingHorizontal: 20,
   },
   emptyStateTitle: {
-    fontSize: 18,
-    fontFamily: 'Inter-SemiBold',
-    color: theme.colors.text,
+    fontSize: 16,
+    fontFamily: 'Inter-Bold',
     marginTop: 16,
     marginBottom: 8,
   },
   emptyStateText: {
     fontSize: 14,
     fontFamily: 'Inter-Regular',
-    color: theme.colors.textDim,
     textAlign: 'center',
     lineHeight: 20,
   },
   summaryContainer: {
-    backgroundColor: theme.colors.darkLight,
-    borderRadius: 12,
     padding: 16,
-    marginTop: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 10,
     marginBottom: 20,
   },
   summaryTitle: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: theme.colors.text,
+    fontSize: 15,
+    fontFamily: 'Inter-Bold',
     marginBottom: 12,
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 6,
+    marginBottom: 4,
   },
   summaryLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'Inter-Regular',
-    color: theme.colors.textDim,
   },
   summaryValue: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: theme.colors.text,
+    fontSize: 13,
+    fontFamily: 'Inter-Bold',
   },
 });
