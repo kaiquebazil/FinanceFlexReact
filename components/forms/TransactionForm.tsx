@@ -284,7 +284,7 @@ export function TransactionForm({
                             { color: colors.textDim },
                             selectedType === type && { color: '#fff', fontFamily: 'Inter-SemiBold' }
                           ]}>
-                            {type === 'income' ? 'Receita' : type === 'expense' ? 'Despesa' : 'Troca'}
+                            {type === 'income' ? 'Receita' : type === 'expense' ? 'Despesa' : 'Transferência'}
                           </Text>
                         </TouchableOpacity>
                       ))}
@@ -468,14 +468,14 @@ export function TransactionForm({
                       <View style={styles.chipRow}>
                         {filteredCategories.map((cat) => (
                           <TouchableOpacity
-                            key={cat.id}
+                              key={cat.id}
                             style={[
                               styles.chip,
                               { 
                                 backgroundColor: isDark ? colors.darkLight : colors.surfaceDark, 
                                 borderColor: colors.border 
                               },
-                              selectedCategory?.id === cat.id && { backgroundColor: cat.color, borderColor: cat.color }
+                              selectedCategory?.id === cat.id && { backgroundColor: "rgb(124, 77, 255)" }
                             ]}
                             onPress={() => {
                               setSelectedCategory(cat);

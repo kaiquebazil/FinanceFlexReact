@@ -173,7 +173,7 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
                     ]}>
                       {filter === 'all' ? 'Todas' :
                        filter === 'income' ? 'Receitas' :
-                       filter === 'expense' ? 'Despesas' : 'Trocas'}
+                       filter === 'expense' ? 'Despesas' : 'Transferências'}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -242,7 +242,7 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
                               backgroundColor: isDark ? colors.darkLight : colors.surfaceDark, 
                               borderColor: colors.border 
                             },
-                            selectedCategory === cat.name && { backgroundColor: cat.color, borderColor: cat.color }
+                            selectedCategory === cat.name && { backgroundColor: "rgb(124, 77, 255)" }
                           ]}
                           onPress={() => setSelectedCategory(cat.name)}
                         >
@@ -250,7 +250,7 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
                             <FontAwesome5
                               name={cat.icon || 'tag'}
                               size={12}
-                              color={selectedCategory === cat.name ? '#fff' : cat.color}
+                              color={'#fff'} 
                             />
                             <Text style={[
                               styles.filterChipText,

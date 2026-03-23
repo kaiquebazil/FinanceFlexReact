@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#FFFFFF"
+      "backgroundColor": "#00000000"
     },
     "web": {
       "favicon": "./assets/images/favicon.png",
@@ -28,7 +28,7 @@
       "splash": {
         "image": "./assets/images/splash-icon.png",
         "resizeMode": "contain",
-        "backgroundColor": "#FFFFFF"
+        "backgroundColor": "#00000000"
       }
     },
     "android": {
@@ -38,12 +38,12 @@
       "softwareKeyboardLayoutMode": "pan",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon-foreground.png",
-        "backgroundColor": "#7C5CBF"
+        "backgroundColor": "#00000000"
       },
       "splash": {
         "image": "./assets/images/splash-icon.png",
         "resizeMode": "contain",
-        "backgroundColor": "#FFFFFF"
+        "backgroundColor": "#00000000"
       }
     },
     "extra": {
