@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth, SyncStatus } from '../../contexts/AuthContext';
 import { Button } from '../ui/Button';
 import { Toast } from '../ui/Toast';
@@ -38,13 +39,13 @@ function statusLabel(status: SyncStatus): string {
   }
 }
 
-function statusColor(status: SyncStatus): string {
+function statusColor(status: SyncStatus, primaryColor: string): string {
   switch (status) {
-    case 'syncing': return theme.colors.primary;
+    case 'syncing': return primaryColor;
     case 'synced':  return '#4CAF50';
     case 'error':   return '#F44336';
     case 'offline': return '#FF9800';
-    default:        return theme.colors.textDim;
+    default:        return '#888888';
   }
 }
 
@@ -61,6 +62,7 @@ function statusIcon(status: SyncStatus): string {
 // ─── Componente ──────────────────────────────────────────────────────────────
 
 export function FirebaseSync({ onClose }: FirebaseSyncProps) {
+  const { colors, isDark } = useTheme();
   const { user, loading, syncStatus, lastSyncedAt, signIn, signUp, logOut, resetPassword, manualSync } = useAuth();
   const { toast, showToast, hideToast } = useToast();
 
@@ -122,7 +124,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
       setEmail('');
       setPassword('');
       setDisplayName('');
-      setShowBenefits(false); // Ocultar benefícios após login
+      setShowBenefits(false);
     } catch (err: any) {
       const msg = parseFirebaseError(err?.code);
       showModalNotif(msg, 'error');
@@ -136,7 +138,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
       await logOut();
       showModalNotif('Desconectado com sucesso', 'info');
       setShowLogoutConfirm(false);
-      setShowBenefits(true); // Mostrar benefícios novamente ao deslogar
+      setShowBenefits(true);
     } catch {
       showModalNotif('Erro ao desconectar', 'error');
     }
@@ -175,13 +177,18 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
     }
   };
 
+  // Cores dinâmicas derivadas do tema
+  const cardBg = isDark ? 'rgba(255,255,255,0.05)' : colors.surfaceDark;
+  const inputBg = isDark ? colors.dark : colors.surfaceDark;
+  const currentStatusColor = statusColor(syncStatus, colors.primary);
+
   // ─── Render ───────────────────────────────────────────────────────────────
 
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.loadingText}>Carregando…</Text>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.textDim }]}>Carregando…</Text>
       </View>
     );
   }
@@ -199,7 +206,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
           modalNotif.type === 'error' && styles.notifError,
           modalNotif.type === 'success' && styles.notifSuccess,
           modalNotif.type === 'warning' && styles.notifWarning,
-          modalNotif.type === 'info' && styles.notifInfo,
+          modalNotif.type === 'info' && { backgroundColor: colors.primary },
         ]}>
           <FontAwesome5
             name={modalNotif.type === 'error' ? 'exclamation-circle' : modalNotif.type === 'success' ? 'check-circle' : 'info-circle'}
@@ -219,9 +226,11 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
       >
         {/* Cabeçalho */}
         <View style={styles.header}>
-          <FontAwesome5 name="cloud" size={48} color={theme.colors.primary} />
-          <Text style={styles.title}>Sincronização em Tempo Real</Text>
-          <Text style={styles.subtitle}>
+          <View style={[styles.headerIconWrap, { backgroundColor: isDark ? 'rgba(124,77,255,0.15)' : 'rgba(108,63,255,0.1)' }]}>
+            <FontAwesome5 name="cloud" size={36} color={colors.primary} />
+          </View>
+          <Text style={[styles.title, { color: colors.text }]}>Sincronização em Tempo Real</Text>
+          <Text style={[styles.subtitle, { color: colors.textDim }]}>
             Seus dados ficam salvos na nuvem e sincronizados automaticamente
             entre todos os seus dispositivos.
           </Text>
@@ -231,23 +240,23 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
           // ─── Usuário logado ──────────────────────────────────────────────
           <>
             {/* Card de status */}
-            <View style={styles.statusCard}>
+            <View style={[styles.statusCard, { backgroundColor: cardBg, borderLeftColor: colors.primary }]}>
               <View style={styles.statusRow}>
                 <FontAwesome5
                   name={statusIcon(syncStatus)}
                   size={20}
-                  color={statusColor(syncStatus)}
+                  color={currentStatusColor}
                 />
-                <Text style={[styles.statusText, { color: statusColor(syncStatus) }]}>
+                <Text style={[styles.statusText, { color: currentStatusColor }]}>
                   {statusLabel(syncStatus)}
                 </Text>
                 {syncStatus === 'syncing' && (
-                  <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginLeft: 6 }} />
+                  <ActivityIndicator size="small" color={colors.primary} style={{ marginLeft: 6 }} />
                 )}
               </View>
 
               {lastSyncedAt && (
-                <Text style={styles.lastSync}>
+                <Text style={[styles.lastSync, { color: colors.textDim }]}>
                   Última sincronização:{' '}
                   {lastSyncedAt.toLocaleString('pt-BR')}
                 </Text>
@@ -261,14 +270,14 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
               </View>
             </View>
 
-            {/* Info do usuário - SEM ID */}
-            <View style={styles.userCard}>
+            {/* Info do usuário */}
+            <View style={[styles.userCard, { backgroundColor: cardBg }]}>
               <View style={styles.userAvatar}>
-                <FontAwesome5 name="user-circle" size={32} color={theme.colors.primary} />
+                <FontAwesome5 name="user-circle" size={32} color={colors.primary} />
               </View>
               <View style={styles.userInfo}>
-                <Text style={styles.userName}>{user.displayName || 'Usuário'}</Text>
-                <Text style={styles.userEmail}>{user.email}</Text>
+                <Text style={[styles.userName, { color: colors.text }]}>{user.displayName || 'Usuário'}</Text>
+                <Text style={[styles.userEmail, { color: colors.textDim }]}>{user.email}</Text>
               </View>
             </View>
 
@@ -289,8 +298,8 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
             </View>
 
             {/* Nota informativa */}
-            <View style={styles.infoBox}>
-              <Text style={styles.infoText}>
+            <View style={[styles.infoBox, { backgroundColor: isDark ? 'rgba(124,77,255,0.1)' : 'rgba(108,63,255,0.08)' }]}>
+              <Text style={[styles.infoText, { color: colors.text }]}>
                 💡 A sincronização em tempo real funciona automaticamente.
                 Qualquer alteração feita em outro dispositivo aparece aqui
                 em segundos, sem precisar pressionar nenhum botão.
@@ -301,16 +310,16 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
           // ─── Usuário não logado ──────────────────────────────────────────
           <>
             {/* Formulário de autenticação */}
-            <View style={styles.formCard}>
-              <Text style={styles.formTitle}>
+            <View style={[styles.formCard, { backgroundColor: cardBg }]}>
+              <Text style={[styles.formTitle, { color: colors.text }]}>
                 {isSignUp ? 'Criar Conta' : 'Entrar na Conta'}
               </Text>
 
               {isSignUp && (
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: inputBg, color: colors.text, borderColor: colors.border }]}
                   placeholder="Seu nome completo"
-                  placeholderTextColor={theme.colors.textDim}
+                  placeholderTextColor={colors.textDim}
                   value={displayName}
                   onChangeText={setDisplayName}
                   autoCapitalize="words"
@@ -319,9 +328,9 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
               )}
 
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: inputBg, color: colors.text, borderColor: colors.border }]}
                 placeholder="E-mail"
-                placeholderTextColor={theme.colors.textDim}
+                placeholderTextColor={colors.textDim}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -331,9 +340,9 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
               />
 
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: inputBg, color: colors.text, borderColor: colors.border }]}
                 placeholder="Senha (mínimo 6 caracteres)"
-                placeholderTextColor={theme.colors.textDim}
+                placeholderTextColor={colors.textDim}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -360,7 +369,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
                   }}
                   style={styles.toggleAuth}
                 >
-                  <Text style={styles.toggleAuthText}>
+                  <Text style={[styles.toggleAuthText, { color: colors.primary }]}>
                     {isSignUp
                       ? 'Já tem uma conta? Entrar'
                       : 'Não tem conta? Criar agora'}
@@ -372,54 +381,37 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
                     onPress={() => setShowForgotPassword(true)}
                     style={styles.forgotPasswordLink}
                   >
-                    <Text style={styles.forgotPasswordText}>Esqueceu a senha?</Text>
+                    <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>Esqueceu a senha?</Text>
                   </TouchableOpacity>
                 )}
               </View>
             </View>
 
-            {/* Benefícios - Mostrar apenas quando deslogado (primeira vez) */}
+            {/* Benefícios - Mostrar apenas quando deslogado */}
             {showBenefits && (
-              <View style={styles.benefitsBox}>
-                <Text style={styles.benefitsTitle}>✨ Benefícios da Sincronização</Text>
-                
-                <View style={styles.benefitItem}>
-                  <FontAwesome5 name="cloud-upload-alt" size={16} color={theme.colors.primary} />
-                  <View style={styles.benefitContent}>
-                    <Text style={styles.benefitName}>Backup Automático</Text>
-                    <Text style={styles.benefitDesc}>Seus dados são salvos na nuvem com segurança</Text>
-                  </View>
-                </View>
+              <View style={[styles.benefitsBox, { backgroundColor: cardBg, borderLeftColor: colors.primary }]}>
+                <Text style={[styles.benefitsTitle, { color: colors.text }]}>✨ Benefícios da Sincronização</Text>
 
-                <View style={styles.benefitItem}>
-                  <FontAwesome5 name="sync-alt" size={16} color={theme.colors.primary} />
-                  <View style={styles.benefitContent}>
-                    <Text style={styles.benefitName}>Sincronização em Tempo Real</Text>
-                    <Text style={styles.benefitDesc}>Alterações aparecem em todos os seus dispositivos instantaneamente</Text>
+                {[
+                  { icon: 'cloud-upload-alt', name: 'Backup Automático', desc: 'Seus dados são salvos na nuvem com segurança' },
+                  { icon: 'sync-alt', name: 'Sincronização em Tempo Real', desc: 'Alterações aparecem em todos os seus dispositivos instantaneamente' },
+                  { icon: 'lock', name: 'Dados Protegidos', desc: 'Criptografia Firebase garante privacidade total' },
+                  { icon: 'mobile-alt', name: 'Acesso em Qualquer Lugar', desc: 'Use o app em múltiplos dispositivos sem perder dados' },
+                ].map((benefit) => (
+                  <View key={benefit.icon} style={styles.benefitItem}>
+                    <FontAwesome5 name={benefit.icon} size={16} color={colors.primary} />
+                    <View style={styles.benefitContent}>
+                      <Text style={[styles.benefitName, { color: colors.text }]}>{benefit.name}</Text>
+                      <Text style={[styles.benefitDesc, { color: colors.textDim }]}>{benefit.desc}</Text>
+                    </View>
                   </View>
-                </View>
-
-                <View style={styles.benefitItem}>
-                  <FontAwesome5 name="lock" size={16} color={theme.colors.primary} />
-                  <View style={styles.benefitContent}>
-                    <Text style={performance.now() > 0 ? styles.benefitName : styles.benefitName}>Dados Protegidos</Text>
-                    <Text style={styles.benefitDesc}>Criptografia Firebase garante privacidade total</Text>
-                  </View>
-                </View>
-
-                <View style={styles.benefitItem}>
-                  <FontAwesome5 name="mobile-alt" size={16} color={theme.colors.primary} />
-                  <View style={styles.benefitContent}>
-                    <Text style={styles.benefitName}>Acesso em Qualquer Lugar</Text>
-                    <Text style={styles.benefitDesc}>Use o app em múltiplos dispositivos sem perder dados</Text>
-                  </View>
-                </View>
+                ))}
               </View>
             )}
 
-            {/* Info box - Mostrar sempre */}
-            <View style={styles.infoBox}>
-              <Text style={styles.infoText}>
+            {/* Info box */}
+            <View style={[styles.infoBox, { backgroundColor: isDark ? 'rgba(124,77,255,0.1)' : 'rgba(108,63,255,0.08)' }]}>
+              <Text style={[styles.infoText, { color: colors.text }]}>
                 🔒 Seus dados ficam protegidos com autenticação Firebase.
                 Cada usuário tem seu próprio espaço privado na nuvem.
               </Text>
@@ -455,9 +447,16 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
         }}
         customContent={
           <TextInput
-            style={styles.forgotInput}
+            style={[
+              styles.forgotInput,
+              {
+                backgroundColor: inputBg,
+                color: colors.text,
+                borderColor: colors.border,
+              },
+            ]}
             placeholder="seu@email.com"
-            placeholderTextColor={theme.colors.textDim}
+            placeholderTextColor={colors.textDim}
             value={forgotEmail}
             onChangeText={setForgotEmail}
             keyboardType="email-address"
@@ -505,8 +504,7 @@ function parseFirebaseError(code?: string): string {
 const styles = StyleSheet.create({
   keyboardAvoid: {
     flex: 1,
-    backgroundColor: theme.colors.dark,
-    justifyContent: 'flex-start', // Garante que o conteúdo suba com o teclado
+    justifyContent: 'flex-start',
   },
   modalNotification: {
     flexDirection: 'row',
@@ -515,6 +513,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     gap: 10,
     zIndex: 1000,
+    borderRadius: 8,
+    marginBottom: 8,
   },
   notifError: {
     backgroundColor: '#F44336',
@@ -524,9 +524,6 @@ const styles = StyleSheet.create({
   },
   notifWarning: {
     backgroundColor: '#FF9800',
-  },
-  notifInfo: {
-    backgroundColor: theme.colors.primary,
   },
   notifIcon: {
     marginRight: 4,
@@ -541,7 +538,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 20,
     paddingBottom: 40,
   },
   centered: {
@@ -551,36 +547,38 @@ const styles = StyleSheet.create({
     padding: 40,
   },
   loadingText: {
-    color: theme.colors.textDim,
     marginTop: 12,
     fontFamily: 'Inter-Regular',
   },
   header: {
     alignItems: 'center',
-    marginBottom: 28,
+    marginBottom: 24,
+  },
+  headerIconWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
   title: {
     fontSize: 20,
     fontFamily: 'Inter-Bold',
-    color: theme.colors.text,
-    marginTop: 12,
     textAlign: 'center',
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 13,
     fontFamily: 'Inter-Regular',
-    color: theme.colors.textDim,
     textAlign: 'center',
-    marginTop: 8,
     lineHeight: 20,
   },
   statusCard: {
-    backgroundColor: theme.colors.cardBg,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
     borderLeftWidth: 4,
-    borderLeftColor: theme.colors.primary,
   },
   statusRow: {
     flexDirection: 'row',
@@ -596,7 +594,6 @@ const styles = StyleSheet.create({
   lastSync: {
     fontSize: 12,
     fontFamily: 'Inter-Regular',
-    color: theme.colors.textDim,
     marginBottom: 8,
   },
   realtimeBadge: {
@@ -615,7 +612,6 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   userCard: {
-    backgroundColor: theme.colors.cardBg,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -631,12 +627,10 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 14,
     fontFamily: 'Inter-SemiBold',
-    color: theme.colors.text,
   },
   userEmail: {
     fontSize: 12,
     fontFamily: 'Inter-Regular',
-    color: theme.colors.textDim,
     marginTop: 4,
   },
   buttons: {
@@ -646,7 +640,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   formCard: {
-    backgroundColor: theme.colors.cardBg,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -654,61 +647,16 @@ const styles = StyleSheet.create({
   formTitle: {
     fontSize: 16,
     fontFamily: 'Inter-Bold',
-    color: theme.colors.text,
     marginBottom: 16,
     textAlign: 'center',
   },
   input: {
-    backgroundColor: theme.colors.inputBg,
     borderRadius: 8,
     padding: 12,
     marginBottom: 12,
-    color: theme.colors.text,
     fontFamily: 'Inter-Regular',
     fontSize: 14,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 16,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: theme.colors.border,
-  },
-  dividerText: {
-    marginHorizontal: 12,
-    color: theme.colors.textDim,
-    fontFamily: 'Inter-Regular',
-    fontSize: 12,
-  },
-  socialButtons: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
-  },
-  socialButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 8,
-    gap: 8,
-  },
-  googleButton: {
-    backgroundColor: '#DB4437',
-  },
-  facebookButton: {
-    backgroundColor: '#1877F2',
-  },
-  socialButtonText: {
-    color: '#fff',
-    fontFamily: 'Inter-SemiBold',
-    fontSize: 13,
   },
   authLinks: {
     gap: 12,
@@ -719,7 +667,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   toggleAuthText: {
-    color: theme.colors.primary,
     fontFamily: 'Inter-SemiBold',
     fontSize: 13,
   },
@@ -728,33 +675,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   forgotPasswordText: {
-    color: theme.colors.primary,
     fontFamily: 'Inter-Regular',
     fontSize: 12,
   },
   forgotInput: {
-    backgroundColor: theme.colors.dark,
     borderRadius: 8,
     padding: 12,
-    color: theme.colors.text,
     fontFamily: 'Inter-Regular',
     fontSize: 14,
     borderWidth: 1,
-    borderColor: theme.colors.border,
     width: '100%',
   },
   benefitsBox: {
-    backgroundColor: theme.colors.cardBg,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
     borderLeftWidth: 4,
-    borderLeftColor: theme.colors.primary,
   },
   benefitsTitle: {
     fontSize: 14,
     fontFamily: 'Inter-Bold',
-    color: theme.colors.text,
     marginBottom: 12,
   },
   benefitItem: {
@@ -769,17 +709,14 @@ const styles = StyleSheet.create({
   benefitName: {
     fontSize: 12,
     fontFamily: 'Inter-SemiBold',
-    color: theme.colors.text,
   },
   benefitDesc: {
     fontSize: 11,
     fontFamily: 'Inter-Regular',
-    color: theme.colors.textDim,
     marginTop: 2,
     lineHeight: 16,
   },
   infoBox: {
-    backgroundColor: 'rgba(124, 77, 255, 0.1)',
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
@@ -787,7 +724,6 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: 12,
     fontFamily: 'Inter-Regular',
-    color: theme.colors.text,
     lineHeight: 18,
   },
 });

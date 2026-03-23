@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { useData } from '../../hooks/useData';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
@@ -27,6 +28,7 @@ const MONTH_NAMES = [
 ];
 
 export function BudgetManager({ onClose }: BudgetManagerProps) {
+  const { colors, isDark } = useTheme();
   const {
     budgets,
     categories,
@@ -165,41 +167,45 @@ export function BudgetManager({ onClose }: BudgetManagerProps) {
   };
 
   const getProgressColor = (percentage: number) => {
-    if (percentage >= 100) return theme.colors.danger;
-    if (percentage >= 80) return theme.colors.warning;
-    return theme.colors.success;
+    if (percentage >= 100) return colors.danger;
+    if (percentage >= 80) return colors.warning;
+    return colors.success;
   };
 
   const getAlertBadge = (percentage: number) => {
-    if (percentage >= 100) return { label: 'Excedido', color: theme.colors.danger };
-    if (percentage >= 80) return { label: 'Atenção', color: theme.colors.warning };
+    if (percentage >= 100) return { label: 'Excedido', color: colors.danger };
+    if (percentage >= 80) return { label: 'Atenção', color: colors.warning };
     return null;
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={{ paddingBottom: 24 }}
+      showsVerticalScrollIndicator={false}
+    >
       {/* Seletor de mês */}
-      <View style={styles.monthSelector}>
-        <TouchableOpacity onPress={handlePrevMonth} style={styles.monthArrow}>
-          <FontAwesome5 name="chevron-left" size={16} color={theme.colors.primary} />
+      <View style={[styles.monthSelector, { backgroundColor: isDark ? colors.darkLight : colors.surfaceDark, borderRadius: 12 }]}>
+        <TouchableOpacity onPress={handlePrevMonth} style={[styles.monthArrow, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
+          <FontAwesome5 name="chevron-left" size={16} color={colors.primary} />
         </TouchableOpacity>
-        <Text style={styles.monthLabel}>
+        <Text style={[styles.monthLabel, { color: colors.text }]}>
           {MONTH_NAMES[selectedMonth - 1]} {selectedYear}
         </Text>
-        <TouchableOpacity onPress={handleNextMonth} style={styles.monthArrow}>
-          <FontAwesome5 name="chevron-right" size={16} color={theme.colors.primary} />
+        <TouchableOpacity onPress={handleNextMonth} style={[styles.monthArrow, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
+          <FontAwesome5 name="chevron-right" size={16} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
       {/* Formulário de criação/edição */}
       {showForm ? (
         <Card style={styles.formCard}>
-          <Text style={styles.formTitle}>
+          <Text style={[styles.formTitle, { color: colors.text }]}>
             {editingBudget ? 'Editar Orçamento' : 'Novo Orçamento'}
           </Text>
 
           {/* Seleção de categoria */}
-          <Text style={styles.fieldLabel}>Categoria de Despesa</Text>
+          <Text style={[styles.fieldLabel, { color: colors.textDim }]}>Categoria de Despesa</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -215,19 +221,22 @@ export function BudgetManager({ onClose }: BudgetManagerProps) {
                 key={cat.id}
                 style={[
                   styles.categoryChip,
-                  selectedCategoryId === cat.id && styles.categoryChipSelected,
+                  {
+                    backgroundColor: selectedCategoryId === cat.id ? colors.primary : (isDark ? colors.dark : colors.surfaceDark),
+                    borderColor: selectedCategoryId === cat.id ? colors.primary : colors.border,
+                  },
                 ]}
                 onPress={() => setSelectedCategoryId(cat.id)}
               >
                 <FontAwesome5
                   name={cat.icon}
                   size={14}
-                  color={selectedCategoryId === cat.id ? '#fff' : theme.colors.textDim}
+                  color={selectedCategoryId === cat.id ? '#fff' : colors.textDim}
                 />
                 <Text
                   style={[
                     styles.categoryChipText,
-                    selectedCategoryId === cat.id && styles.categoryChipTextSelected,
+                    { color: selectedCategoryId === cat.id ? '#fff' : colors.textDim },
                   ]}
                 >
                   {cat.name}
@@ -237,13 +246,20 @@ export function BudgetManager({ onClose }: BudgetManagerProps) {
           </ScrollView>
 
           {/* Limite */}
-          <Text style={styles.fieldLabel}>Limite Mensal (R$)</Text>
+          <Text style={[styles.fieldLabel, { color: colors.textDim }]}>Limite Mensal (R$)</Text>
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: isDark ? colors.dark : colors.surfaceDark,
+                borderColor: colors.border,
+                color: colors.text,
+              },
+            ]}
             value={limitAmount}
             onChangeText={setLimitAmount}
             placeholder="0,00"
-            placeholderTextColor={theme.colors.textMuted}
+            placeholderTextColor={colors.textMuted}
             keyboardType="numeric"
           />
 
@@ -254,8 +270,7 @@ export function BudgetManager({ onClose }: BudgetManagerProps) {
         </Card>
       ) : (
         <Button
-          title="Novo Orçamento"
-          icon="plus"
+          title="+ Novo Orçamento"
           onPress={handleOpenCreate}
           variant="outline"
           style={styles.addButton}
@@ -265,9 +280,9 @@ export function BudgetManager({ onClose }: BudgetManagerProps) {
       {/* Lista de orçamentos */}
       {monthlyBudgets.length === 0 && !showForm ? (
         <View style={styles.emptyState}>
-          <FontAwesome5 name="chart-pie" size={40} color={theme.colors.textDim} />
-          <Text style={styles.emptyTitle}>Nenhum orçamento definido</Text>
-          <Text style={styles.emptySubtitle}>
+          <FontAwesome5 name="chart-pie" size={40} color={colors.textDim} />
+          <Text style={[styles.emptyTitle, { color: colors.text }]}>Nenhum orçamento definido</Text>
+          <Text style={[styles.emptySubtitle, { color: colors.textDim }]}>
             Defina limites de gastos por categoria para controlar suas despesas mensais.
           </Text>
         </View>
@@ -283,7 +298,7 @@ export function BudgetManager({ onClose }: BudgetManagerProps) {
               <Card key={budget.id} style={styles.budgetCard}>
                 {/* Cabeçalho do card */}
                 <View style={styles.budgetHeader}>
-                  <View style={styles.budgetIconContainer}>
+                  <View style={[styles.budgetIconContainer, { backgroundColor: isDark ? colors.dark : colors.surfaceDark }]}>
                     <FontAwesome5
                       name={budget.categoryIcon}
                       size={18}
@@ -292,7 +307,7 @@ export function BudgetManager({ onClose }: BudgetManagerProps) {
                   </View>
                   <View style={styles.budgetInfo}>
                     <View style={styles.budgetTitleRow}>
-                      <Text style={styles.budgetCategoryName}>{budget.categoryName}</Text>
+                      <Text style={[styles.budgetCategoryName, { color: colors.text }]}>{budget.categoryName}</Text>
                       {alert && (
                         <View style={[styles.alertBadge, { backgroundColor: alert.color + '25' }]}>
                           <Text style={[styles.alertBadgeText, { color: alert.color }]}>
@@ -301,7 +316,7 @@ export function BudgetManager({ onClose }: BudgetManagerProps) {
                         </View>
                       )}
                     </View>
-                    <Text style={styles.budgetAmounts}>
+                    <Text style={[styles.budgetAmounts, { color: colors.textDim }]}>
                       {formatValue(spent)} de {formatValue(budget.limitAmount)}
                     </Text>
                   </View>
@@ -310,19 +325,19 @@ export function BudgetManager({ onClose }: BudgetManagerProps) {
                       onPress={() => handleOpenEdit(budget)}
                       style={styles.actionBtn}
                     >
-                      <FontAwesome5 name="edit" size={14} color={theme.colors.primary} />
+                      <FontAwesome5 name="edit" size={14} color={colors.primary} />
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => handleDelete(budget)}
                       style={styles.actionBtn}
                     >
-                      <FontAwesome5 name="trash-alt" size={14} color={theme.colors.danger} />
+                      <FontAwesome5 name="trash-alt" size={14} color={colors.danger} />
                     </TouchableOpacity>
                   </View>
                 </View>
 
                 {/* Barra de progresso */}
-                <View style={styles.progressBarBg}>
+                <View style={[styles.progressBarBg, { backgroundColor: isDark ? colors.dark : colors.surfaceDark }]}>
                   <View
                     style={[
                       styles.progressBarFill,
@@ -342,7 +357,7 @@ export function BudgetManager({ onClose }: BudgetManagerProps) {
                   <Text
                     style={[
                       styles.remainingText,
-                      { color: remaining >= 0 ? theme.colors.textDim : theme.colors.danger },
+                      { color: remaining >= 0 ? colors.textDim : colors.danger },
                     ]}
                   >
                     {remaining >= 0
@@ -355,32 +370,26 @@ export function BudgetManager({ onClose }: BudgetManagerProps) {
           })}
         </View>
       )}
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingBottom: 24,
-  },
   monthSelector: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
-    marginBottom: 8,
+    marginBottom: 12,
     gap: 16,
   },
   monthArrow: {
     padding: 8,
     borderRadius: 20,
-    backgroundColor: theme.colors.darkLight,
   },
   monthLabel: {
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
-    color: theme.colors.text,
     minWidth: 160,
     textAlign: 'center',
   },
@@ -394,13 +403,11 @@ const styles = StyleSheet.create({
   formTitle: {
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
-    color: theme.colors.text,
     marginBottom: 16,
   },
   fieldLabel: {
     fontSize: 13,
     fontFamily: 'Inter-Medium',
-    color: theme.colors.textDim,
     marginBottom: 8,
   },
   categoryScroll: {
@@ -413,32 +420,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: theme.colors.dark,
     borderWidth: 1,
-    borderColor: theme.colors.border,
     marginRight: 8,
-  },
-  categoryChipSelected: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
   },
   categoryChipText: {
     fontSize: 12,
     fontFamily: 'Inter-Medium',
-    color: theme.colors.textDim,
-  },
-  categoryChipTextSelected: {
-    color: '#fff',
   },
   input: {
-    backgroundColor: theme.colors.dark,
     borderWidth: 1,
-    borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.input,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
-    color: theme.colors.text,
     marginBottom: 16,
   },
   formButtons: {
@@ -457,13 +451,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
-    color: theme.colors.text,
     marginTop: 8,
   },
   emptySubtitle: {
     fontSize: 13,
     fontFamily: 'Inter-Regular',
-    color: theme.colors.textDim,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -482,7 +474,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: theme.colors.dark,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -499,7 +490,6 @@ const styles = StyleSheet.create({
   budgetCategoryName: {
     fontSize: 15,
     fontFamily: 'Inter-SemiBold',
-    color: theme.colors.text,
   },
   alertBadge: {
     paddingHorizontal: 8,
@@ -513,7 +503,6 @@ const styles = StyleSheet.create({
   budgetAmounts: {
     fontSize: 12,
     fontFamily: 'Inter-Regular',
-    color: theme.colors.textDim,
   },
   budgetActions: {
     flexDirection: 'row',
@@ -524,7 +513,6 @@ const styles = StyleSheet.create({
   },
   progressBarBg: {
     height: 8,
-    backgroundColor: theme.colors.dark,
     borderRadius: 4,
     overflow: 'hidden',
     marginBottom: 8,

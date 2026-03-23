@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { useData } from '../../hooks/useData';
 import { AVAILABLE_ICONS } from '../../constants/availableIcons';
 
@@ -18,6 +19,7 @@ interface CategoryManagerProps {
 }
 
 export function CategoryManager({ onClose }: CategoryManagerProps) {
+  const { colors, isDark } = useTheme();
   const { categories, addCategory, updateCategory, deleteCategory } = useData();
   const [selectedType, setSelectedType] = useState<'income' | 'expense'>('expense');
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -59,27 +61,36 @@ export function CategoryManager({ onClose }: CategoryManagerProps) {
     setSelectedType(category.type);
   };
 
-  return (
-    <View style={styles.container}>
-      {/* Cabeçalho */}
+  const currentCategories = selectedType === 'expense' ? expenseCategories : incomeCategories;
 
+  return (
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.contentContainer}
+      showsVerticalScrollIndicator={false}
+    >
       {/* Seletor de tipo */}
       <View style={styles.typeContainer}>
         <TouchableOpacity
           style={[
             styles.typeButton,
-            selectedType === 'income' && styles.typeButtonActive
+            {
+              backgroundColor: selectedType === 'income'
+                ? colors.primary
+                : (isDark ? colors.darkLight : colors.surfaceDark),
+              borderColor: selectedType === 'income' ? colors.primary : colors.border,
+            },
           ]}
           onPress={() => setSelectedType('income')}
         >
-          <FontAwesome5 
-            name="arrow-down" 
-            size={14} 
-            color={selectedType === 'income' ? '#fff' : theme.colors.success} 
+          <FontAwesome5
+            name="arrow-down"
+            size={14}
+            color={selectedType === 'income' ? '#fff' : colors.success}
           />
           <Text style={[
             styles.typeText,
-            selectedType === 'income' && styles.typeTextActive
+            { color: selectedType === 'income' ? '#fff' : colors.text },
           ]}>
             Receita
           </Text>
@@ -88,18 +99,23 @@ export function CategoryManager({ onClose }: CategoryManagerProps) {
         <TouchableOpacity
           style={[
             styles.typeButton,
-            selectedType === 'expense' && styles.typeButtonActive
+            {
+              backgroundColor: selectedType === 'expense'
+                ? colors.primary
+                : (isDark ? colors.darkLight : colors.surfaceDark),
+              borderColor: selectedType === 'expense' ? colors.primary : colors.border,
+            },
           ]}
           onPress={() => setSelectedType('expense')}
         >
-          <FontAwesome5 
-            name="arrow-up" 
-            size={14} 
-            color={selectedType === 'expense' ? '#fff' : theme.colors.danger} 
+          <FontAwesome5
+            name="arrow-up"
+            size={14}
+            color={selectedType === 'expense' ? '#fff' : colors.danger}
           />
           <Text style={[
             styles.typeText,
-            selectedType === 'expense' && styles.typeTextActive
+            { color: selectedType === 'expense' ? '#fff' : colors.text },
           ]}>
             Despesa
           </Text>
@@ -107,10 +123,10 @@ export function CategoryManager({ onClose }: CategoryManagerProps) {
       </View>
 
       {/* Seletor de ícones */}
-      <Text style={styles.sectionTitle}>Escolha um ícone</Text>
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false} 
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>Escolha um ícone</Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
         style={styles.iconSelector}
         contentContainerStyle={styles.iconSelectorContent}
       >
@@ -119,14 +135,19 @@ export function CategoryManager({ onClose }: CategoryManagerProps) {
             key={icon}
             style={[
               styles.iconButton,
-              selectedIcon === icon && styles.iconButtonActive
+              {
+                backgroundColor: selectedIcon === icon
+                  ? colors.primary
+                  : (isDark ? colors.darkLight : colors.surfaceDark),
+                borderColor: selectedIcon === icon ? colors.primary : colors.border,
+              },
             ]}
             onPress={() => setSelectedIcon(icon)}
           >
-            <FontAwesome5 
-              name={icon} 
-              size={20} 
-              color={selectedIcon === icon ? '#fff' : theme.colors.textMuted} 
+            <FontAwesome5
+              name={icon}
+              size={20}
+              color={selectedIcon === icon ? '#fff' : colors.textMuted}
             />
           </TouchableOpacity>
         ))}
@@ -135,21 +156,31 @@ export function CategoryManager({ onClose }: CategoryManagerProps) {
       {/* Input para nova categoria */}
       <View style={styles.inputContainer}>
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            {
+              backgroundColor: isDark ? colors.darkLight : colors.surfaceDark,
+              color: colors.text,
+              borderColor: colors.border,
+            },
+          ]}
           value={newCategoryName}
           onChangeText={setNewCategoryName}
           placeholder="Nome da categoria"
-          placeholderTextColor={theme.colors.textMuted}
+          placeholderTextColor={colors.textMuted}
         />
-        <TouchableOpacity 
-          style={[styles.addButton, editingId && { backgroundColor: theme.colors.success }]} 
+        <TouchableOpacity
+          style={[
+            styles.addButton,
+            { backgroundColor: editingId ? colors.success : colors.primary },
+          ]}
           onPress={handleAddCategory}
         >
           <Text style={styles.addButtonText}>{editingId ? 'Salvar' : 'Adicionar'}</Text>
         </TouchableOpacity>
         {editingId && (
-          <TouchableOpacity 
-            style={[styles.addButton, { backgroundColor: theme.colors.textDim }]} 
+          <TouchableOpacity
+            style={[styles.addButton, { backgroundColor: colors.textDim }]}
             onPress={() => {
               setEditingId(null);
               setNewCategoryName('');
@@ -162,53 +193,56 @@ export function CategoryManager({ onClose }: CategoryManagerProps) {
       </View>
 
       {/* Lista de categorias */}
-      <ScrollView style={styles.list}>
-        {(selectedType === 'expense' ? expenseCategories : incomeCategories).map((category) => (
-          <View key={category.id} style={styles.categoryItem}>
-            <View style={styles.categoryInfo}>
-              <FontAwesome5 
-                name={category.icon || 'tag'} 
-                size={16} 
-                color={selectedType === 'income' ? theme.colors.success : theme.colors.danger} 
-              />
-              <Text style={styles.categoryName}>{category.name}</Text>
+      {currentCategories.length === 0 ? (
+        <View style={styles.emptyState}>
+          <FontAwesome5 name="tag" size={32} color={colors.textDim} />
+          <Text style={[styles.emptyText, { color: colors.textDim }]}>
+            Nenhuma categoria cadastrada
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.list}>
+          {currentCategories.map((category) => (
+            <View
+              key={category.id}
+              style={[styles.categoryItem, { borderBottomColor: colors.border }]}
+            >
+              <View style={styles.categoryInfo}>
+                <View style={[
+                  styles.categoryIconWrap,
+                  { backgroundColor: isDark ? colors.darkLight : colors.surfaceDark },
+                ]}>
+                  <FontAwesome5
+                    name={category.icon || 'tag'}
+                    size={16}
+                    color={selectedType === 'income' ? colors.success : colors.danger}
+                  />
+                </View>
+                <Text style={[styles.categoryName, { color: colors.text }]}>{category.name}</Text>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 15 }}>
+                <TouchableOpacity onPress={() => handleEditCategory(category)}>
+                  <FontAwesome5 name="edit" size={16} color={colors.primary} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => deleteCategory(category.id)}>
+                  <FontAwesome5 name="trash" size={16} color={colors.danger} />
+                </TouchableOpacity>
+              </View>
             </View>
-            <View style={{ flexDirection: 'row', gap: 15 }}>
-              <TouchableOpacity onPress={() => handleEditCategory(category)}>
-                <FontAwesome5 name="edit" size={16} color={theme.colors.primary} />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => deleteCategory(category.id)}>
-                <FontAwesome5 name="trash" size={16} color={theme.colors.danger} />
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
-      </ScrollView>
-    </View>
+          ))}
+        </View>
+      )}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontFamily: 'Inter-Bold',
-    color: theme.colors.text,
-  },
-  subtitle: {
-    fontSize: 18,
-    fontFamily: 'Inter-SemiBold',
-    color: theme.colors.text,
-    marginBottom: 20,
+  contentContainer: {
+    padding: 4,
+    paddingBottom: 24,
   },
   typeContainer: {
     flexDirection: 'row',
@@ -223,21 +257,11 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: theme.colors.darkLight,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  typeButtonActive: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
   },
   typeText: {
     fontSize: 14,
     fontFamily: 'Inter-Medium',
-    color: theme.colors.text,
-  },
-  typeTextActive: {
-    color: '#fff',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -246,19 +270,16 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    backgroundColor: theme.colors.darkLight,
     borderRadius: 8,
     padding: 12,
-    color: theme.colors.text,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: theme.colors.border,
   },
   addButton: {
-    backgroundColor: theme.colors.primary,
     borderRadius: 8,
     paddingHorizontal: 20,
     justifyContent: 'center',
+    paddingVertical: 12,
   },
   addButtonText: {
     color: '#fff',
@@ -266,7 +287,16 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-SemiBold',
   },
   list: {
-    flex: 1,
+    gap: 0,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 32,
+    gap: 12,
+  },
+  emptyText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
   },
   categoryItem: {
     flexDirection: 'row',
@@ -274,22 +304,26 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
   },
   categoryInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
+  categoryIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   categoryName: {
     fontSize: 16,
     fontFamily: 'Inter-Medium',
-    color: theme.colors.text,
   },
   sectionTitle: {
     fontSize: 14,
     fontFamily: 'Inter-SemiBold',
-    color: theme.colors.text,
     marginBottom: 10,
   },
   iconSelector: {
@@ -304,14 +338,8 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: theme.colors.darkLight,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  iconButtonActive: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
   },
 });
