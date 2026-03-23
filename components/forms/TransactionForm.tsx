@@ -1,4 +1,3 @@
-// components/forms/TransactionForm.tsx
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -8,7 +7,6 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
-  FlatList,
   KeyboardAvoidingView,
   Platform,
   TouchableWithoutFeedback,
@@ -75,7 +73,6 @@ export function TransactionForm({
   );
 
   // Estados para modais de seleção
-  const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showToAccountModal, setShowToAccountModal] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
@@ -98,65 +95,29 @@ export function TransactionForm({
     setErrors({});
   };
 
-  // Resetar formulário quando o modal abrir, respeitando o initialType
+  // Efeito para resetar quando fechar
   useEffect(() => {
-    if (visible) {
+    if (!visible) {
       resetForm();
     }
-  }, [visible, initialType]);
+  }, [visible]);
 
-  // Filtrar categorias por tipo (apenas se não for transferência)
-  const filteredCategories =
-    selectedType !== "transfer"
-      ? categories.filter((c) => c.type === selectedType)
-      : [];
+  // Filtrar categorias por tipo
+  const filteredCategories = categories.filter(
+    (cat) => cat.type === selectedType,
+  );
 
-  // Formatar valor enquanto digita
-  const handleAmountChange = (text: string) => {
-    const cleanText = text.replace(/[^0-9]/g, "");
-
-    if (cleanText === "") {
-      setAmount("");
-      return;
-    }
-
-    const numberValue = parseFloat(cleanText) / 100;
-    setAmount(numberValue.toFixed(2).replace(".", ","));
+  // Função para formatar valor
+  const handleAmountChange = (value: string) => {
+    const formatted = value.replace(/[^0-9,]/g, "");
+    setAmount(formatted);
   };
 
-  // Formatar data para exibição
-  const getFormattedDate = () => {
-    return `${selectedDay.padStart(2, "0")}/${(selectedMonth + 1).toString().padStart(2, "0")}/${selectedYear}`;
-  };
-
-  // Validar dia do mês
-  const getDaysInMonth = (month: number, year: number) => {
-    return new Date(year, month + 1, 0).getDate();
-  };
-
-  const handleDaySelect = (day: string) => {
-    const daysInMonth = getDaysInMonth(selectedMonth, parseInt(selectedYear));
-    if (parseInt(day) > daysInMonth) {
-      setSelectedDay(daysInMonth.toString());
-    } else {
-      setSelectedDay(day);
-    }
-  };
-
-  // Quando muda o mês/ano, ajustar o dia se necessário
-  useEffect(() => {
-    const daysInMonth = getDaysInMonth(selectedMonth, parseInt(selectedYear));
-    if (parseInt(selectedDay) > daysInMonth) {
-      setSelectedDay(daysInMonth.toString());
-    }
-  }, [selectedMonth, selectedYear]);
-
-  // Validar e salvar
-  const handleSave = (stayOpen = false) => {
+  // Validar formulário
+  const validateForm = () => {
     const newErrors: any = {};
+    const amountValue = parseFloat(amount.replace(",", "."));
 
-    // Validar valor
-    const amountValue = parseFloat(amount?.replace(",", ".") || "0");
     if (!amount || amountValue <= 0) {
       newErrors.amount = "Valor deve ser maior que zero";
     }
@@ -240,8 +201,8 @@ export function TransactionForm({
       transaction.accountName = selectedAccount.name;
     }
 
-    onSave(transaction, stayOpen);
-    if (stayOpen) {
+    onSave(transaction, false);
+    if (!visible) {
       resetForm();
     }
   };
@@ -251,25 +212,6 @@ export function TransactionForm({
     Keyboard.dismiss();
     onClose();
   };
-
-  // Renderizar item de categoria
-  const renderCategoryItem = ({ item }: any) => (
-    <TouchableOpacity
-      style={[styles.selectItem, { borderBottomColor: colors.border }]}
-      onPress={() => {
-        setSelectedCategory(item);
-        setShowCategoryModal(false);
-        setErrors({ ...errors, category: null });
-      }}
-    >
-      <FontAwesome5
-        name={item.icon || "tag"}
-        size={16}
-        color={colors.primary}
-      />
-      <Text style={[styles.selectItemText, { color: colors.text }]}>{item.name}</Text>
-    </TouchableOpacity>
-  );
 
   // Renderizar item de conta
   const renderAccountItem = ({ item }: any) => (
@@ -288,7 +230,7 @@ export function TransactionForm({
       }}
     >
       <FontAwesome5
-        name={item.type === "Dinheiro" ? "money-bill-wave" : "university"}
+        name="wallet"
         size={16}
         color={colors.primary}
       />
@@ -305,7 +247,7 @@ export function TransactionForm({
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
+      animationType="slide"
       onRequestClose={handleCancel}
       statusBarTranslucent
     >
@@ -314,20 +256,14 @@ export function TransactionForm({
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={[styles.modalOverlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.5)' }]}>
+          <View style={[styles.modalOverlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.4)' }]}>
             <TouchableWithoutFeedback onPress={() => {}}>
-              <View style={[styles.modalContent, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                {/* Cabeçalho */}
+              <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
                 <View style={[styles.header, { borderBottomColor: colors.border }]}>
                   <Text style={[styles.title, { color: colors.text }]}>
-                    {selectedType === "income" && "Nova Receita"}
-                    {selectedType === "expense" && "Nova Despesa"}
-                    {selectedType === "transfer" && "Nova Transferência"}
+                    Nova Transação
                   </Text>
-                  <TouchableOpacity
-                    onPress={handleCancel}
-                    style={styles.closeButton}
-                  >
+                  <TouchableOpacity onPress={handleCancel}>
                     <FontAwesome5
                       name="times"
                       size={20}
@@ -344,7 +280,10 @@ export function TransactionForm({
                       { backgroundColor: colors.surfaceDark, borderColor: colors.border },
                       selectedType === "income" && styles.typeButtonActive,
                     ]}
-                    onPress={() => setSelectedType("income")}
+                    onPress={() => {
+                      setSelectedType("income");
+                      setSelectedCategory(null);
+                    }}
                   >
                     <FontAwesome5
                       name="arrow-down"
@@ -370,7 +309,10 @@ export function TransactionForm({
                       { backgroundColor: colors.surfaceDark, borderColor: colors.border },
                       selectedType === "expense" && styles.typeButtonActive,
                     ]}
-                    onPress={() => setSelectedType("expense")}
+                    onPress={() => {
+                      setSelectedType("expense");
+                      setSelectedCategory(null);
+                    }}
                   >
                     <FontAwesome5
                       name="arrow-up"
@@ -396,7 +338,10 @@ export function TransactionForm({
                       { backgroundColor: colors.surfaceDark, borderColor: colors.border },
                       selectedType === "transfer" && styles.typeButtonActive,
                     ]}
-                    onPress={() => setSelectedType("transfer")}
+                    onPress={() => {
+                      setSelectedType("transfer");
+                      setSelectedCategory(null);
+                    }}
                   >
                     <FontAwesome5
                       name="exchange-alt"
@@ -464,39 +409,57 @@ export function TransactionForm({
 
                   {selectedType !== "transfer" ? (
                     <>
-                      {/* Categoria (para receitas/despesas) */}
+                      {/* Categoria - BOTÕES EM GRADE DIRETOS */}
                       <View style={styles.field}>
                         <Text style={[styles.label, { color: colors.textDim }]}>Categoria</Text>
-                        <TouchableOpacity
-                          style={[
-                            styles.selectButton,
-                            { backgroundColor: colors.surfaceDark, borderColor: colors.border },
-                            errors.category && styles.inputError,
-                          ]}
-                          onPress={() => setShowCategoryModal(true)}
-                        >
-                          {selectedCategory ? (
-                            <View style={styles.selectButtonContent}>
+                        <View style={styles.categoryGrid}>
+                          {filteredCategories.map((cat) => (
+                            <TouchableOpacity
+                              key={cat.id}
+                              style={[
+                                styles.categoryButton,
+                                {
+                                  backgroundColor:
+                                    selectedCategory?.id === cat.id
+                                      ? cat.color
+                                      : `${cat.color}20`,
+                                  borderColor:
+                                    selectedCategory?.id === cat.id
+                                      ? cat.color
+                                      : `${cat.color}40`,
+                                },
+                              ]}
+                              onPress={() => {
+                                setSelectedCategory(cat);
+                                setErrors({ ...errors, category: null });
+                              }}
+                            >
                               <FontAwesome5
-                                name={selectedCategory.icon || "tag"}
-                                size={16}
-                                color={colors.primary}
+                                name={cat.icon || "tag"}
+                                size={14}
+                                color={
+                                  selectedCategory?.id === cat.id
+                                    ? "#fff"
+                                    : cat.color
+                                }
                               />
-                              <Text style={[styles.selectButtonText, { color: colors.text }]}>
-                                {selectedCategory.name}
+                              <Text
+                                style={[
+                                  styles.categoryButtonText,
+                                  {
+                                    color:
+                                      selectedCategory?.id === cat.id
+                                        ? "#fff"
+                                        : colors.text,
+                                  },
+                                ]}
+                                numberOfLines={1}
+                              >
+                                {cat.name}
                               </Text>
-                            </View>
-                          ) : (
-                            <Text style={[styles.placeholderText, { color: colors.textMuted }]}>
-                              Selecione a categoria
-                            </Text>
-                          )}
-                          <FontAwesome5
-                            name="chevron-down"
-                            size={14}
-                            color={colors.textDim}
-                          />
-                        </TouchableOpacity>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
                         {errors.category && (
                           <Text style={styles.errorText}>{errors.category}</Text>
                         )}
@@ -516,23 +479,16 @@ export function TransactionForm({
                           {selectedAccount ? (
                             <View style={styles.selectButtonContent}>
                               <FontAwesome5
-                                name={
-                                  selectedAccount.type === "Dinheiro"
-                                    ? "money-bill-wave"
-                                    : "university"
-                                }
+                                name="wallet"
                                 size={16}
                                 color={colors.primary}
                               />
-                              <View>
+                              <View style={{ flex: 1 }}>
                                 <Text style={[styles.selectButtonText, { color: colors.text }]}>
                                   {selectedAccount.name}
                                 </Text>
-                                <Text style={[styles.selectBalance, { color: colors.textDim }]}>
-                                  {formatCurrency(
-                                    selectedAccount.balance,
-                                    selectedAccount.currency,
-                                  )}
+                                <Text style={[styles.selectButtonSubtext, { color: colors.textDim }]}>
+                                  {formatCurrency(selectedAccount.balance, selectedAccount.currency)}
                                 </Text>
                               </View>
                             </View>
@@ -554,7 +510,7 @@ export function TransactionForm({
                     </>
                   ) : (
                     <>
-                      {/* Conta de Origem (para transferência) */}
+                      {/* Conta de Origem (Transfer) */}
                       <View style={styles.field}>
                         <Text style={[styles.label, { color: colors.textDim }]}>Conta de Origem</Text>
                         <TouchableOpacity
@@ -568,23 +524,16 @@ export function TransactionForm({
                           {selectedAccount ? (
                             <View style={styles.selectButtonContent}>
                               <FontAwesome5
-                                name={
-                                  selectedAccount.type === "Dinheiro"
-                                    ? "money-bill-wave"
-                                    : "university"
-                                }
+                                name="wallet"
                                 size={16}
                                 color={colors.primary}
                               />
-                              <View>
+                              <View style={{ flex: 1 }}>
                                 <Text style={[styles.selectButtonText, { color: colors.text }]}>
                                   {selectedAccount.name}
                                 </Text>
-                                <Text style={[styles.selectBalance, { color: colors.textDim }]}>
-                                  {formatCurrency(
-                                    selectedAccount.balance,
-                                    selectedAccount.currency,
-                                  )}
+                                <Text style={[styles.selectButtonSubtext, { color: colors.textDim }]}>
+                                  {formatCurrency(selectedAccount.balance, selectedAccount.currency)}
                                 </Text>
                               </View>
                             </View>
@@ -604,7 +553,7 @@ export function TransactionForm({
                         )}
                       </View>
 
-                      {/* Conta de Destino (para transferência) */}
+                      {/* Conta de Destino (Transfer) */}
                       <View style={styles.field}>
                         <Text style={[styles.label, { color: colors.textDim }]}>Conta de Destino</Text>
                         <TouchableOpacity
@@ -618,23 +567,16 @@ export function TransactionForm({
                           {selectedToAccount ? (
                             <View style={styles.selectButtonContent}>
                               <FontAwesome5
-                                name={
-                                  selectedToAccount.type === "Dinheiro"
-                                    ? "money-bill-wave"
-                                    : "university"
-                                }
+                                name="wallet"
                                 size={16}
                                 color={colors.primary}
                               />
-                              <View>
+                              <View style={{ flex: 1 }}>
                                 <Text style={[styles.selectButtonText, { color: colors.text }]}>
                                   {selectedToAccount.name}
                                 </Text>
-                                <Text style={[styles.selectBalance, { color: colors.textDim }]}>
-                                  {formatCurrency(
-                                    selectedToAccount.balance,
-                                    selectedToAccount.currency,
-                                  )}
+                                <Text style={[styles.selectButtonSubtext, { color: colors.textDim }]}>
+                                  {formatCurrency(selectedToAccount.balance, selectedToAccount.currency)}
                                 </Text>
                               </View>
                             </View>
@@ -663,21 +605,18 @@ export function TransactionForm({
                       style={[styles.dateButton, { backgroundColor: colors.surfaceDark, borderColor: colors.border }]}
                       onPress={() => setShowDateModal(true)}
                     >
+                      <Text style={[styles.dateText, { color: colors.text }]}>
+                        {selectedDay}/{String(selectedMonth + 1).padStart(2, "0")}/{selectedYear}
+                      </Text>
                       <FontAwesome5
-                        name="calendar-alt"
+                        name="calendar"
                         size={16}
-                        color={colors.primary}
-                      />
-                      <Text style={[styles.dateText, { color: colors.text }]}>{getFormattedDate()}</Text>
-                      <FontAwesome5
-                        name="chevron-down"
-                        size={14}
                         color={colors.textDim}
                       />
                     </TouchableOpacity>
                   </View>
 
-                  {/* Botões */}
+                  {/* Botões de Ação */}
                   <View style={styles.footer}>
                     <Button
                       title="Cancelar"
@@ -687,12 +626,7 @@ export function TransactionForm({
                     />
                     <Button
                       title="Salvar"
-                      onPress={() => handleSave(false)}
-                      style={styles.saveButton}
-                    />
-                    <Button
-                      title="Lançar Mais"
-                      onPress={() => handleSave(true)}
+                      onPress={validateForm}
                       style={styles.saveButton}
                     />
                   </View>
@@ -702,105 +636,6 @@ export function TransactionForm({
           </View>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
-
-      {/* Modal de Seleção de Categoria */}
-      <Modal
-        visible={showCategoryModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowCategoryModal(false)}
-        statusBarTranslucent
-      >
-        <TouchableWithoutFeedback onPress={() => setShowCategoryModal(false)}>
-          <View style={[styles.bottomSheetOverlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.4)' }]}>
-            <TouchableWithoutFeedback onPress={() => {}}>
-              <View style={[styles.selectionModal, { backgroundColor: colors.surface }]}>
-                <View style={[styles.selectionHeader, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.selectionTitle, { color: colors.text }]}>
-                    Selecione uma categoria
-                  </Text>
-                  <TouchableOpacity onPress={() => setShowCategoryModal(false)}>
-                    <FontAwesome5
-                      name="times"
-                      size={20}
-                      color={colors.textDim}
-                    />
-                  </TouchableOpacity>
-                </View>
-
-                <ScrollView
-                  style={styles.categoryScrollView}
-                  showsVerticalScrollIndicator={true}
-                  keyboardShouldPersistTaps="handled"
-                >
-                  {filteredCategories.length === 0 ? (
-                    <View style={styles.emptyState}>
-                      <FontAwesome5
-                        name="tags"
-                        size={40}
-                        color={colors.textDim}
-                      />
-                      <Text style={[styles.emptyText, { color: colors.textDim }]}>
-                        Nenhuma categoria encontrada
-                      </Text>
-                    </View>
-                  ) : (
-                    <View style={styles.categoryButtonGrid}>
-                      {filteredCategories.map((item) => (
-                        <TouchableOpacity
-                          key={item.id}
-                          style={[
-                            styles.categoryButtonItem,
-                            {
-                              backgroundColor:
-                                selectedCategory?.id === item.id
-                                  ? item.color
-                                  : `${item.color}15`,
-                              borderColor:
-                                selectedCategory?.id === item.id
-                                  ? item.color
-                                  : `${item.color}30`,
-                            },
-                          ]}
-                          onPress={() => {
-                            setSelectedCategory(item);
-                            setShowCategoryModal(false);
-                            setErrors({ ...errors, category: null });
-                          }}
-                        >
-                          <FontAwesome5
-                            name={item.icon || "tag"}
-                            size={18}
-                            color={
-                              selectedCategory?.id === item.id
-                                ? "#fff"
-                                : item.color
-                            }
-                          />
-                          <Text
-                            style={[
-                              styles.categoryButtonText,
-                              {
-                                color:
-                                  selectedCategory?.id === item.id
-                                    ? "#fff"
-                                    : colors.text,
-                              },
-                            ]}
-                            numberOfLines={1}
-                          >
-                            {item.name}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  )}
-                </ScrollView>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
 
       {/* Modal de Seleção de Conta (Origem) */}
       <Modal
@@ -829,26 +664,25 @@ export function TransactionForm({
                   </TouchableOpacity>
                 </View>
 
-                {accounts.length === 0 ? (
-                  <View style={styles.emptyState}>
-                    <FontAwesome5
-                      name="wallet"
-                      size={40}
-                      color={colors.textDim}
-                    />
-                    <Text style={[styles.emptyText, { color: colors.textDim }]}>
-                      Nenhuma conta encontrada
-                    </Text>
-                  </View>
-                ) : (
-                  <FlatList
-                    data={accounts}
-                    keyExtractor={(item) => item.id}
-                    renderItem={renderAccountItem}
-                    showsVerticalScrollIndicator={false}
-                    keyboardShouldPersistTaps="handled"
-                  />
-                )}
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  {accounts.length === 0 ? (
+                    <View style={styles.emptyState}>
+                      <FontAwesome5
+                        name="wallet"
+                        size={40}
+                        color={colors.textDim}
+                      />
+                      <Text style={[styles.emptyText, { color: colors.textDim }]}>
+                        Nenhuma conta encontrada
+                      </Text>
+                    </View>
+                  ) : (
+                    accounts.map((item) => renderAccountItem({ item }))
+                  )}
+                </ScrollView>
               </View>
             </TouchableWithoutFeedback>
           </View>
@@ -871,9 +705,7 @@ export function TransactionForm({
                   <Text style={[styles.selectionTitle, { color: colors.text }]}>
                     Selecione a conta de destino
                   </Text>
-                  <TouchableOpacity
-                    onPress={() => setShowToAccountModal(false)}
-                  >
+                  <TouchableOpacity onPress={() => setShowToAccountModal(false)}>
                     <FontAwesome5
                       name="times"
                       size={20}
@@ -882,26 +714,27 @@ export function TransactionForm({
                   </TouchableOpacity>
                 </View>
 
-                {accounts.length === 0 ? (
-                  <View style={styles.emptyState}>
-                    <FontAwesome5
-                      name="wallet"
-                      size={40}
-                      color={colors.textDim}
-                    />
-                    <Text style={[styles.emptyText, { color: colors.textDim }]}>
-                      Nenhuma conta encontrada
-                    </Text>
-                  </View>
-                ) : (
-                  <FlatList
-                    data={accounts.filter((a) => a.id !== selectedAccount?.id)}
-                    keyExtractor={(item) => item.id}
-                    renderItem={renderAccountItem}
-                    showsVerticalScrollIndicator={false}
-                    keyboardShouldPersistTaps="handled"
-                  />
-                )}
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  {accounts.filter((a) => a.id !== selectedAccount?.id).length === 0 ? (
+                    <View style={styles.emptyState}>
+                      <FontAwesome5
+                        name="wallet"
+                        size={40}
+                        color={colors.textDim}
+                      />
+                      <Text style={[styles.emptyText, { color: colors.textDim }]}>
+                        Nenhuma conta encontrada
+                      </Text>
+                    </View>
+                  ) : (
+                    accounts
+                      .filter((a) => a.id !== selectedAccount?.id)
+                      .map((item) => renderAccountItem({ item }))
+                  )}
+                </ScrollView>
               </View>
             </TouchableWithoutFeedback>
           </View>
@@ -921,7 +754,9 @@ export function TransactionForm({
             <TouchableWithoutFeedback onPress={() => {}}>
               <View style={[styles.dateModal, { backgroundColor: colors.surface }]}>
                 <View style={[styles.selectionHeader, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.selectionTitle, { color: colors.text }]}>Selecione a Data</Text>
+                  <Text style={[styles.selectionTitle, { color: colors.text }]}>
+                    Selecione a data
+                  </Text>
                   <TouchableOpacity onPress={() => setShowDateModal(false)}>
                     <FontAwesome5
                       name="times"
@@ -931,90 +766,71 @@ export function TransactionForm({
                   </TouchableOpacity>
                 </View>
 
-                {/* Seletor de Ano */}
-                <View style={styles.dateSection}>
-                  <Text style={[styles.dateSectionLabel, { color: colors.textDim }]}>Ano</Text>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.dateScroll}
-                    keyboardShouldPersistTaps="handled"
-                  >
-                    {YEARS.map((year) => (
-                      <TouchableOpacity
-                        key={year}
-                        style={[
-                          styles.dateOption,
-                          { backgroundColor: colors.surfaceDark, borderColor: colors.border },
-                          selectedYear === year && styles.dateOptionSelected,
-                        ]}
-                        onPress={() => setSelectedYear(year)}
-                      >
-                        <Text
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  {/* Ano */}
+                  <View style={styles.dateSection}>
+                    <Text style={[styles.dateSectionLabel, { color: colors.textDim }]}>Ano</Text>
+                    <View style={styles.dateScroll}>
+                      {YEARS.map((year) => (
+                        <TouchableOpacity
+                          key={year}
                           style={[
-                            styles.dateOptionText,
-                            { color: colors.text },
-                            selectedYear === year &&
-                              styles.dateOptionTextSelected,
+                            styles.dateOption,
+                            { backgroundColor: colors.surfaceDark, borderColor: colors.border },
+                            selectedYear === year && styles.dateOptionSelected,
                           ]}
+                          onPress={() => setSelectedYear(year)}
                         >
-                          {year}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
+                          <Text
+                            style={[
+                              styles.dateOptionText,
+                              { color: colors.text },
+                              selectedYear === year && styles.dateOptionTextSelected,
+                            ]}
+                          >
+                            {year}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
 
-                {/* Seletor de Mês */}
-                <View style={styles.dateSection}>
-                  <Text style={[styles.dateSectionLabel, { color: colors.textDim }]}>Mês</Text>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.dateScroll}
-                    keyboardShouldPersistTaps="handled"
-                  >
-                    {MONTHS.map((month, index) => (
-                      <TouchableOpacity
-                        key={month}
-                        style={[
-                          styles.dateOption,
-                          { backgroundColor: colors.surfaceDark, borderColor: colors.border },
-                          selectedMonth === index && styles.dateOptionSelected,
-                        ]}
-                        onPress={() => setSelectedMonth(index)}
-                      >
-                        <Text
+                  {/* Mês */}
+                  <View style={styles.dateSection}>
+                    <Text style={[styles.dateSectionLabel, { color: colors.textDim }]}>Mês</Text>
+                    <View style={styles.dateScroll}>
+                      {MONTHS.map((month, index) => (
+                        <TouchableOpacity
+                          key={month}
                           style={[
-                            styles.dateOptionText,
-                            { color: colors.text },
-                            selectedMonth === index &&
-                              styles.dateOptionTextSelected,
+                            styles.dateOption,
+                            { backgroundColor: colors.surfaceDark, borderColor: colors.border },
+                            selectedMonth === index && styles.dateOptionSelected,
                           ]}
+                          onPress={() => setSelectedMonth(index)}
                         >
-                          {month.substring(0, 3)}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
+                          <Text
+                            style={[
+                              styles.dateOptionText,
+                              { color: colors.text },
+                              selectedMonth === index && styles.dateOptionTextSelected,
+                            ]}
+                          >
+                            {month.substring(0, 3)}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
 
-                {/* Seletor de Dia */}
-                <View style={styles.dateSection}>
-                  <Text style={[styles.dateSectionLabel, { color: colors.textDim }]}>Dia</Text>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.dateScroll}
-                    keyboardShouldPersistTaps="handled"
-                  >
-                    {DAYS.map((day) => {
-                      const daysInMonth = getDaysInMonth(
-                        selectedMonth,
-                        parseInt(selectedYear),
-                      );
-                      if (parseInt(day) > daysInMonth) return null;
-                      return (
+                  {/* Dia */}
+                  <View style={styles.dateSection}>
+                    <Text style={[styles.dateSectionLabel, { color: colors.textDim }]}>Dia</Text>
+                    <View style={styles.dateScroll}>
+                      {DAYS.map((day) => (
                         <TouchableOpacity
                           key={day}
                           style={[
@@ -1022,30 +838,24 @@ export function TransactionForm({
                             { backgroundColor: colors.surfaceDark, borderColor: colors.border },
                             selectedDay === day && styles.dateOptionSelected,
                           ]}
-                          onPress={() => handleDaySelect(day)}
+                          onPress={() => setSelectedDay(day)}
                         >
                           <Text
                             style={[
                               styles.dateOptionText,
                               { color: colors.text },
-                              selectedDay === day &&
-                                styles.dateOptionTextSelected,
+                              selectedDay === day && styles.dateOptionTextSelected,
                             ]}
                           >
-                            {day.padStart(2, "0")}
+                            {day}
                           </Text>
                         </TouchableOpacity>
-                      );
-                    })}
-                  </ScrollView>
-                </View>
+                      ))}
+                    </View>
+                  </View>
 
-                {/* Botão Confirmar */}
-                <Button
-                  title="Confirmar Data"
-                  onPress={() => setShowDateModal(false)}
-                  style={styles.confirmButton}
-                />
+                  <View style={{ height: 20 }} />
+                </ScrollView>
               </View>
             </TouchableWithoutFeedback>
           </View>
@@ -1149,54 +959,79 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontFamily: "Inter-Bold",
     color: theme.colors.text,
-    paddingVertical: 12,
+    paddingVertical: 15,
     paddingRight: 15,
   },
   input: {
-    backgroundColor: theme.colors.darkLight,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
     borderRadius: 10,
-    padding: 15,
-    fontSize: 16,
-    color: theme.colors.text,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  inputError: {
-    borderColor: theme.colors.danger,
-  },
-  errorText: {
-    color: theme.colors.danger,
-    fontSize: 12,
-    marginTop: 5,
+    fontFamily: "Inter-Regular",
+    fontSize: 14,
+    color: theme.colors.text,
   },
   selectButton: {
-    backgroundColor: theme.colors.darkLight,
-    borderRadius: 10,
-    padding: 15,
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    borderRadius: 10,
     borderWidth: 1,
+    backgroundColor: theme.colors.darkLight,
     borderColor: theme.colors.border,
   },
   selectButtonContent: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 12,
     flex: 1,
   },
   selectButtonText: {
-    fontSize: 16,
+    fontSize: 14,
+    fontFamily: "Inter-Medium",
     color: theme.colors.text,
   },
-  selectBalance: {
+  selectButtonSubtext: {
     fontSize: 12,
+    fontFamily: "Inter-Regular",
     color: theme.colors.textDim,
     marginTop: 2,
   },
   placeholderText: {
-    fontSize: 16,
+    fontSize: 14,
+    fontFamily: "Inter-Regular",
     color: theme.colors.textMuted,
+  },
+  errorText: {
+    fontSize: 12,
+    fontFamily: "Inter-Regular",
+    color: theme.colors.danger,
+    marginTop: 4,
+  },
+  inputError: {
+    borderColor: theme.colors.danger,
+  },
+  categoryGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  categoryButton: {
+    width: "31%",
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+  },
+  categoryButtonText: {
+    fontSize: 11,
+    fontFamily: "Inter-Medium",
+    textAlign: "center",
   },
   dateButton: {
     backgroundColor: theme.colors.darkLight,
@@ -1325,33 +1160,5 @@ const styles = StyleSheet.create({
   },
   dateOptionTextSelected: {
     color: "#fff",
-  },
-  confirmButton: {
-    marginTop: 20,
-  },
-  categoryScrollView: {
-    flex: 1,
-    paddingHorizontal: 10,
-  },
-  categoryButtonGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    paddingVertical: 10,
-  },
-  categoryButtonItem: {
-    width: "48%",
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-  },
-  categoryButtonText: {
-    fontSize: 12,
-    fontFamily: "Inter-Medium",
-    textAlign: "center",
   },
 });
