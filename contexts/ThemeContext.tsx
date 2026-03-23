@@ -8,15 +8,15 @@ type ThemeType = 'light' | 'dark';
 interface ThemeContextType {
   themeType: ThemeType;
   toggleTheme: () => void;
-  colors: typeof theme.colors.dark;
+  colors: typeof theme.colors.light | typeof theme.colors.dark;
   isDark: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const systemColorScheme = useColorScheme();
-  const [themeType, setThemeType] = useState<ThemeType>(systemColorScheme || 'dark');
+  const [themeType, setThemeType] = useState<ThemeType>('dark');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadTheme = async () => {
@@ -24,6 +24,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (savedTheme) {
         setThemeType(savedTheme as ThemeType);
       }
+      setIsLoading(false);
     }
     loadTheme();
   }, []);
@@ -34,8 +35,29 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     await AsyncStorage.setItem('user-theme', newTheme);
   };
 
-  const colors = themeType === 'dark' ? theme.colors.dark : theme.colors.light;
+  // Retorna as cores do tema dark (originais) ou light
+  const getColors = () => {
+    if (themeType === 'dark') {
+      return {
+        background: theme.colors.darker,
+        surface: theme.colors.darkLight,
+        surfaceDark: theme.colors.dark,
+        text: theme.colors.text,
+        textDim: theme.colors.textDim,
+        textSecondary: theme.colors.textSecondary,
+        textMuted: theme.colors.textMuted,
+        border: theme.colors.border,
+      };
+    }
+    return theme.colors.light;
+  };
+
+  const colors = getColors();
   const isDark = themeType === 'dark';
+
+  if (isLoading) {
+    return null;
+  }
 
   return (
     <ThemeContext.Provider value={{ themeType, toggleTheme, colors, isDark }}>

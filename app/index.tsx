@@ -66,7 +66,7 @@ interface ConfirmCallbackOptions {
 }
 
 export default function HomeScreen() {
-  const { colors, toggleTheme, isDark } = useTheme();
+  const { colors } = useTheme();
   const styles = getStyles(colors);
   const {
     accounts,
@@ -358,21 +358,10 @@ export default function HomeScreen() {
                   source={require("../assets/images/icon.png")}
                   style={{ width: 32, height: 32, resizeMode: "contain" }}
                 />
-                <Text style={[styles.logoText, { color: colors.text }]}>FinanceFlex</Text>
+                <Text style={styles.logoText}>FinanceFlex</Text>
               </View>
               <View style={styles.headerActions}>
                 {/* Indicador de sincronização em tempo real */}
-
-                <TouchableOpacity
-                  onPress={toggleTheme}
-                  style={styles.iconButton}
-                >
-                  <FontAwesome5
-                    name={isDark ? "sun" : "moon"}
-                    size={20}
-                    color={colors.text}
-                  />
-                </TouchableOpacity>
 
                 <TouchableOpacity
                   onPress={() => setValuesHidden(!valuesHidden)}
@@ -381,7 +370,7 @@ export default function HomeScreen() {
                   <FontAwesome5
                     name={valuesHidden ? "eye-slash" : "eye"}
                     size={20}
-                    color={colors.text}
+                    color={theme.colors.text}
                   />
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -391,7 +380,7 @@ export default function HomeScreen() {
                   <FontAwesome5
                     name="bars"
                     size={20}
-                    color={colors.text}
+                    color={theme.colors.text}
                   />
                 </TouchableOpacity>
               </View>
@@ -577,7 +566,7 @@ export default function HomeScreen() {
                         ? theme.colors.warning
                         : theme.colors.success;
                     return (
-                      <View key={budget.id} style={{ margin: 16, borderBottomWidth: 1, borderBottomColor: theme.colors.dark}}>
+                      <View key={budget.id} style={{ margin: 16, borderBottomWidth: 1, borderBottomColor: theme.colors.border}}>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                             <FontAwesome5 name={budget.categoryIcon} size={12} color={barColor} />
@@ -595,14 +584,14 @@ export default function HomeScreen() {
                               </View>
                             )}
                           </View>
-                          <Text style={{ color: theme.colors.textDim, fontSize: 11, fontFamily: 'Inter-Regular' }}>
+                          <Text style={{ color: theme.colors.text, fontSize: 11, fontFamily: 'Inter-Regular' }}>
                             {valuesHidden ? '• • •' : `${percentage.toFixed(0)}%`}
                           </Text>
                         </View>
-                        <View style={{ height: 6, backgroundColor: theme.colors.dark, borderRadius: 3, overflow: 'hidden', marginBottom: 8 }}>
+                        <View style={{ height: 6, backgroundColor: theme.colors.darkLight, borderRadius: 3, overflow: 'hidden', marginBottom: 8 }}>
                           <View style={{ height: '100%', width: `${cappedPct}%` as any, backgroundColor: barColor, borderRadius: 3 }} />
                         </View>
-                        <Text style={{ color: theme.colors.textMuted, fontSize: 11, marginTop: 8, fontFamily: 'Inter-Regular' }}>
+                        <Text style={{ color: theme.colors.text, fontSize: 11, marginTop: 8, fontFamily: 'Inter-Regular' }}>
                           {valuesHidden ? '• • •' : `${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(spent)} de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(budget.limitAmount)}`}
                         </Text>
                       </View>
@@ -1244,7 +1233,7 @@ export default function HomeScreen() {
 const getStyles = (colors: any) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.colors.darker,
   },
   container: {
     flex: 1,
@@ -1280,7 +1269,7 @@ const getStyles = (colors: any) => StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1316,7 +1305,7 @@ const getStyles = (colors: any) => StyleSheet.create({
     flex: 1,
     minWidth: "47%",
     padding: 16,
-    backgroundColor: colors.surface,
+    backgroundColor: theme.colors.darkLight,
   },
   summaryIconContainer: {
     marginBottom: 8,
@@ -1355,7 +1344,7 @@ const getStyles = (colors: any) => StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: "rgba(255, 255, 255, 0.05)",
   },
   transactionIcon: {
     width: 40,
@@ -1390,7 +1379,7 @@ const getStyles = (colors: any) => StyleSheet.create({
     gap: 8,
     paddingVertical: 16,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: "rgba(255, 255, 255, 0.05)",
   },
   viewAllText: {
     fontSize: 14,
@@ -1401,7 +1390,7 @@ const getStyles = (colors: any) => StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: "rgba(255, 255, 255, 0.05)",
   },
   piggyHeader: {
     flexDirection: "row",
@@ -1412,7 +1401,7 @@ const getStyles = (colors: any) => StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: theme.colors.darkLight,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -1446,7 +1435,7 @@ const getStyles = (colors: any) => StyleSheet.create({
   },
   progressBarContainer: {
     height: 8,
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: theme.colors.darkLight,
     borderRadius: 4,
     overflow: "hidden",
   },
@@ -1457,7 +1446,7 @@ const getStyles = (colors: any) => StyleSheet.create({
   tabs: {
     flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: "rgba(255, 255, 255, 0.1)",
     paddingHorizontal: 20,
   },
   tab: {
@@ -1481,7 +1470,7 @@ const getStyles = (colors: any) => StyleSheet.create({
   modalPiggyItem: {
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: theme.colors.border,
   },
   modalPiggyHeader: {
     flexDirection: "row",

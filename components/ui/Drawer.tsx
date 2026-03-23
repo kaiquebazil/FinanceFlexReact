@@ -242,7 +242,7 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
 
                 {/* Ações Rápidas - AGORA COM O BOTÃO APAGAR */}
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>AÇÕES RÁPIDAS</Text>
+                  <Text style={[styles.sectionTitle, { color: colors.textDim }]}>AÇÕES RÁPIDAS</Text>
                   {actionItems.map((item) => (
                     <TouchableOpacity
                       key={item.id}
@@ -264,9 +264,9 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
                           color={item.iconColor}
                           style={styles.menuItemIcon}
                         />
-                        <Text style={styles.menuItemText}>{item.label}</Text>
+                        <Text style={[styles.menuItemText, { color: colors.text }]}>{item.label}</Text>
                       </View>
-                      <FontAwesome5 name="chevron-right" size={16} color={theme.colors.textDim} />
+                      <FontAwesome5 name="chevron-right" size={16} color={colors.textDim} />
                     </TouchableOpacity>
                   ))}
                 </View>
