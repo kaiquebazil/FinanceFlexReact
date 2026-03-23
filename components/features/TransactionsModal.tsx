@@ -26,7 +26,7 @@ interface TransactionsModalProps {
 }
 
 type FilterType = 'all' | 'income' | 'expense' | 'transfer';
-type PeriodType = 'today' | 'week' | 'month' | 'year';
+type PeriodType = 'all' | 'today' | 'week' | 'month' | 'year';
 
 export function TransactionsModal({ visible, onClose }: TransactionsModalProps) {
   const { colors, isDark } = useTheme();
@@ -35,12 +35,21 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
   
   // Estados de filtro
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('all');
-  const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('month');
+  const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   // Estados para confirmação de deleção
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<any>(null);
+
+  // Resetar filtros ao abrir o modal
+  React.useEffect(() => {
+    if (visible) {
+      setSelectedFilter('all');
+      setSelectedPeriod('all');
+      setSelectedCategory('all');
+    }
+  }, [visible]);
 
   // Filtrar transações
   const getFilteredTransactions = () => {
@@ -65,6 +74,8 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
         if (tDate.getMonth() !== now.getMonth() || tDate.getFullYear() !== now.getFullYear()) return false;
       } else if (selectedPeriod === 'year') {
         if (tDate.getFullYear() !== now.getFullYear()) return false;
+      } else if (selectedPeriod === 'all') {
+        // Não filtra por período, mostra todas
       }
 
       // Filtro por categoria
@@ -183,7 +194,7 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
               <View style={styles.filtersContainer}>
                 <Text style={[styles.filterLabel, { color: colors.textDim }]}>Período</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
-                  {(['today', 'week', 'month', 'year'] as const).map((period) => (
+                  {(['all', 'today', 'week', 'month', 'year'] as const).map((period) => (
                     <TouchableOpacity
                       key={period}
                       style={[
@@ -201,7 +212,8 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
                         { color: colors.textDim },
                         selectedPeriod === period && { color: '#fff', fontFamily: 'Inter-SemiBold' }
                       ]}>
-                        {period === 'today' ? 'Hoje' :
+                        {period === 'all' ? 'Tudo' :
+                         period === 'today' ? 'Hoje' :
                          period === 'week' ? 'Semana' :
                          period === 'month' ? 'Mês' : 'Ano'}
                       </Text>
