@@ -36,7 +36,6 @@ export function Modal({ visible, onClose, title, children }: ModalProps) {
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={[styles.overlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.5)' }]}>
@@ -59,12 +58,16 @@ export function Modal({ visible, onClose, title, children }: ModalProps) {
                     <FontAwesome5 name="times" size={18} color={colors.textDim} />
                   </TouchableOpacity>
                 </View>
+                
+                {/* 
+                  Removido flexGrow: 0 do ScrollView para permitir que ele ocupe 
+                  o espaço disponível e funcione corretamente o scroll.
+                */}
                 <ScrollView
                   style={styles.content}
                   contentContainerStyle={styles.contentContainer}
-                  showsVerticalScrollIndicator={false}
+                  showsVerticalScrollIndicator={true}
                   keyboardShouldPersistTaps="handled"
-                  keyboardDismissMode="none"
                 >
                   {children}
                 </ScrollView>
@@ -89,10 +92,10 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     borderRadius: 20,
-    padding: 24,
+    padding: 20,
     width: '100%',
     maxWidth: 500,
-    maxHeight: '90%',
+    maxHeight: '85%',
     borderWidth: 1,
     shadowOffset: { width: 0, height: 8 },
     shadowRadius: 24,
@@ -102,13 +105,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 15,
     paddingBottom: 12,
     borderBottomWidth: 1,
   },
   title: {
     fontSize: 20,
-    fontFamily: theme.fonts.semibold,
+    fontFamily: 'Inter-Bold',
   },
   closeButton: {
     padding: 8,
@@ -119,9 +122,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   content: {
-    flexGrow: 0,
+    flex: 1,
   },
   contentContainer: {
-    paddingBottom: 10,
+    paddingBottom: 20,
   },
 });
