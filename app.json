@@ -3,7 +3,7 @@
     "sdkVersion": "54.0.0",
     "name": "Finance Flex",
     "slug": "finance-flex",
-    "version": "4.0.0",
+    "version": "5.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
@@ -33,17 +33,17 @@
     },
     "android": {
       "package": "com.kaiquebazil.financeflex",
-      "versionCode": 6,
-      "versionName": "4.0.0",
+      "versionCode": 18,
+      "versionName": "5.0.1",
       "softwareKeyboardLayoutMode": "pan",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon512x512.png",
-        "backgroundColor": "#7C5CBF"
+        "backgroundColor": "#00000000"
       }
     },
     "extra": {
       "eas": {
-        "projectId": "4b05c13b-2cbf-45ec-8542-e45c4e054f4c"
+        "projectId": "74b2b998-41f9-49d8-8651-c998f4448da5"
       }
     },
     "ios": {
