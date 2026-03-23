@@ -39,40 +39,50 @@ export function Modal({ visible, onClose, title, children }: ModalProps) {
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={[styles.overlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.5)' }]}>
-            <TouchableWithoutFeedback onPress={() => {}}>
-              <View style={[
-                styles.modalContainer,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                  shadowColor: isDark ? '#000' : '#888',
-                  shadowOpacity: isDark ? 0.5 : 0.15,
-                }
-              ]}>
-                <View style={[styles.header, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
-                  <TouchableOpacity
-                    onPress={onClose}
-                    style={[styles.closeButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}
+            {/* 
+              Overlay clicável que fecha o modal apenas quando tocado fora do container.
+              O TouchableWithoutFeedback do overlay dispara onClose ao tocar no fundo cinza.
+            */}
+            <TouchableOpacity 
+              activeOpacity={1}
+              onPress={onClose}
+              style={styles.overlayTouchable}
+            >
+              {/* 
+                Container do modal com TouchableWithoutFeedback para impedir que 
+                toques no conteúdo propaguem para o overlay.
+              */}
+              <TouchableWithoutFeedback>
+                <View style={[
+                  styles.modalContainer,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                    shadowColor: isDark ? '#000' : '#888',
+                    shadowOpacity: isDark ? 0.5 : 0.15,
+                  }
+                ]}>
+                  <View style={[styles.header, { borderBottomColor: colors.border }]}>
+                    <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+                    <TouchableOpacity
+                      onPress={onClose}
+                      style={[styles.closeButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}
+                    >
+                      <FontAwesome5 name="times" size={18} color={colors.textDim} />
+                    </TouchableOpacity>
+                  </View>
+                  
+                  <ScrollView
+                    style={styles.content}
+                    contentContainerStyle={styles.contentContainer}
+                    showsVerticalScrollIndicator={true}
+                    keyboardShouldPersistTaps="handled"
                   >
-                    <FontAwesome5 name="times" size={18} color={colors.textDim} />
-                  </TouchableOpacity>
+                    {children}
+                  </ScrollView>
                 </View>
-                
-                {/* 
-                  Removido flexGrow: 0 do ScrollView para permitir que ele ocupe 
-                  o espaço disponível e funcione corretamente o scroll.
-                */}
-                <ScrollView
-                  style={styles.content}
-                  contentContainerStyle={styles.contentContainer}
-                  showsVerticalScrollIndicator={true}
-                  keyboardShouldPersistTaps="handled"
-                >
-                  {children}
-                </ScrollView>
-              </View>
-            </TouchableWithoutFeedback>
+              </TouchableWithoutFeedback>
+            </TouchableOpacity>
           </View>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
@@ -89,6 +99,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+  },
+  overlayTouchable: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
   },
   modalContainer: {
     borderRadius: 20,
