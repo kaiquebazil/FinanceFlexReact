@@ -217,44 +217,66 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
                   ))}
 
                 {/* Filtro por categoria */}
-                <Text style={[styles.filterLabel, { color: colors.textDim }]}>Categoria:</Text>
-                <TouchableOpacity
-                  style={[styles.categorySelector, { backgroundColor: colors.surfaceDark, borderColor: colors.border }]}
-                  onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                >
-                  <Text style={[styles.categorySelectorText, { color: colors.text }]}>
-                    {selectedCategory === 'all' ? 'Todas' : selectedCategory}
-                  </Text>
-                  <FontAwesome5 
-                    name={showCategoryDropdown ? 'chevron-up' : 'chevron-down'} 
-                    size={14} 
-                    color={colors.textDim} 
-                  />
-                </TouchableOpacity>
+                <View style={styles.field}>
+                  <Text style={[styles.label, { color: colors.textDim }]}>Categoria</Text>
+                  <TouchableOpacity
+                    style={[styles.selectButton, { backgroundColor: colors.surfaceDark, borderColor: colors.border }]}
+                    onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                  >
+                    <View style={styles.selectButtonContent}>
+                      <FontAwesome5
+                        name="tag"
+                        size={16}
+                        color={colors.primary}
+                      />
+                      <Text style={[styles.selectButtonText, { color: colors.text }]}>
+                        {selectedCategory === 'all' ? 'Todas' : selectedCategory}
+                      </Text>
+                    </View>
+                    <FontAwesome5 
+                      name={showCategoryDropdown ? 'chevron-up' : 'chevron-down'} 
+                      size={14} 
+                      color={colors.textDim} 
+                    />
+                  </TouchableOpacity>
+                </View>
 
                 {showCategoryDropdown && (
-                  <View style={[styles.dropdown, { backgroundColor: colors.surfaceDark, borderColor: colors.border }]}>
+                  <View style={[styles.selectionModal, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                     <TouchableOpacity
-                      style={[styles.dropdownItem, { borderBottomColor: colors.border }]}
+                      style={[styles.selectItem, { borderBottomColor: colors.border }]}
                       onPress={() => {
                         setSelectedCategory('all');
                         setShowCategoryDropdown(false);
                       }}
                     >
-                      <Text style={[styles.dropdownItemText, { color: colors.text }]}>Todas</Text>
+                      <FontAwesome5
+                        name="tag"
+                        size={16}
+                        color={colors.primary}
+                      />
+                      <Text style={[styles.selectItemText, { color: colors.text }]}>Todas</Text>
                     </TouchableOpacity>
-                    {uniqueCategories.map(cat => (
-                      <TouchableOpacity
-                        key={cat}
-                        style={[styles.dropdownItem, { borderBottomColor: colors.border }]}
-                        onPress={() => {
-                          setSelectedCategory(cat);
-                          setShowCategoryDropdown(false);
-                        }}
-                      >
-                        <Text style={[styles.dropdownItemText, { color: colors.text }]}>{cat}</Text>
-                      </TouchableOpacity>
-                    ))}
+                    {uniqueCategories.map(cat => {
+                      const category = categories.find(c => c.name === cat);
+                      return (
+                        <TouchableOpacity
+                          key={cat}
+                          style={[styles.selectItem, { borderBottomColor: colors.border }]}
+                          onPress={() => {
+                            setSelectedCategory(cat);
+                            setShowCategoryDropdown(false);
+                          }}
+                        >
+                          <FontAwesome5
+                            name={category?.icon || 'tag'}
+                            size={16}
+                            color={colors.primary}
+                          />
+                          <Text style={[styles.selectItemText, { color: colors.text }]}>{cat}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
                   </View>
                 )}
               </View>
@@ -429,30 +451,56 @@ const styles = StyleSheet.create({
   filterChipTextActive: {
     color: '#fff',
   },
-  categorySelector: {
+  field: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: theme.colors.textDim,
+    marginBottom: 8,
+  },
+  selectButton: {
+    backgroundColor: theme.colors.darkLight,
+    borderRadius: 10,
+    padding: 15,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderRadius: 8,
-    padding: 12,
     borderWidth: 1,
-    marginBottom: 5,
+    borderColor: theme.colors.border,
   },
-  categorySelectorText: {
-    fontSize: 14,
+  selectButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
   },
-  dropdown: {
-    borderRadius: 8,
-    borderWidth: 1,
+  selectButtonText: {
+    fontSize: 16,
+    color: theme.colors.text,
+  },
+  selectionModal: {
+    backgroundColor: theme.colors.dark,
+    borderRadius: 10,
     marginBottom: 15,
-    maxHeight: 200,
+    maxHeight: 300,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
-  dropdownItem: {
-    padding: 12,
+  selectItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 15,
+    paddingHorizontal: 10,
     borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
   },
-  dropdownItemText: {
-    fontSize: 14,
+  selectItemText: {
+    fontSize: 16,
+    color: theme.colors.text,
+    flex: 1,
   },
   summaryContainer: {
     flexDirection: 'row',
