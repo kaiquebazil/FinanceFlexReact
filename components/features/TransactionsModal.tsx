@@ -8,7 +8,9 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
-  Alert
+  Alert,
+  FlatList,
+  TouchableWithoutFeedback
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
@@ -37,7 +39,7 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('month');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
 
   // Estados para confirmação de deleção
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -220,7 +222,7 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
                   <Text style={[styles.label, { color: colors.textDim }]}>Categoria</Text>
                   <TouchableOpacity
                     style={[styles.selectButton, { backgroundColor: colors.surfaceDark, borderColor: colors.border }]}
-                    onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                    onPress={() => setShowCategoryModal(true)}
                   >
                     <View style={styles.selectButtonContent}>
                       <FontAwesome5
@@ -233,51 +235,12 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
                       </Text>
                     </View>
                     <FontAwesome5 
-                      name={showCategoryDropdown ? 'chevron-up' : 'chevron-down'} 
+                      name="chevron-down" 
                       size={14} 
                       color={colors.textDim} 
                     />
                   </TouchableOpacity>
                 </View>
-
-                {showCategoryDropdown && (
-                  <View style={[styles.selectionModal, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <TouchableOpacity
-                      style={[styles.selectItem, { borderBottomColor: colors.border }]}
-                      onPress={() => {
-                        setSelectedCategory('all');
-                        setShowCategoryDropdown(false);
-                      }}
-                    >
-                      <FontAwesome5
-                        name="tag"
-                        size={16}
-                        color={colors.primary}
-                      />
-                      <Text style={[styles.selectItemText, { color: colors.text }]}>Todas</Text>
-                    </TouchableOpacity>
-                    {uniqueCategories.map(cat => {
-                      const category = categories.find(c => c.name === cat);
-                      return (
-                        <TouchableOpacity
-                          key={cat}
-                          style={[styles.selectItem, { borderBottomColor: colors.border }]}
-                          onPress={() => {
-                            setSelectedCategory(cat);
-                            setShowCategoryDropdown(false);
-                          }}
-                        >
-                          <FontAwesome5
-                            name={category?.icon || 'tag'}
-                            size={16}
-                            color={colors.primary}
-                          />
-                          <Text style={[styles.selectItemText, { color: colors.text }]}>{cat}</Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                )}
               </View>
 
               {/* Resumo dos totais */}
@@ -392,6 +355,63 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
         type={toast.type}
         onHide={hideToast}
       />
+
+      {/* Modal de Seleção de Categoria */}
+      <Modal
+        visible={showCategoryModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowCategoryModal(false)}
+        statusBarTranslucent
+      >
+        <TouchableWithoutFeedback onPress={() => setShowCategoryModal(false)}>
+          <View style={[styles.bottomSheetOverlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.4)' }]}>
+            <TouchableWithoutFeedback onPress={() => {}}>
+              <View style={[styles.selectionModalContent, { backgroundColor: colors.surface }]}>
+                <View style={[styles.selectionHeader, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.selectionTitle, { color: colors.text }]}>
+                    Selecione uma categoria
+                  </Text>
+                  <TouchableOpacity onPress={() => setShowCategoryModal(false)}>
+                    <FontAwesome5
+                      name="times"
+                      size={20}
+                      color={colors.textDim}
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                <FlatList
+                  data={['all', ...uniqueCategories]}
+                  keyExtractor={(item) => item}
+                  renderItem={({ item }) => {
+                    const category = categories.find(c => c.name === item);
+                    return (
+                      <TouchableOpacity
+                        style={[styles.selectItem, { borderBottomColor: colors.border }]}
+                        onPress={() => {
+                          setSelectedCategory(item);
+                          setShowCategoryModal(false);
+                        }}
+                      >
+                        <FontAwesome5
+                          name={item === 'all' ? 'tag' : (category?.icon || 'tag')}
+                          size={16}
+                          color={colors.primary}
+                        />
+                        <Text style={[styles.selectItemText, { color: colors.text }]}>
+                          {item === 'all' ? 'Todas' : item}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  }}
+                  showsVerticalScrollIndicator={false}
+                />
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </>
   );
 }
@@ -399,6 +419,11 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
+    justifyContent: 'flex-end',
+  },
+  bottomSheetOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'flex-end',
   },
   modalContent: {
@@ -479,13 +504,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: theme.colors.text,
   },
-  selectionModal: {
-    backgroundColor: theme.colors.dark,
-    borderRadius: 10,
+  selectionModalContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: '70%',
+    width: '100%',
+  },
+  selectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 15,
-    maxHeight: 300,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+  },
+  selectionTitle: {
+    fontSize: 18,
+    fontFamily: 'Inter-Bold',
   },
   selectItem: {
     flexDirection: 'row',
