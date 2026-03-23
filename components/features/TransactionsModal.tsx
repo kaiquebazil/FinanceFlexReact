@@ -37,7 +37,6 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('month');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
   // Estados para confirmação de deleção
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -119,6 +118,16 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
       default: return colors.textDim;
     }
   };
+
+  // Obter categorias filtradas por tipo de transação
+  const getCategoriesByType = () => {
+    if (selectedFilter === 'all' || selectedFilter === 'transfer') {
+      return [];
+    }
+    return categories.filter(cat => cat.type === selectedFilter);
+  };
+
+  const filteredCategoriesForType = getCategoriesByType();
 
   const uniqueCategories = [...new Set(transactions.map(t => t.category))].filter(Boolean);
 
@@ -211,46 +220,56 @@ export function TransactionsModal({ visible, onClose }: TransactionsModalProps) 
                   ))}
                 </View>
 
-                {/* Filtro por categoria */}
-                <Text style={[styles.filterLabel, { color: colors.textDim }]}>Categoria:</Text>
-                <TouchableOpacity
-                  style={[styles.categorySelector, { backgroundColor: colors.surfaceDark, borderColor: colors.border }]}
-                  onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                >
-                  <Text style={[styles.categorySelectorText, { color: colors.text }]}>
-                    {selectedCategory === 'all' ? 'Todas' : selectedCategory}
-                  </Text>
-                  <FontAwesome5 
-                    name={showCategoryDropdown ? 'chevron-up' : 'chevron-down'} 
-                    size={14} 
-                    color={colors.textDim} 
-                  />
-                </TouchableOpacity>
-
-                {showCategoryDropdown && (
-                  <View style={[styles.dropdown, { backgroundColor: colors.surfaceDark, borderColor: colors.border }]}>
-                    <TouchableOpacity
-                      style={[styles.dropdownItem, { borderBottomColor: colors.border }]}
-                      onPress={() => {
-                        setSelectedCategory('all');
-                        setShowCategoryDropdown(false);
-                      }}
-                    >
-                      <Text style={[styles.dropdownItemText, { color: colors.text }]}>Todas</Text>
-                    </TouchableOpacity>
-                    {uniqueCategories.map(cat => (
+                {/* Filtro por categoria - BOTÕES EM GRADE */}
+                {filteredCategoriesForType.length > 0 && (
+                  <>
+                    <Text style={[styles.filterLabel, { color: colors.textDim }]}>Categoria:</Text>
+                    <View style={styles.categoryGrid}>
                       <TouchableOpacity
-                        key={cat}
-                        style={[styles.dropdownItem, { borderBottomColor: colors.border }]}
-                        onPress={() => {
-                          setSelectedCategory(cat);
-                          setShowCategoryDropdown(false);
-                        }}
+                        style={[
+                          styles.categoryFilterButton,
+                          { backgroundColor: colors.surfaceDark, borderColor: colors.border },
+                          selectedCategory === 'all' && [styles.categoryFilterButtonActive, { backgroundColor: colors.primary, borderColor: colors.primary }]
+                        ]}
+                        onPress={() => setSelectedCategory('all')}
                       >
-                        <Text style={[styles.dropdownItemText, { color: colors.text }]}>{cat}</Text>
+                        <Text style={[
+                          styles.categoryFilterButtonText,
+                          { color: colors.text },
+                          selectedCategory === 'all' && styles.categoryFilterButtonTextActive
+                        ]}>
+                          Todas
+                        </Text>
                       </TouchableOpacity>
-                    ))}
-                  </View>
+                      {filteredCategoriesForType.map((cat) => (
+                        <TouchableOpacity
+                          key={cat.id}
+                          style={[
+                            styles.categoryFilterButton,
+                            {
+                              backgroundColor: selectedCategory === cat.name ? cat.color : `${cat.color}20`,
+                              borderColor: selectedCategory === cat.name ? cat.color : `${cat.color}40`,
+                            },
+                          ]}
+                          onPress={() => setSelectedCategory(cat.name)}
+                        >
+                          <FontAwesome5
+                            name={cat.icon || 'tag'}
+                            size={12}
+                            color={selectedCategory === cat.name ? '#fff' : cat.color}
+                          />
+                          <Text style={[
+                            styles.categoryFilterButtonText,
+                            {
+                              color: selectedCategory === cat.name ? '#fff' : colors.text,
+                            },
+                          ]}>
+                            {cat.name}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </>
                 )}
               </View>
 
@@ -533,5 +552,32 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     marginTop: 10,
+  },
+  categoryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 20,
+  },
+  categoryFilterButton: {
+    width: '31%',
+    paddingVertical: 8,
+    paddingHorizontal: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  categoryFilterButtonActive: {
+    borderWidth: 2,
+  },
+  categoryFilterButtonText: {
+    fontSize: 10,
+    fontFamily: 'Inter-Medium',
+    textAlign: 'center',
+  },
+  categoryFilterButtonTextActive: {
+    color: '#fff',
   },
 });
