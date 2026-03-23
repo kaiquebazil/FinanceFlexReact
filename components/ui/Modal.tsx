@@ -36,53 +36,44 @@ export function Modal({ visible, onClose, title, children }: ModalProps) {
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={[styles.overlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.5)' }]}>
             {/* 
-              Overlay clicável que fecha o modal apenas quando tocado fora do container.
-              O TouchableWithoutFeedback do overlay dispara onClose ao tocar no fundo cinza.
+              TouchableWithoutFeedback no container do modal impede que toques 
+              no conteúdo propaguem para o overlay (que fecharia o modal).
             */}
-            <TouchableOpacity 
-              activeOpacity={1}
-              onPress={onClose}
-              style={styles.overlayTouchable}
-            >
-              {/* 
-                Container do modal com TouchableWithoutFeedback para impedir que 
-                toques no conteúdo propaguem para o overlay.
-              */}
-              <TouchableWithoutFeedback>
-                <View style={[
-                  styles.modalContainer,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                    shadowColor: isDark ? '#000' : '#888',
-                    shadowOpacity: isDark ? 0.5 : 0.15,
-                  }
-                ]}>
-                  <View style={[styles.header, { borderBottomColor: colors.border }]}>
-                    <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
-                    <TouchableOpacity
-                      onPress={onClose}
-                      style={[styles.closeButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}
-                    >
-                      <FontAwesome5 name="times" size={18} color={colors.textDim} />
-                    </TouchableOpacity>
-                  </View>
-                  
-                  <ScrollView
-                    style={styles.content}
-                    contentContainerStyle={styles.contentContainer}
-                    showsVerticalScrollIndicator={true}
-                    keyboardShouldPersistTaps="handled"
+            <TouchableWithoutFeedback onPress={() => {}}>
+              <View style={[
+                styles.modalContainer,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  shadowColor: isDark ? '#000' : '#888',
+                  shadowOpacity: isDark ? 0.5 : 0.15,
+                }
+              ]}>
+                <View style={[styles.header, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+                  <TouchableOpacity
+                    onPress={onClose}
+                    style={[styles.closeButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}
                   >
-                    {children}
-                  </ScrollView>
+                    <FontAwesome5 name="times" size={18} color={colors.textDim} />
+                  </TouchableOpacity>
                 </View>
-              </TouchableWithoutFeedback>
-            </TouchableOpacity>
+                <ScrollView
+                  style={styles.content}
+                  contentContainerStyle={styles.contentContainer}
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                  keyboardDismissMode="none"
+                >
+                  {children}
+                </ScrollView>
+              </View>
+            </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
@@ -100,18 +91,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
-  overlayTouchable: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
-  },
   modalContainer: {
     borderRadius: 20,
-    padding: 20,
+    padding: 24,
     width: '100%',
     maxWidth: 500,
-    maxHeight: '85%',
+    maxHeight: '90%',
     borderWidth: 1,
     shadowOffset: { width: 0, height: 8 },
     shadowRadius: 24,
@@ -121,13 +106,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 20,
     paddingBottom: 12,
     borderBottomWidth: 1,
   },
   title: {
     fontSize: 20,
-    fontFamily: 'Inter-Bold',
+    fontFamily: theme.fonts.semibold,
   },
   closeButton: {
     padding: 8,
@@ -138,9 +123,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   content: {
-    flex: 1,
+    flexGrow: 0,
   },
   contentContainer: {
-    paddingBottom: 20,
+    paddingBottom: 10,
   },
 });

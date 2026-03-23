@@ -68,63 +68,54 @@ export function ConfirmModal({
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={[styles.overlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.5)' }]}>
           {/* 
-            Overlay clicável que fecha o modal apenas quando tocado fora do container.
+            TouchableWithoutFeedback no container do modal impede que toques 
+            no conteúdo propaguem para o overlay (que fecharia o modal).
           */}
-          <TouchableOpacity 
-            activeOpacity={1}
-            onPress={onCancel}
-            style={styles.overlayTouchable}
-          >
-            {/* 
-              Container do modal com TouchableWithoutFeedback para impedir que 
-              toques no conteúdo propaguem para o overlay.
-            */}
-            <TouchableWithoutFeedback>
-              <View style={[
-                styles.modalContainer,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                  shadowColor: isDark ? '#000' : '#888',
-                  shadowOpacity: isDark ? 0.5 : 0.15,
-                }
-              ]}>
-                <View style={[styles.iconContainer, { backgroundColor: `${getIconColor()}18`, borderColor: `${getIconColor()}30` }]}>
-                  <FontAwesome5
-                    name={getIconName()}
-                    size={40}
-                    color={getIconColor()}
-                  />
+          <TouchableWithoutFeedback onPress={() => {}}>
+            <View style={[
+              styles.modalContainer,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+                shadowColor: isDark ? '#000' : '#888',
+                shadowOpacity: isDark ? 0.5 : 0.15,
+              }
+            ]}>
+              <View style={[styles.iconContainer, { backgroundColor: `${getIconColor()}18`, borderColor: `${getIconColor()}30` }]}>
+                <FontAwesome5
+                  name={getIconName()}
+                  size={40}
+                  color={getIconColor()}
+                />
+              </View>
+
+              <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+              <Text style={[styles.message, { color: colors.textDim }]}>{message}</Text>
+
+              {customContent && (
+                <View style={styles.customContent}>
+                  {customContent}
                 </View>
+              )}
 
-                <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
-                <Text style={[styles.message, { color: colors.textDim }]}>{message}</Text>
-
-                {customContent && (
-                  <View style={styles.customContent}>
-                    {customContent}
-                  </View>
-                )}
-
-                <View style={styles.buttonsContainer}>
-                  {cancelText ? (
-                    <Button
-                      title={cancelText}
-                      onPress={onCancel}
-                      variant="outline"
-                      style={styles.button}
-                    />
-                  ) : null}
+              <View style={styles.buttonsContainer}>
+                {cancelText ? (
                   <Button
-                    title={confirmText}
-                    onPress={onConfirm}
-                    variant={type === 'danger' ? 'danger' : 'primary'}
+                    title={cancelText}
+                    onPress={onCancel}
+                    variant="outline"
                     style={styles.button}
                   />
-                </View>
+                ) : null}
+                <Button
+                  title={confirmText}
+                  onPress={onConfirm}
+                  variant={type === 'danger' ? 'danger' : 'primary'}
+                  style={styles.button}
+                />
               </View>
-            </TouchableWithoutFeedback>
-          </TouchableOpacity>
+            </View>
+          </TouchableWithoutFeedback>
         </View>
       </TouchableWithoutFeedback>
     </Modal>
@@ -137,12 +128,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-  },
-  overlayTouchable: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
   },
   modalContainer: {
     borderRadius: 20,
