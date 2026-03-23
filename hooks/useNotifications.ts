@@ -2,6 +2,7 @@ import * as Notifications from 'expo-notifications';
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -13,9 +14,18 @@ Notifications.setNotificationHandler({
 
 const NOTIFICATION_KEY = 'daily-notification-scheduled';
 
+// Verifica se está rodando no Expo Go
+const isExpoGo = Constants.appOwnership === 'expo';
+
 export const useNotifications = () => {
   useEffect(() => {
     const setupNotifications = async () => {
+      // Pula setup de notificações no Expo Go para evitar erro com SDK 53+
+      if (isExpoGo) {
+        console.log('Notificações push desativadas no Expo Go (SDK 53+)');
+        return;
+      }
+
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
       
@@ -40,7 +50,7 @@ export const useNotifications = () => {
   }, []);
 
   const scheduleDailyNotification = async () => {
-    if (Platform.OS === 'web') return;
+    if (Platform.OS === 'web' || isExpoGo) return;
 
     // Cancela notificações anteriores para evitar duplicatas
     await Notifications.cancelAllScheduledNotificationsAsync();
