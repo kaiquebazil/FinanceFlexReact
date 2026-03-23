@@ -26,7 +26,7 @@ interface TransactionsModalProps {
 }
 
 type FilterType = 'all' | 'income' | 'expense' | 'transfer';
-type PeriodType = 'today' | 'week' | 'month' | 'year';
+type PeriodType = 'all' | 'today' | 'week' | 'month' | 'year';
 
 export function TransactionsModal({ visible, onClose }: TransactionsModalProps) {
   const { colors, isDark } = useTheme();
