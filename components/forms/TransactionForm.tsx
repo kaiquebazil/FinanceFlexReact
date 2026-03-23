@@ -744,8 +744,11 @@ export function TransactionForm({
                     data={filteredCategories}
                     keyExtractor={(item) => item.id}
                     renderItem={renderCategoryItem}
-                    showsVerticalScrollIndicator={false}
+                    showsVerticalScrollIndicator={true}
                     keyboardShouldPersistTaps="handled"
+                    nestedScrollEnabled={true}
+                    scrollEnabled={true}
+                    style={{ maxHeight: 400 }}
                   />
                 )}
               </View>
@@ -797,8 +800,11 @@ export function TransactionForm({
                     data={accounts}
                     keyExtractor={(item) => item.id}
                     renderItem={renderAccountItem}
-                    showsVerticalScrollIndicator={false}
+                    showsVerticalScrollIndicator={true}
                     keyboardShouldPersistTaps="handled"
+                    nestedScrollEnabled={true}
+                    scrollEnabled={true}
+                    style={{ maxHeight: 400 }}
                   />
                 )}
               </View>
@@ -850,8 +856,11 @@ export function TransactionForm({
                     data={accounts.filter((a) => a.id !== selectedAccount?.id)}
                     keyExtractor={(item) => item.id}
                     renderItem={renderAccountItem}
-                    showsVerticalScrollIndicator={false}
+                    showsVerticalScrollIndicator={true}
                     keyboardShouldPersistTaps="handled"
+                    nestedScrollEnabled={true}
+                    scrollEnabled={true}
+                    style={{ maxHeight: 400 }}
                   />
                 )}
               </View>
