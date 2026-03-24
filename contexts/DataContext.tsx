@@ -744,6 +744,9 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteCreditCard = (id: string) => {
     setCreditCards((prev) => prev.filter((c) => c.id !== id));
+    // Remover transações e faturas associadas
+    setCreditCardTransactions((prev) => prev.filter((t) => t.creditCardId !== id));
+    setInvoices((prev) => prev.filter((inv) => inv.creditCardId !== id));
     if (uiCallbacks.showToast) {
       uiCallbacks.showToast("Cartão excluído com sucesso!", "success");
     }
@@ -761,7 +764,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       date: data.date || new Date().toISOString(),
       installments: data.installments || 1,
       currentInstallment: data.currentInstallment || 1,
-      installmentAmount: data.installmentAmount || 0,
+      installmentAmount: data.installmentAmount || data.amount ? (data.amount / (data.installments || 1)) : 0,
       createdAt: new Date().toISOString(),
     };
     
@@ -785,6 +788,98 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     
     if (uiCallbacks.showToast) {
       uiCallbacks.showToast('Compra adicionada com sucesso!', 'success');
+    }
+  };
+
+  const updateCreditCardTransaction = (id: string, data: Partial<CreditCardTransaction>) => {
+    setCreditCardTransactions((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, ...data } : t)),
+    );
+  };
+
+  const deleteCreditCardTransaction = (id: string) => {
+    const transaction = creditCardTransactions.find((t) => t.id === id);
+    if (!transaction) return;
+
+    // Remover transação
+    setCreditCardTransactions((prev) => prev.filter((t) => t.id !== id));
+
+    // Atualizar limite do cartão
+    if (transaction.creditCardId) {
+      setCreditCards(prev => prev.map(card => 
+        card.id === transaction.creditCardId
+          ? { 
+              ...card, 
+              used: Math.max(0, (card.used || 0) - transaction.amount),
+              availableLimit: (card.availableLimit || card.limit) + transaction.amount
+            }
+          : card
+      ));
+    }
+
+    // Remover transação das faturas
+    setInvoices(prev => prev.map(inv => ({
+      ...inv,
+      transactions: inv.transactions.filter(t => t !== id),
+      totalAmount: inv.transactions.includes(id) ? inv.totalAmount - transaction.installmentAmount : inv.totalAmount
+    })).filter(inv => inv.transactions.length > 0));
+
+    if (uiCallbacks.showToast) {
+      uiCallbacks.showToast('Transação excluída com sucesso!', 'success');
+    }
+  };
+
+  const payInvoice = (invoiceId: string, accountId: string, amount: number) => {
+    const invoice = invoices.find((inv) => inv.id === invoiceId);
+    const account = accounts.find((a) => a.id === accountId);
+
+    if (!invoice || !account) {
+      if (uiCallbacks.showConfirm) {
+        uiCallbacks.showConfirm({
+          title: 'Erro',
+          message: 'Fatura ou conta não encontrada',
+          type: 'warning',
+          onConfirm: () => {},
+        });
+      }
+      return;
+    }
+
+    if (account.balance < amount) {
+      const errorMessage = `Saldo insuficiente em ${account.name}! Saldo atual: ${formatCurrency(account.balance, account.currency)}`;
+      if (uiCallbacks.showConfirm) {
+        uiCallbacks.showConfirm({
+          title: 'Erro',
+          message: errorMessage,
+          type: 'warning',
+          onConfirm: () => {},
+        });
+      }
+      return;
+    }
+
+    // Atualizar fatura
+    setInvoices(prev => prev.map(inv => 
+      inv.id === invoiceId
+        ? { ...inv, status: 'paid', paidAt: new Date().toISOString() }
+        : inv
+    ));
+
+    // Atualizar saldo da conta
+    updateAccountBalance(accountId, amount, 'subtract');
+
+    // Registrar transação
+    addTransaction({
+      type: 'expense',
+      amount,
+      description: `Pagamento de fatura - ${invoice.month}/${invoice.year}`,
+      category: 'Pagamento de Cartão',
+      accountId,
+      date: new Date().toISOString(),
+    });
+
+    if (uiCallbacks.showToast) {
+      uiCallbacks.showToast('Fatura paga com sucesso!', 'success');
     }
   };
 
@@ -1077,10 +1172,10 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         deleteCreditCard,
         
         addCreditCardTransaction,
-        updateCreditCardTransaction: undefined,
-        deleteCreditCardTransaction: undefined,
+        updateCreditCardTransaction,
+        deleteCreditCardTransaction,
         
-        payInvoice: undefined,
+        payInvoice,
 
         addRecurringBill,
         updateRecurringBill,
