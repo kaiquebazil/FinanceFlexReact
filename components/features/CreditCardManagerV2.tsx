@@ -217,6 +217,9 @@ export function CreditCardManagerV2({ onClose }: CreditCardManagerV2Props) {
     }
   };
 
+  // Importar useMemo se não estiver importado
+  // (já está importado no início do arquivo)
+
   // Renderização por aba
   const renderCardsTab = () => (
     <View>
@@ -394,6 +397,36 @@ export function CreditCardManagerV2({ onClose }: CreditCardManagerV2Props) {
   const renderHistoryTab = () => {
     const transactions = selectedCard ? getCardTransactions(selectedCard.id) : creditCardTransactions;
     
+    // Agrupar transações por data
+    const groupedByDate = useMemo(() => {
+      const groups: { [key: string]: any[] } = {};
+      
+      // Ordenar transações por data (mais recentes primeiro)
+      const sortedTransactions = [...transactions].sort((a, b) => 
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+      
+      sortedTransactions.forEach((transaction) => {
+        const dateStr = new Date(transaction.date).toLocaleDateString('pt-BR');
+        if (!groups[dateStr]) {
+          groups[dateStr] = [];
+        }
+        groups[dateStr].push(transaction);
+      });
+      
+      return groups;
+    }, [transactions]);
+    
+    // Calcular saldo do dia (soma de todas as transações do dia)
+    const calculateDayBalance = (dayTransactions: any[]) => {
+      return dayTransactions.reduce((sum, transaction) => {
+        // Assumindo que transações de cartão são débitos (negativas)
+        return sum - transaction.amount;
+      }, 0);
+    };
+    
+    const groupedDates = Object.keys(groupedByDate);
+    
     return (
       <View style={styles.tabContent}>
         {selectedCard && (
@@ -413,31 +446,49 @@ export function CreditCardManagerV2({ onClose }: CreditCardManagerV2Props) {
               <Text style={styles.emptyText}>Nenhuma transação registrada</Text>
             </View>
           ) : (
-            transactions.map((transaction) => (
-              <View key={transaction.id} style={styles.transactionCard}>
-                <View style={styles.transactionHeader}>
-                  <View>
-                    <Text style={styles.transactionDescription}>
-                      {transaction.description}
-                    </Text>
-                    <Text style={styles.transactionCategory}>
-                      {transaction.category}
+            groupedDates.map((dateStr) => {
+              const dayTransactions = groupedByDate[dateStr];
+              const dayBalance = calculateDayBalance(dayTransactions);
+              
+              return (
+                <View key={dateStr}>
+                  {/* Cabeçalho do dia com saldo */}
+                  <View style={styles.dayHeaderContainer}>
+                    <Text style={styles.dayDate}>{dateStr}</Text>
+                    <Text style={styles.dayBalance}>
+                      Saldo do dia {formatCurrency(Math.abs(dayBalance), 'BRL')}
                     </Text>
                   </View>
-                  <Text style={styles.transactionAmount}>
-                    {formatCurrency(transaction.amount, 'BRL')}
-                  </Text>
+                  
+                  {/* Transações do dia */}
+                  {dayTransactions.map((transaction) => (
+                    <View key={transaction.id} style={styles.transactionCard}>
+                      <View style={styles.transactionHeader}>
+                        <View>
+                          <Text style={styles.transactionDescription}>
+                            {transaction.description}
+                          </Text>
+                          <Text style={styles.transactionCategory}>
+                            {transaction.category}
+                          </Text>
+                        </View>
+                        <Text style={styles.transactionAmount}>
+                          {formatCurrency(transaction.amount, 'BRL')}
+                        </Text>
+                      </View>
+                      <View style={styles.transactionFooter}>
+                        <Text style={styles.transactionTime}>
+                          {new Date(transaction.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        </Text>
+                        <Text style={styles.transactionInstallments}>
+                          {transaction.currentInstallment}/{transaction.installments}x
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
                 </View>
-                <View style={styles.transactionFooter}>
-                  <Text style={styles.transactionDate}>
-                    {new Date(transaction.date).toLocaleDateString('pt-BR')}
-                  </Text>
-                  <Text style={styles.transactionInstallments}>
-                    {transaction.currentInstallment}/{transaction.installments}x
-                  </Text>
-                </View>
-              </View>
-            ))
+              );
+            })
           )}
         </ScrollView>
       </View>
@@ -960,10 +1011,35 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.textDim,
   },
+  transactionTime: {
+    fontSize: 12,
+    color: theme.colors.textDim,
+  },
   transactionInstallments: {
     fontSize: 12,
     fontFamily: 'Inter-SemiBold',
     color: theme.colors.primary,
+  },
+  dayHeaderContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    marginTop: 16,
+    marginBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  dayDate: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: theme.colors.textDim,
+  },
+  dayBalance: {
+    fontSize: 14,
+    fontFamily: 'Inter-SemiBold',
+    color: theme.colors.text,
   },
   keyboardView: {
     flex: 1,
