@@ -8,7 +8,7 @@ import { AuthProvider } from '../contexts/AuthContext';
 import { useData } from '../hooks/useData';
 import { theme } from '../constants/theme';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
-import { useNotifications } from '../hooks/useNotifications';
+
 import type { CloudData } from '../services/syncService';
 
 SplashScreen.preventAutoHideAsync();
@@ -30,7 +30,7 @@ function AppWithSync({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
-  useNotifications();
+
   const [loaded, error] = useFonts({
     'Inter-Regular': Inter_400Regular,
     'Inter-Medium': Inter_500Medium,
