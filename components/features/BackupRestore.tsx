@@ -88,7 +88,7 @@ export function BackupRestore({ onClose }: BackupRestoreProps) {
 
   return (
     <>
-      <ScrollView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.header}>
           <FontAwesome5 name="redo" size={50} color={theme.colors.primary} />
           <Text style={styles.title}>Resetar Dados</Text>
@@ -127,7 +127,7 @@ export function BackupRestore({ onClose }: BackupRestoreProps) {
           ❌ Todas as suas transações serão perdidas{'\n'}
           ❌ Cofrinhos, cartões e contas recorrentes serão apagados
         </Text>
-      </ScrollView>
+      </View>
 
       {/* Modal de Confirmação */}
       <ConfirmModal

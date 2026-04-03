@@ -8,6 +8,7 @@ import {
   ScrollView,
   TextInput,
   Alert,
+  Modal,
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
@@ -19,6 +20,7 @@ import type { Budget, Category } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 
 interface BudgetManagerProps {
+  visible: boolean;
   onClose: () => void;
 }
 
@@ -27,7 +29,7 @@ const MONTH_NAMES = [
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ];
 
-export function BudgetManager({ onClose }: BudgetManagerProps) {
+export function BudgetManager({ visible, onClose }: BudgetManagerProps) {
   const { colors, isDark } = useTheme();
   const {
     budgets,
@@ -179,202 +181,247 @@ export function BudgetManager({ onClose }: BudgetManagerProps) {
   };
 
   return (
-    <ScrollView
-      style={{ flex: 1 }}
-      contentContainerStyle={{ paddingBottom: 24 }}
-      showsVerticalScrollIndicator={false}
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+      statusBarTranslucent
     >
-      {/* Seletor de mês */}
-      <View style={[styles.monthSelector, { backgroundColor: isDark ? colors.darkLight : colors.surfaceDark, borderRadius: 12 }]}>
-        <TouchableOpacity onPress={handlePrevMonth} style={[styles.monthArrow, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
-          <FontAwesome5 name="chevron-left" size={16} color={colors.primary} />
-        </TouchableOpacity>
-        <Text style={[styles.monthLabel, { color: colors.text }]}>
-          {MONTH_NAMES[selectedMonth - 1]} {selectedYear}
-        </Text>
-        <TouchableOpacity onPress={handleNextMonth} style={[styles.monthArrow, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
-          <FontAwesome5 name="chevron-right" size={16} color={colors.primary} />
-        </TouchableOpacity>
-      </View>
-
-      {/* Formulário de criação/edição */}
-      {showForm ? (
-        <Card style={styles.formCard}>
-          <Text style={[styles.formTitle, { color: colors.text }]}>
-            {editingBudget ? 'Editar Orçamento' : 'Novo Orçamento'}
-          </Text>
-
-          {/* Seleção de categoria */}
-          <Text style={[styles.fieldLabel, { color: colors.textDim }]}>Categoria de Despesa</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.categoryScroll}
-          >
-            {(editingBudget
-              ? expenseCategories.filter(
-                  (c) => c.id === editingBudget.categoryId || !usedCategoryIds.includes(c.id),
-                )
-              : availableCategories
-            ).map((cat) => (
-              <TouchableOpacity
-                key={cat.id}
-                style={[
-                  styles.categoryChip,
-                  {
-                    backgroundColor: selectedCategoryId === cat.id ? colors.primary : (isDark ? colors.dark : colors.surfaceDark),
-                    borderColor: selectedCategoryId === cat.id ? colors.primary : colors.border,
-                  },
-                ]}
-                onPress={() => setSelectedCategoryId(cat.id)}
-              >
-                <FontAwesome5
-                  name={cat.icon}
-                  size={14}
-                  color={selectedCategoryId === cat.id ? '#fff' : colors.textDim}
-                />
-                <Text
-                  style={[
-                    styles.categoryChipText,
-                    { color: selectedCategoryId === cat.id ? '#fff' : colors.textDim },
-                  ]}
-                >
-                  {cat.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-
-          {/* Limite */}
-          <Text style={[styles.fieldLabel, { color: colors.textDim }]}>Limite Mensal (R$)</Text>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: isDark ? colors.dark : colors.surfaceDark,
-                borderColor: colors.border,
-                color: colors.text,
-              },
-            ]}
-            value={limitAmount}
-            onChangeText={setLimitAmount}
-            placeholder="0,00"
-            placeholderTextColor={colors.textMuted}
-            keyboardType="numeric"
-          />
-
-          <View style={styles.formButtons}>
-            <Button title="Cancelar" onPress={resetForm} variant="outline" style={styles.formBtn} />
-            <Button title="Salvar" onPress={handleSave} style={styles.formBtn} />
+      <View style={[styles.modalOverlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.5)' }]}>
+        <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+          {/* Cabeçalho */}
+          <View style={[styles.header, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.title, { color: colors.text }]}>Orçamentos</Text>
+            <TouchableOpacity onPress={onClose}>
+              <FontAwesome5 name="times" size={20} color={colors.textDim} />
+            </TouchableOpacity>
           </View>
-        </Card>
-      ) : (
-        <Button
-          title="+ Novo Orçamento"
-          onPress={handleOpenCreate}
-          variant="outline"
-          style={styles.addButton}
-        />
-      )}
 
-      {/* Lista de orçamentos */}
-      {monthlyBudgets.length === 0 && !showForm ? (
-        <View style={styles.emptyState}>
-          <FontAwesome5 name="chart-pie" size={40} color={colors.textDim} />
-          <Text style={[styles.emptyTitle, { color: colors.text }]}>Nenhum orçamento definido</Text>
-          <Text style={[styles.emptySubtitle, { color: colors.textDim }]}>
-            Defina limites de gastos por categoria para controlar suas despesas mensais.
-          </Text>
-        </View>
-      ) : (
-        <View style={styles.budgetList}>
-          {monthlyBudgets.map((budget) => {
-            const { spent, percentage, remaining } = getBudgetProgress(budget);
-            const progressColor = getProgressColor(percentage);
-            const alert = getAlertBadge(percentage);
-            const cappedPct = Math.min(percentage, 100);
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            {/* Seletor de mês */}
+            <View style={[styles.monthSelector, { backgroundColor: isDark ? colors.darkLight : colors.surfaceDark, borderRadius: 12 }]}>
+              <TouchableOpacity onPress={handlePrevMonth} style={[styles.monthArrow, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
+                <FontAwesome5 name="chevron-left" size={16} color={colors.primary} />
+              </TouchableOpacity>
+              <Text style={[styles.monthLabel, { color: colors.text }]}>
+                {MONTH_NAMES[selectedMonth - 1]} {selectedYear}
+              </Text>
+              <TouchableOpacity onPress={handleNextMonth} style={[styles.monthArrow, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
+                <FontAwesome5 name="chevron-right" size={16} color={colors.primary} />
+              </TouchableOpacity>
+            </View>
 
-            return (
-              <Card key={budget.id} style={styles.budgetCard}>
-                {/* Cabeçalho do card */}
-                <View style={styles.budgetHeader}>
-                  <View style={[styles.budgetIconContainer, { backgroundColor: isDark ? colors.dark : colors.surfaceDark }]}>
-                    <FontAwesome5
-                      name={budget.categoryIcon}
-                      size={18}
-                      color={progressColor}
-                    />
-                  </View>
-                  <View style={styles.budgetInfo}>
-                    <View style={styles.budgetTitleRow}>
-                      <Text style={[styles.budgetCategoryName, { color: colors.text }]}>{budget.categoryName}</Text>
-                      {alert && (
-                        <View style={[styles.alertBadge, { backgroundColor: alert.color + '25' }]}>
-                          <Text style={[styles.alertBadgeText, { color: alert.color }]}>
-                            {alert.label}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                    <Text style={[styles.budgetAmounts, { color: colors.textDim }]}>
-                      {formatValue(spent)} de {formatValue(budget.limitAmount)}
-                    </Text>
-                  </View>
-                  <View style={styles.budgetActions}>
+            {/* Formulário de criação/edição */}
+            {showForm ? (
+              <Card style={styles.formCard}>
+                <Text style={[styles.formTitle, { color: colors.text }]}>
+                  {editingBudget ? 'Editar Orçamento' : 'Novo Orçamento'}
+                </Text>
+
+                {/* Seleção de categoria */}
+                <Text style={[styles.fieldLabel, { color: colors.textDim }]}>Categoria de Despesa</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.categoryScroll}
+                >
+                  {(editingBudget
+                    ? expenseCategories.filter(
+                        (c) => c.id === editingBudget.categoryId || !usedCategoryIds.includes(c.id),
+                      )
+                    : availableCategories
+                  ).map((cat) => (
                     <TouchableOpacity
-                      onPress={() => handleOpenEdit(budget)}
-                      style={styles.actionBtn}
+                      key={cat.id}
+                      style={[
+                        styles.categoryChip,
+                        {
+                          backgroundColor: selectedCategoryId === cat.id ? colors.primary : (isDark ? colors.dark : colors.surfaceDark),
+                          borderColor: selectedCategoryId === cat.id ? colors.primary : colors.border,
+                        },
+                      ]}
+                      onPress={() => setSelectedCategoryId(cat.id)}
                     >
-                      <FontAwesome5 name="edit" size={14} color={colors.primary} />
+                      <FontAwesome5
+                        name={cat.icon}
+                        size={14}
+                        color={selectedCategoryId === cat.id ? '#fff' : colors.textDim}
+                      />
+                      <Text
+                        style={[
+                          styles.categoryChipText,
+                          { color: selectedCategoryId === cat.id ? '#fff' : colors.textDim },
+                        ]}
+                      >
+                        {cat.name}
+                      </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => handleDelete(budget)}
-                      style={styles.actionBtn}
-                    >
-                      <FontAwesome5 name="trash-alt" size={14} color={colors.danger} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
+                  ))}
+                </ScrollView>
 
-                {/* Barra de progresso */}
-                <View style={[styles.progressBarBg, { backgroundColor: isDark ? colors.dark : colors.surfaceDark }]}>
-                  <View
-                    style={[
-                      styles.progressBarFill,
-                      {
-                        width: `${cappedPct}%` as any,
-                        backgroundColor: progressColor,
-                      },
-                    ]}
-                  />
-                </View>
+                {/* Limite */}
+                <Text style={[styles.fieldLabel, { color: colors.textDim }]}>Limite Mensal (R$)</Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: isDark ? colors.dark : colors.surfaceDark,
+                      borderColor: colors.border,
+                      color: colors.text,
+                    },
+                  ]}
+                  value={limitAmount}
+                  onChangeText={setLimitAmount}
+                  placeholder="0,00"
+                  placeholderTextColor={colors.textMuted}
+                  keyboardType="numeric"
+                />
 
-                {/* Rodapé: percentual e saldo restante */}
-                <View style={styles.budgetFooter}>
-                  <Text style={[styles.percentageText, { color: progressColor }]}>
-                    {percentage.toFixed(0)}% utilizado
-                  </Text>
-                  <Text
-                    style={[
-                      styles.remainingText,
-                      { color: remaining >= 0 ? colors.textDim : colors.danger },
-                    ]}
-                  >
-                    {remaining >= 0
-                      ? `Restam ${formatValue(remaining)}`
-                      : `Excedido em ${formatValue(Math.abs(remaining))}`}
-                  </Text>
+                <View style={styles.formButtons}>
+                  <Button title="Cancelar" onPress={resetForm} variant="outline" style={styles.formBtn} />
+                  <Button title="Salvar" onPress={handleSave} style={styles.formBtn} />
                 </View>
               </Card>
-            );
-          })}
+            ) : (
+              <Button
+                title="+ Novo Orçamento"
+                onPress={handleOpenCreate}
+                variant="outline"
+                style={styles.addButton}
+              />
+            )}
+
+            {/* Lista de orçamentos */}
+            {monthlyBudgets.length === 0 && !showForm ? (
+              <View style={styles.emptyState}>
+                <FontAwesome5 name="chart-pie" size={40} color={colors.textDim} />
+                <Text style={[styles.emptyTitle, { color: colors.text }]}>Nenhum orçamento definido</Text>
+                <Text style={[styles.emptySubtitle, { color: colors.textDim }]}>
+                  Defina limites de gastos por categoria para controlar suas despesas mensais.
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.budgetList}>
+                {monthlyBudgets.map((budget) => {
+                  const { spent, percentage, remaining } = getBudgetProgress(budget);
+                  const progressColor = getProgressColor(percentage);
+                  const alert = getAlertBadge(percentage);
+                  const cappedPct = Math.min(percentage, 100);
+
+                  return (
+                    <Card key={budget.id} style={styles.budgetCard}>
+                      {/* Cabeçalho do card */}
+                      <View style={styles.budgetHeader}>
+                        <View style={[styles.budgetIconContainer, { backgroundColor: isDark ? colors.dark : colors.surfaceDark }]}>
+                          <FontAwesome5
+                            name={budget.categoryIcon}
+                            size={18}
+                            color={progressColor}
+                          />
+                        </View>
+                        <View style={styles.budgetInfo}>
+                          <View style={styles.budgetTitleRow}>
+                            <Text style={[styles.budgetCategoryName, { color: colors.text }]}>{budget.categoryName}</Text>
+                            {alert && (
+                              <View style={[styles.alertBadge, { backgroundColor: alert.color + '25' }]}>
+                                <Text style={[styles.alertBadgeText, { color: alert.color }]}>
+                                  {alert.label}
+                                </Text>
+                              </View>
+                            )}
+                          </View>
+                          <Text style={[styles.budgetAmounts, { color: colors.textDim }]}>
+                            {formatValue(spent)} de {formatValue(budget.limitAmount)}
+                          </Text>
+                        </View>
+                        <View style={styles.budgetActions}>
+                          <TouchableOpacity
+                            onPress={() => handleOpenEdit(budget)}
+                            style={styles.actionBtn}
+                          >
+                            <FontAwesome5 name="edit" size={14} color={colors.primary} />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            onPress={() => handleDelete(budget)}
+                            style={styles.actionBtn}
+                          >
+                            <FontAwesome5 name="trash-alt" size={14} color={colors.danger} />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+
+                      {/* Barra de progresso */}
+                      <View style={[styles.progressBarBg, { backgroundColor: isDark ? colors.dark : colors.surfaceDark }]}>
+                        <View
+                          style={[
+                            styles.progressBarFill,
+                            {
+                              width: `${cappedPct}%` as any,
+                              backgroundColor: progressColor,
+                            },
+                          ]}
+                        />
+                      </View>
+
+                      {/* Rodapé: percentual e saldo restante */}
+                      <View style={styles.budgetFooter}>
+                        <Text style={[styles.percentageText, { color: progressColor }]}>
+                          {percentage.toFixed(0)}% utilizado
+                        </Text>
+                        <Text
+                          style={[
+                            styles.remainingText,
+                            { color: remaining >= 0 ? colors.textDim : colors.danger },
+                          ]}
+                        >
+                          {remaining >= 0
+                            ? `Restam ${formatValue(remaining)}`
+                            : `Excedido em ${formatValue(Math.abs(remaining))}`}
+                        </Text>
+                      </View>
+                    </Card>
+                  );
+                })}
+              </View>
+            )}
+          </ScrollView>
+
+          {/* Botão Fechar */}
+          <Button
+            title="Fechar"
+            onPress={onClose}
+            style={styles.closeButton}
+          />
         </View>
-      )}
-    </ScrollView>
+      </View>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: '90%',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+  },
+  title: {
+    fontSize: 24,
+    fontFamily: 'Inter-Bold',
+  },
   monthSelector: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -533,5 +580,8 @@ const styles = StyleSheet.create({
   remainingText: {
     fontSize: 12,
     fontFamily: 'Inter-Regular',
+  },
+  closeButton: {
+    marginTop: 10,
   },
 });

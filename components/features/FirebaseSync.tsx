@@ -241,12 +241,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
         </View>
       )}
 
-      <ScrollView
-        style={styles.container}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
+      <View style={styles.container}>
         {/* Cabeçalho */}
         <View style={styles.header}>
           <View style={[styles.headerIconWrap, { backgroundColor: isDark ? 'rgba(124,77,255,0.15)' : 'rgba(108,63,255,0.1)' }]}>
@@ -415,7 +410,7 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
             </View>
           </View>
         )}
-      </ScrollView>
+      </View>
 
       {/* Modais de Confirmação */}
       <ConfirmModal
@@ -502,7 +497,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   container: {
-    flex: 1,
+    // Removido flex:1
   },
   scrollContent: {
     padding: 20,

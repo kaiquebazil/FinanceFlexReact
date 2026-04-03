@@ -1,5 +1,6 @@
+// components/features/RecurringBillsManager.tsx
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Modal } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -9,13 +10,14 @@ import { Input } from '../ui/Input';
 import { formatCurrency } from '../../utils/currency';
 
 interface RecurringBillsManagerProps {
+  visible: boolean;
   onClose: () => void;
 }
 
-export function RecurringBillsManager({ onClose }: RecurringBillsManagerProps) {
+export function RecurringBillsManager({ visible, onClose }: RecurringBillsManagerProps) {
   const { colors, isDark } = useTheme();
   const { recurringBills, addRecurringBill, deleteRecurringBill, toggleRecurringBillPaid, categories } = useData();
-  
+
   // Estados para o formulário
   const [newBillName, setNewBillName] = useState('');
   const [newBillAmount, setNewBillAmount] = useState('');
@@ -30,16 +32,16 @@ export function RecurringBillsManager({ onClose }: RecurringBillsManagerProps) {
   const handleAddBill = () => {
     // Validações
     const newErrors: { name?: string; amount?: string; dueDay?: string } = {};
-    
+
     if (!newBillName.trim()) {
       newErrors.name = 'Nome é obrigatório';
     }
-    
+
     const amountNum = parseFloat(newBillAmount?.replace(',', '.') ?? '0');
     if (!newBillAmount || isNaN(amountNum) || amountNum <= 0) {
       newErrors.amount = 'Valor inválido';
     }
-    
+
     const dueDayNum = parseInt(newBillDueDay);
     if (!newBillDueDay || isNaN(dueDayNum) || dueDayNum < 1 || dueDayNum > 31) {
       newErrors.dueDay = 'Dia deve ser entre 1 e 31';
@@ -74,8 +76,8 @@ export function RecurringBillsManager({ onClose }: RecurringBillsManagerProps) {
       `Tem certeza que deseja excluir "${name}"?`,
       [
         { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Excluir', 
+        {
+          text: 'Excluir',
           onPress: () => deleteRecurringBill(id),
           style: 'destructive'
         }
@@ -96,17 +98,17 @@ export function RecurringBillsManager({ onClose }: RecurringBillsManagerProps) {
 
     return (
     <View key={bill.id} style={[styles.billItem, { backgroundColor: isDark ? colors.surfaceDark : '#fff', borderColor: colors.border }]}>
-      <TouchableOpacity 
-        onPress={() => toggleRecurringBillPaid(bill.id)} 
+      <TouchableOpacity
+        onPress={() => toggleRecurringBillPaid(bill.id)}
         style={styles.checkbox}
       >
-        <FontAwesome5 
-          name={bill.isPaid ? 'check-circle' : 'circle'} 
-          size={24} 
-          color={bill.isPaid ? colors.success : colors.textDim} 
+        <FontAwesome5
+          name={bill.isPaid ? 'check-circle' : 'circle'}
+          size={24}
+          color={bill.isPaid ? colors.success : colors.textDim}
         />
       </TouchableOpacity>
-      
+
       <View style={styles.billInfo}>
         <View style={styles.billHeader}>
           <Text style={[styles.billName, { color: colors.text }, bill.isPaid && styles.billNamePaid]}>
@@ -116,7 +118,7 @@ export function RecurringBillsManager({ onClose }: RecurringBillsManagerProps) {
             {formatCurrency(bill.amount, 'BRL')}
           </Text>
         </View>
-        
+
         <View style={styles.billDetails}>
           <View style={styles.billDetail}>
             <FontAwesome5 name="calendar-alt" size={12} color={colors.textDim} />
@@ -124,7 +126,7 @@ export function RecurringBillsManager({ onClose }: RecurringBillsManagerProps) {
               Dia {bill.dueDay}
             </Text>
           </View>
-          
+
           {bill.category && (
             <View style={styles.billDetail}>
               <FontAwesome5 name={categoryIcon} size={12} color={colors.textDim} />
@@ -136,8 +138,8 @@ export function RecurringBillsManager({ onClose }: RecurringBillsManagerProps) {
         </View>
       </View>
 
-      <TouchableOpacity 
-        onPress={() => handleDeleteBill(bill.id, bill.name)} 
+      <TouchableOpacity
+        onPress={() => handleDeleteBill(bill.id, bill.name)}
         style={styles.deleteButton}
       >
         <FontAwesome5 name="trash" size={16} color={colors.danger} />
@@ -147,181 +149,227 @@ export function RecurringBillsManager({ onClose }: RecurringBillsManagerProps) {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Botão para adicionar nova conta */}
-      {!showForm ? (
-        <Button
-          title="Nova Conta Recorrente"
-          icon="plus"
-          onPress={() => setShowForm(true)}
-          style={styles.addButton}
-        />
-      ) : (
-        <View style={[styles.formContainer, { backgroundColor: isDark ? colors.surfaceDark : '#f8f8f8', borderColor: colors.border }]}>
-          <Text style={[styles.formTitle, { color: colors.text }]}>Nova Conta Recorrente</Text>
-          
-          <Input
-            label="Nome da conta"
-            value={newBillName}
-            onChangeText={setNewBillName}
-            placeholder="Ex: Aluguel, Internet, Academia"
-            error={errors.name}
-          />
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+      statusBarTranslucent
+    >
+      <View style={[styles.modalOverlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.5)' }]}>
+        <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+          {/* Cabeçalho */}
+          <View style={[styles.header, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.title, { color: colors.text }]}>Contas Recorrentes</Text>
+            <TouchableOpacity onPress={onClose}>
+              <FontAwesome5 name="times" size={20} color={colors.textDim} />
+            </TouchableOpacity>
+          </View>
 
-          <Input
-            label="Valor (R$)"
-            value={newBillAmount}
-            onChangeText={setNewBillAmount}
-            keyboardType="numeric"
-            placeholder="0,00"
-            error={errors.amount}
-          />
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            {/* Botão para adicionar nova conta */}
+            {!showForm ? (
+              <Button
+                title="Nova Conta Recorrente"
+                icon="plus"
+                onPress={() => setShowForm(true)}
+                style={styles.addButton}
+              />
+            ) : (
+              <View style={[styles.formContainer, { backgroundColor: isDark ? colors.surfaceDark : '#f8f8f8', borderColor: colors.border }]}>
+                <Text style={[styles.formTitle, { color: colors.text }]}>Nova Conta Recorrente</Text>
 
-          <Input
-            label="Dia do Vencimento"
-            value={newBillDueDay}
-            onChangeText={setNewBillDueDay}
-            keyboardType="numeric"
-            placeholder="1 a 31"
-            maxLength={2}
-            error={errors.dueDay}
-          />
+                <Input
+                  label="Nome da conta"
+                  value={newBillName}
+                  onChangeText={setNewBillName}
+                  placeholder="Ex: Aluguel, Internet, Academia"
+                  error={errors.name}
+                />
 
-          <Text style={[styles.label, { color: colors.textDim }]}>Categoria</Text>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.categoryScroll}
-          >
-            <View style={styles.categoryContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.categoryChip,
-                  { backgroundColor: isDark ? colors.surface : '#eee', borderColor: colors.border },
-                  newBillCategory === 'Outros' && { backgroundColor: colors.primary, borderColor: colors.primary }
-                ]}
-                onPress={() => setNewBillCategory('Outros')}
-              >
-                <Text style={[
-                  styles.categoryChipText,
-                  { color: colors.text },
-                  newBillCategory === 'Outros' && { color: '#fff' }
-                ]}>
-                  Outros
-                </Text>
-              </TouchableOpacity>
-              
-              {expenseCategories.map(cat => (
-                <TouchableOpacity
-                  key={cat.id}
-                  style={[
-                    styles.categoryChip,
-                    { backgroundColor: isDark ? colors.surface : '#eee', borderColor: colors.border },
-                    newBillCategory === cat.name && { backgroundColor: colors.primary, borderColor: colors.primary }
-                  ]}
-                  onPress={() => setNewBillCategory(cat.name)}
+                <Input
+                  label="Valor (R$)"
+                  value={newBillAmount}
+                  onChangeText={setNewBillAmount}
+                  keyboardType="numeric"
+                  placeholder="0,00"
+                  error={errors.amount}
+                />
+
+                <Input
+                  label="Dia do Vencimento"
+                  value={newBillDueDay}
+                  onChangeText={setNewBillDueDay}
+                  keyboardType="numeric"
+                  placeholder="1 a 31"
+                  maxLength={2}
+                  error={errors.dueDay}
+                />
+
+                <Text style={[styles.label, { color: colors.textDim }]}>Categoria</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.categoryScroll}
                 >
-                  <Text style={[
-                    styles.categoryChipText,
-                    { color: colors.text },
-                    newBillCategory === cat.name && { color: '#fff' }
-                  ]}>
-                    {cat.name}
+                  <View style={styles.categoryContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.categoryChip,
+                        { backgroundColor: isDark ? colors.surface : '#eee', borderColor: colors.border },
+                        newBillCategory === 'Outros' && { backgroundColor: colors.primary, borderColor: colors.primary }
+                      ]}
+                      onPress={() => setNewBillCategory('Outros')}
+                    >
+                      <Text style={[
+                        styles.categoryChipText,
+                        { color: colors.text },
+                        newBillCategory === 'Outros' && { color: '#fff' }
+                      ]}>
+                        Outros
+                      </Text>
+                    </TouchableOpacity>
+
+                    {expenseCategories.map(cat => (
+                      <TouchableOpacity
+                        key={cat.id}
+                        style={[
+                          styles.categoryChip,
+                          { backgroundColor: isDark ? colors.surface : '#eee', borderColor: colors.border },
+                          newBillCategory === cat.name && { backgroundColor: colors.primary, borderColor: colors.primary }
+                        ]}
+                        onPress={() => setNewBillCategory(cat.name)}
+                      >
+                        <Text style={[
+                          styles.categoryChipText,
+                          { color: colors.text },
+                          newBillCategory === cat.name && { color: '#fff' }
+                        ]}>
+                          {cat.name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </ScrollView>
+
+                <View style={styles.formButtons}>
+                  <Button
+                    title="Cancelar"
+                    onPress={() => {
+                      setShowForm(false);
+                      setErrors({});
+                      setNewBillName('');
+                      setNewBillAmount('');
+                      setNewBillDueDay('');
+                      setNewBillCategory('Outros');
+                    }}
+                    variant="outline"
+                    style={styles.formButton}
+                  />
+                  <Button
+                    title="Salvar"
+                    onPress={handleAddBill}
+                    style={styles.formButton}
+                  />
+                </View>
+              </View>
+            )}
+
+            {/* Lista de contas a pagar */}
+            {unpaidBills.length > 0 && (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>A Pagar</Text>
+                  <View style={[styles.sectionCountBadge, { backgroundColor: colors.danger + '20' }]}>
+                    <Text style={[styles.sectionCount, { color: colors.danger }]}>{unpaidBills.length}</Text>
+                  </View>
+                </View>
+                <View style={styles.billsList}>
+                  {unpaidBills.map(renderBillItem)}
+                </View>
+              </View>
+            )}
+
+            {/* Lista de contas pagas */}
+            {paidBills.length > 0 && (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>Pagas</Text>
+                  <View style={[styles.sectionCountBadge, { backgroundColor: colors.success + '20' }]}>
+                    <Text style={[styles.sectionCount, { color: colors.success }]}>{paidBills.length}</Text>
+                  </View>
+                </View>
+                <View style={styles.billsList}>
+                  {paidBills.map(renderBillItem)}
+                </View>
+              </View>
+            )}
+
+            {/* Mensagem quando não há contas */}
+            {recurringBills.length === 0 && !showForm && (
+              <View style={styles.emptyState}>
+                <FontAwesome5 name="calendar-alt" size={48} color={colors.textDim} />
+                <Text style={[styles.emptyStateTitle, { color: colors.text }]}>Nenhuma conta recorrente</Text>
+                <Text style={[styles.emptyStateText, { color: colors.textDim }]}>
+                  Adicione contas fixas como aluguel, internet ou streaming para acompanhar seus gastos mensais.
+                </Text>
+              </View>
+            )}
+
+            {/* Resumo mensal */}
+            {recurringBills.length > 0 && (
+              <View style={[styles.summaryContainer, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' }]}>
+                <Text style={[styles.summaryTitle, { color: colors.primary }]}>Resumo Mensal</Text>
+
+                <View style={styles.summaryRow}>
+                  <Text style={[styles.summaryLabel, { color: colors.textDim }]}>Total de contas:</Text>
+                  <Text style={[styles.summaryValue, { color: colors.text }]}>{recurringBills.length}</Text>
+                </View>
+
+                <View style={styles.summaryRow}>
+                  <Text style={[styles.summaryLabel, { color: colors.textDim }]}>Total a pagar:</Text>
+                  <Text style={[styles.summaryValue, { color: colors.danger }]}>
+                    {formatCurrency(unpaidBills.reduce((acc, b) => acc + b.amount, 0), 'BRL')}
                   </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+                </View>
+              </View>
+            )}
           </ScrollView>
 
-          <View style={styles.formButtons}>
-            <Button
-              title="Cancelar"
-              onPress={() => {
-                setShowForm(false);
-                setErrors({});
-                setNewBillName('');
-                setNewBillAmount('');
-                setNewBillDueDay('');
-                setNewBillCategory('Outros');
-              }}
-              variant="outline"
-              style={styles.formButton}
-            />
-            <Button
-              title="Salvar"
-              onPress={handleAddBill}
-              style={styles.formButton}
-            />
-          </View>
+          {/* Botão Fechar */}
+          <Button
+            title="Fechar"
+            onPress={onClose}
+            style={styles.closeButton}
+          />
         </View>
-      )}
-
-      {/* Lista de contas a pagar */}
-      {unpaidBills.length > 0 && (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>A Pagar</Text>
-            <View style={[styles.sectionCountBadge, { backgroundColor: colors.danger + '20' }]}>
-              <Text style={[styles.sectionCount, { color: colors.danger }]}>{unpaidBills.length}</Text>
-            </View>
-          </View>
-          <View style={styles.billsList}>
-            {unpaidBills.map(renderBillItem)}
-          </View>
-        </View>
-      )}
-
-      {/* Lista de contas pagas */}
-      {paidBills.length > 0 && (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Pagas</Text>
-            <View style={[styles.sectionCountBadge, { backgroundColor: colors.success + '20' }]}>
-              <Text style={[styles.sectionCount, { color: colors.success }]}>{paidBills.length}</Text>
-            </View>
-          </View>
-          <View style={styles.billsList}>
-            {paidBills.map(renderBillItem)}
-          </View>
-        </View>
-      )}
-
-      {/* Mensagem quando não há contas */}
-      {recurringBills.length === 0 && !showForm && (
-        <View style={styles.emptyState}>
-          <FontAwesome5 name="calendar-alt" size={48} color={colors.textDim} />
-          <Text style={[styles.emptyStateTitle, { color: colors.text }]}>Nenhuma conta recorrente</Text>
-          <Text style={[styles.emptyStateText, { color: colors.textDim }]}>
-            Adicione contas fixas como aluguel, internet ou streaming para acompanhar seus gastos mensais.
-          </Text>
-        </View>
-      )}
-
-      {/* Resumo mensal */}
-      {recurringBills.length > 0 && (
-        <View style={[styles.summaryContainer, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' }]}>
-          <Text style={[styles.summaryTitle, { color: colors.primary }]}>Resumo Mensal</Text>
-          
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, { color: colors.textDim }]}>Total de contas:</Text>
-            <Text style={[styles.summaryValue, { color: colors.text }]}>{recurringBills.length}</Text>
-          </View>
-          
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, { color: colors.textDim }]}>Total a pagar:</Text>
-            <Text style={[styles.summaryValue, { color: colors.danger }]}>
-              {formatCurrency(unpaidBills.reduce((acc, b) => acc + b.amount, 0), 'BRL')}
-            </Text>
-          </View>
-        </View>
-      )}
-    </View>
+      </View>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  modalOverlay: {
     flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: '90%',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+  },
+  title: {
+    fontSize: 24,
+    fontFamily: 'Inter-Bold',
   },
   addButton: {
     marginBottom: 20,
@@ -487,5 +535,8 @@ const styles = StyleSheet.create({
   summaryValue: {
     fontSize: 13,
     fontFamily: 'Inter-Bold',
+  },
+  closeButton: {
+    marginTop: 10,
   },
 });

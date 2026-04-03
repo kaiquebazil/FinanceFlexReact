@@ -110,7 +110,6 @@ export function CreditCardManager({ onClose }: CreditCardManagerProps) {
 
   return (
     <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
         {creditCards.length === 0 ? (
           <View style={styles.emptyState}>
             <FontAwesome5 name="credit-card" size={50} color={theme.colors.textDim} />
@@ -226,7 +225,6 @@ export function CreditCardManager({ onClose }: CreditCardManagerProps) {
           onPress={() => setShowAddModal(true)}
           style={styles.addButton}
         />
-      </ScrollView>
 
       {/* Modal Adicionar Cartão */}
       <Modal
@@ -499,7 +497,7 @@ export function CreditCardManager({ onClose }: CreditCardManagerProps) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    // Removido flex:1
     padding: 20,
   },
   keyboardView: {

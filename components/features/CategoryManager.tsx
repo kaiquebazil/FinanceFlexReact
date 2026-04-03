@@ -1,3 +1,4 @@
+// components/features/CategoryManager.tsx
 import React, { useState } from 'react';
 import {
   View,
@@ -6,7 +7,8 @@ import {
   TouchableOpacity,
   TextInput,
   ScrollView,
-  Alert
+  Alert,
+  Modal,
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
@@ -15,10 +17,11 @@ import { useData } from '../../hooks/useData';
 import { AVAILABLE_ICONS } from '../../constants/availableIcons';
 
 interface CategoryManagerProps {
+  visible: boolean;
   onClose: () => void;
 }
 
-export function CategoryManager({ onClose }: CategoryManagerProps) {
+export function CategoryManager({ visible, onClose }: CategoryManagerProps) {
   const { colors, isDark } = useTheme();
   const { categories, addCategory, updateCategory, deleteCategory } = useData();
   const [selectedType, setSelectedType] = useState<'income' | 'expense'>('expense');
@@ -64,185 +67,225 @@ export function CategoryManager({ onClose }: CategoryManagerProps) {
   const currentCategories = selectedType === 'expense' ? expenseCategories : incomeCategories;
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-      showsVerticalScrollIndicator={false}
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+      statusBarTranslucent
     >
-      {/* Seletor de tipo */}
-      <View style={styles.typeContainer}>
-        <TouchableOpacity
-          style={[
-            styles.typeButton,
-            {
-              backgroundColor: selectedType === 'income'
-                ? colors.primary
-                : (isDark ? colors.darkLight : colors.surfaceDark),
-              borderColor: selectedType === 'income' ? colors.primary : colors.border,
-            },
-          ]}
-          onPress={() => setSelectedType('income')}
-        >
-          <FontAwesome5
-            name="arrow-down"
-            size={14}
-            color={selectedType === 'income' ? '#fff' : colors.success}
-          />
-          <Text style={[
-            styles.typeText,
-            { color: selectedType === 'income' ? '#fff' : colors.text },
-          ]}>
-            Receita
-          </Text>
-        </TouchableOpacity>
+      <View style={[styles.modalOverlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.5)' }]}>
+        <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+          {/* Cabeçalho */}
+          <View style={[styles.header, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.title, { color: colors.text }]}>Categorias</Text>
+            <TouchableOpacity onPress={onClose}>
+              <FontAwesome5 name="times" size={20} color={colors.textDim} />
+            </TouchableOpacity>
+          </View>
 
-        <TouchableOpacity
-          style={[
-            styles.typeButton,
-            {
-              backgroundColor: selectedType === 'expense'
-                ? colors.primary
-                : (isDark ? colors.darkLight : colors.surfaceDark),
-              borderColor: selectedType === 'expense' ? colors.primary : colors.border,
-            },
-          ]}
-          onPress={() => setSelectedType('expense')}
-        >
-          <FontAwesome5
-            name="arrow-up"
-            size={14}
-            color={selectedType === 'expense' ? '#fff' : colors.danger}
-          />
-          <Text style={[
-            styles.typeText,
-            { color: selectedType === 'expense' ? '#fff' : colors.text },
-          ]}>
-            Despesa
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Seletor de ícones */}
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>Escolha um ícone</Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.iconSelector}
-        contentContainerStyle={styles.iconSelectorContent}
-      >
-        {AVAILABLE_ICONS.map((icon) => (
-          <TouchableOpacity
-            key={icon}
-            style={[
-              styles.iconButton,
-              {
-                backgroundColor: selectedIcon === icon
-                  ? colors.primary
-                  : (isDark ? colors.darkLight : colors.surfaceDark),
-                borderColor: selectedIcon === icon ? colors.primary : colors.border,
-              },
-            ]}
-            onPress={() => setSelectedIcon(icon)}
-          >
-            <FontAwesome5
-              name={icon}
-              size={20}
-              color={selectedIcon === icon ? '#fff' : colors.textMuted}
-            />
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      {/* Input para nova categoria */}
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={[
-            styles.input,
-            {
-              backgroundColor: isDark ? colors.darkLight : colors.surfaceDark,
-              color: colors.text,
-              borderColor: colors.border,
-            },
-          ]}
-          value={newCategoryName}
-          onChangeText={setNewCategoryName}
-          placeholder="Nome da categoria"
-          placeholderTextColor={colors.textMuted}
-        />
-        <TouchableOpacity
-          style={[
-            styles.addButton,
-            { backgroundColor: editingId ? colors.success : colors.primary },
-          ]}
-          onPress={handleAddCategory}
-        >
-          <Text style={styles.addButtonText}>{editingId ? 'Salvar' : 'Adicionar'}</Text>
-        </TouchableOpacity>
-        {editingId && (
-          <TouchableOpacity
-            style={[styles.addButton, { backgroundColor: colors.textDim }]}
-            onPress={() => {
-              setEditingId(null);
-              setNewCategoryName('');
-              setSelectedIcon('tag');
-            }}
-          >
-            <Text style={styles.addButtonText}>X</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Lista de categorias */}
-      {currentCategories.length === 0 ? (
-        <View style={styles.emptyState}>
-          <FontAwesome5 name="tag" size={32} color={colors.textDim} />
-          <Text style={[styles.emptyText, { color: colors.textDim }]}>
-            Nenhuma categoria cadastrada
-          </Text>
-        </View>
-      ) : (
-        <View style={styles.list}>
-          {currentCategories.map((category) => (
-            <View
-              key={category.id}
-              style={[styles.categoryItem, { borderBottomColor: colors.border }]}
-            >
-              <View style={styles.categoryInfo}>
-                <View style={[
-                  styles.categoryIconWrap,
-                  { backgroundColor: isDark ? colors.darkLight : colors.surfaceDark },
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            {/* Seletor de tipo */}
+            <View style={styles.typeContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.typeButton,
+                  {
+                    backgroundColor: selectedType === 'income'
+                      ? colors.primary
+                      : (isDark ? colors.darkLight : colors.surfaceDark),
+                    borderColor: selectedType === 'income' ? colors.primary : colors.border,
+                  },
+                ]}
+                onPress={() => setSelectedType('income')}
+              >
+                <FontAwesome5
+                  name="arrow-down"
+                  size={14}
+                  color={selectedType === 'income' ? '#fff' : colors.success}
+                />
+                <Text style={[
+                  styles.typeText,
+                  { color: selectedType === 'income' ? '#fff' : colors.text },
                 ]}>
-                  <FontAwesome5
-                    name={category.icon || 'tag'}
-                    size={16}
-                    color={selectedType === 'income' ? colors.success : colors.danger}
-                  />
-                </View>
-                <Text style={[styles.categoryName, { color: colors.text }]}>{category.name}</Text>
-              </View>
-              <View style={{ flexDirection: 'row', gap: 15 }}>
-                <TouchableOpacity onPress={() => handleEditCategory(category)}>
-                  <FontAwesome5 name="edit" size={16} color={colors.primary} />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => deleteCategory(category.id)}>
-                  <FontAwesome5 name="trash" size={16} color={colors.danger} />
-                </TouchableOpacity>
-              </View>
+                  Receita
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.typeButton,
+                  {
+                    backgroundColor: selectedType === 'expense'
+                      ? colors.primary
+                      : (isDark ? colors.darkLight : colors.surfaceDark),
+                    borderColor: selectedType === 'expense' ? colors.primary : colors.border,
+                  },
+                ]}
+                onPress={() => setSelectedType('expense')}
+              >
+                <FontAwesome5
+                  name="arrow-up"
+                  size={14}
+                  color={selectedType === 'expense' ? '#fff' : colors.danger}
+                />
+                <Text style={[
+                  styles.typeText,
+                  { color: selectedType === 'expense' ? '#fff' : colors.text },
+                ]}>
+                  Despesa
+                </Text>
+              </TouchableOpacity>
             </View>
-          ))}
+
+            {/* Seletor de ícones */}
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Escolha um ícone</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.iconSelector}
+              contentContainerStyle={styles.iconSelectorContent}
+            >
+              {AVAILABLE_ICONS.map((icon) => (
+                <TouchableOpacity
+                  key={icon}
+                  style={[
+                    styles.iconButton,
+                    {
+                      backgroundColor: selectedIcon === icon
+                        ? colors.primary
+                        : (isDark ? colors.darkLight : colors.surfaceDark),
+                      borderColor: selectedIcon === icon ? colors.primary : colors.border,
+                    },
+                  ]}
+                  onPress={() => setSelectedIcon(icon)}
+                >
+                  <FontAwesome5
+                    name={icon}
+                    size={20}
+                    color={selectedIcon === icon ? '#fff' : colors.textMuted}
+                  />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            {/* Input para nova categoria */}
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: isDark ? colors.darkLight : colors.surfaceDark,
+                    color: colors.text,
+                    borderColor: colors.border,
+                  },
+                ]}
+                value={newCategoryName}
+                onChangeText={setNewCategoryName}
+                placeholder="Nome da categoria"
+                placeholderTextColor={colors.textMuted}
+              />
+              <TouchableOpacity
+                style={[
+                  styles.addButton,
+                  { backgroundColor: editingId ? colors.success : colors.primary },
+                ]}
+                onPress={handleAddCategory}
+              >
+                <Text style={styles.addButtonText}>{editingId ? 'Salvar' : 'Adicionar'}</Text>
+              </TouchableOpacity>
+              {editingId && (
+                <TouchableOpacity
+                  style={[styles.addButton, { backgroundColor: colors.textDim }]}
+                  onPress={() => {
+                    setEditingId(null);
+                    setNewCategoryName('');
+                    setSelectedIcon('tag');
+                  }}
+                >
+                  <Text style={styles.addButtonText}>X</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Lista de categorias */}
+            {currentCategories.length === 0 ? (
+              <View style={styles.emptyState}>
+                <FontAwesome5 name="tag" size={32} color={colors.textDim} />
+                <Text style={[styles.emptyText, { color: colors.textDim }]}>
+                  Nenhuma categoria cadastrada
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.list}>
+                {currentCategories.map((category) => (
+                  <View
+                    key={category.id}
+                    style={[styles.categoryItem, { borderBottomColor: colors.border }]}
+                  >
+                    <View style={styles.categoryInfo}>
+                      <View style={[
+                        styles.categoryIconWrap,
+                        { backgroundColor: isDark ? colors.darkLight : colors.surfaceDark },
+                      ]}>
+                        <FontAwesome5
+                          name={category.icon || 'tag'}
+                          size={16}
+                          color={selectedType === 'income' ? colors.success : colors.danger}
+                        />
+                      </View>
+                      <Text style={[styles.categoryName, { color: colors.text }]}>{category.name}</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', gap: 15 }}>
+                      <TouchableOpacity onPress={() => handleEditCategory(category)}>
+                        <FontAwesome5 name="edit" size={16} color={colors.primary} />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => deleteCategory(category.id)}>
+                        <FontAwesome5 name="trash" size={16} color={colors.danger} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+          </ScrollView>
+
+          {/* Botão Fechar */}
+          <TouchableOpacity
+            style={[styles.closeButton, { backgroundColor: colors.primary }]}
+            onPress={onClose}
+          >
+            <Text style={styles.closeButtonText}>Fechar</Text>
+          </TouchableOpacity>
         </View>
-      )}
-    </ScrollView>
+      </View>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  modalOverlay: {
     flex: 1,
+    justifyContent: 'flex-end',
   },
-  contentContainer: {
-    padding: 4,
-    paddingBottom: 24,
+  modalContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: '90%',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+  },
+  title: {
+    fontSize: 24,
+    fontFamily: 'Inter-Bold',
+    color: theme.colors.text,
   },
   typeContainer: {
     flexDirection: 'row',
@@ -341,5 +384,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
+  },
+  closeButton: {
+    marginTop: 10,
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
   },
 });

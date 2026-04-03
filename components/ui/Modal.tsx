@@ -8,8 +8,6 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
@@ -24,7 +22,7 @@ interface ModalProps {
 
 export function Modal({ visible, onClose, title, children }: ModalProps) {
   const { colors, isDark } = useTheme();
-  
+
   return (
     <RNModal
       visible={visible}
@@ -34,48 +32,37 @@ export function Modal({ visible, onClose, title, children }: ModalProps) {
       statusBarTranslucent
     >
       <KeyboardAvoidingView
-        style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        style={styles.keyboardView}
       >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={[styles.overlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.5)' }]}>
-            {/* 
-              TouchableWithoutFeedback no container do modal impede que toques 
-              no conteúdo propaguem para o overlay (que fecharia o modal).
-            */}
-            <TouchableWithoutFeedback onPress={() => {}}>
-              <View style={[
-                styles.modalContainer,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                  shadowColor: isDark ? '#000' : '#888',
-                  shadowOpacity: isDark ? 0.5 : 0.15,
-                }
-              ]}>
-                <View style={[styles.header, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
-                  <TouchableOpacity
-                    onPress={onClose}
-                    style={[styles.closeButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}
-                  >
-                    <FontAwesome5 name="times" size={18} color={colors.textDim} />
-                  </TouchableOpacity>
-                </View>
-                <ScrollView
-                  style={styles.content}
-                  contentContainerStyle={styles.contentContainer}
-                  showsVerticalScrollIndicator={false}
-                  keyboardShouldPersistTaps="handled"
-                  keyboardDismissMode="none"
-                >
-                  {children}
-                </ScrollView>
-              </View>
-            </TouchableWithoutFeedback>
+        <View style={[styles.overlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.5)' }]}>
+          <View style={[
+            styles.modalContainer,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+            }
+          ]}>
+            <View style={[styles.header, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+              <TouchableOpacity
+                onPress={onClose}
+                style={[styles.closeButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}
+              >
+                <FontAwesome5 name="times" size={18} color={colors.textDim} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView
+              style={styles.scrollView}
+              contentContainerStyle={styles.contentContainer}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+            >
+              {children}
+            </ScrollView>
           </View>
-        </TouchableWithoutFeedback>
+        </View>
       </KeyboardAvoidingView>
     </RNModal>
   );
@@ -98,9 +85,8 @@ const styles = StyleSheet.create({
     maxWidth: 500,
     maxHeight: '90%',
     borderWidth: 1,
-    shadowOffset: { width: 0, height: 8 },
-    shadowRadius: 24,
-    elevation: 12,
+    // Flex column para distribuir espaço entre header e conteúdo
+    flexDirection: 'column',
   },
   header: {
     flexDirection: 'row',
@@ -109,6 +95,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingBottom: 12,
     borderBottomWidth: 1,
+    // Altura fixa para o header
+    flexShrink: 0,
   },
   title: {
     fontSize: 20,
@@ -122,10 +110,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  content: {
-    flexGrow: 0,
+  scrollView: {
+    // Ocupa o espaço restante
+    flex: 1,
   },
   contentContainer: {
     paddingBottom: 10,
+    // Garante que o conteúdo seja maior que a tela quando necessário
+    flexGrow: 1,
   },
 });
