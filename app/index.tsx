@@ -1145,60 +1145,40 @@ export default function HomeScreen() {
       </Modal>
 
       {/* Modal de Categorias */}
-      <Modal
+      <CategoryManager
         visible={showCategoriesModal}
         onClose={() => setShowCategoriesModal(false)}
-        title="Categorias"
-      >
-        <CategoryManager onClose={() => setShowCategoriesModal(false)} />
-      </Modal>
+      />
 
       {/* Modal de Contas Recorrentes */}
-      <Modal
+      <RecurringBillsManager
         visible={showRecurringBillsModal}
         onClose={() => setShowRecurringBillsModal(false)}
-        title="Contas Recorrentes"
-      >
-        <RecurringBillsManager
-          onClose={() => setShowRecurringBillsModal(false)}
-        />
-      </Modal>
+      />
 
       {/* Modal de Cartões de Crédito */}
-      <Modal
+      <CreditCardManager
         visible={showCreditCardsModal}
         onClose={() => setShowCreditCardsModal(false)}
-        title="Cartões de Crédito"
-      >
-        <CreditCardManager onClose={() => setShowCreditCardsModal(false)} />
-      </Modal>
+      />
 
       {/* Modal de Orçamentos */}
-      <Modal
+      <BudgetManager
         visible={showBudgetsModal}
         onClose={() => setShowBudgetsModal(false)}
-        title="Orçamentos"
-      >
-        <BudgetManager onClose={() => setShowBudgetsModal(false)} />
-      </Modal>
+      />
 
       {/* Modal de Backup e Restauração */}
-      <Modal
+      <BackupRestore
         visible={showBackupModal}
         onClose={() => setShowBackupModal(false)}
-        title="Backup e Restauração"
-      >
-        <BackupRestore onClose={() => setShowBackupModal(false)} />
-      </Modal>
+      />
 
       {/* Modal de Sincronização em Tempo Real */}
-      <Modal
+      <FirebaseSync
         visible={showSyncModal}
         onClose={() => setShowSyncModal(false)}
-        title="Sincronização"
-      >
-        <FirebaseSync onClose={() => setShowSyncModal(false)} />
-      </Modal>
+      />
 
       {/* Modal de Calendário Interativo */}
       <CalendarModal

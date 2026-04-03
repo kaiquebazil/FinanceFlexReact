@@ -20,21 +20,24 @@ import { useToast } from '../../hooks/useToast';
 import { theme } from '../../constants/theme';
 import { useData } from '../../hooks/useData';
 import { formatCurrency } from '../../utils/currency';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface CreditCardManagerProps {
+  visible: boolean;
   onClose: () => void;
 }
 
-export function CreditCardManager({ onClose }: CreditCardManagerProps) {
+export function CreditCardManager({ visible, onClose }: CreditCardManagerProps) {
   const { creditCards, setCreditCards, addCreditCard, deleteCreditCard } = useData();
   const { toast, showToast, hideToast } = useToast();
+  const { colors, isDark } = useTheme();
   const [selectedCard, setSelectedCard] = useState<any>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  
+
   // Estado para novo cartão
   const [newCard, setNewCard] = useState({
     name: '',
@@ -84,8 +87,8 @@ export function CreditCardManager({ onClose }: CreditCardManagerProps) {
     const installments = parseInt(newPurchase.installments);
 
     // Atualizar valor usado do cartão
-    const updatedCards = creditCards.map(card => 
-      card.id === selectedCard.id 
+    const updatedCards = creditCards.map(card =>
+      card.id === selectedCard.id
         ? { ...card, used: card.used + amount }
         : card
     );
@@ -109,122 +112,151 @@ export function CreditCardManager({ onClose }: CreditCardManagerProps) {
   };
 
   return (
-    <View style={styles.container}>
-        {creditCards.length === 0 ? (
-          <View style={styles.emptyState}>
-            <FontAwesome5 name="credit-card" size={50} color={theme.colors.textDim} />
-            <Text style={styles.emptyText}>Nenhum cartão cadastrado</Text>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+      statusBarTranslucent
+    >
+      <View style={[styles.modalOverlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.5)' }]}>
+        <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+          {/* Cabeçalho */}
+          <View style={[styles.header, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.title, { color: colors.text }]}>Cartões de Crédito</Text>
+            <TouchableOpacity onPress={onClose}>
+              <FontAwesome5 name="times" size={20} color={colors.textDim} />
+            </TouchableOpacity>
           </View>
-        ) : (
-          creditCards.map((card) => {
-            const available = calculateAvailable(card);
-            const percentage = calculatePercentage(card);
-            const isOverLimit = available < 0;
 
-            return (
-              <View key={card.id} style={styles.card}>
-                {/* Cabeçalho do Cartão */}
-                <View style={styles.cardHeader}>
-                  <View style={styles.cardTitleContainer}>
-                    <FontAwesome5 name="credit-card" size={20} color={card.color || theme.colors.primary} />
-                    <Text style={styles.cardName}>{card.name}</Text>
-                  </View>
-                  <TouchableOpacity 
-                    onPress={() => deleteCreditCard(card.id)}
-                    style={styles.deleteButton}
-                  >
-                    <FontAwesome5 name="trash" size={16} color={theme.colors.danger} />
-                  </TouchableOpacity>
-                </View>
-
-                {/* Limite Total */}
-                <Text style={styles.limitText}>
-                  Limite total {formatCurrency(card.limit, 'BRL')}
-                </Text>
-
-                {/* Barras de Progresso */}
-                <View style={styles.progressContainer}>
-                  <View style={styles.progressBar}>
-                    <View 
-                      style={[
-                        styles.progressFill,
-                        { 
-                          width: `${Math.min(percentage, 100)}%`,
-                          backgroundColor: isOverLimit ? theme.colors.danger : theme.colors.success 
-                        }
-                      ]} 
-                    />
-                  </View>
-                </View>
-
-                {/* Usado e Disponível */}
-                <View style={styles.usageContainer}>
-                  <View style={styles.usageItem}>
-                    <Text style={styles.usageLabel}>Usado:</Text>
-                    <Text style={[styles.usageValue, { color: theme.colors.danger }]}>
-                      {formatCurrency(card.used || 0, 'BRL')}
-                    </Text>
-                  </View>
-                  <View style={styles.usageItem}>
-                    <Text style={styles.usageLabel}>Disponível:</Text>
-                    <Text style={[styles.usageValue, { color: available > 0 ? theme.colors.success : theme.colors.danger }]}>
-                      {formatCurrency(available, 'BRL')}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Datas */}
-                <View style={styles.datesContainer}>
-                  <View style={styles.dateItem}>
-                    <FontAwesome5 name="calendar-times" size={12} color={theme.colors.textDim} />
-                    <Text style={styles.dateText}>
-                      Fecha dia {formatDate(card.closingDay)}
-                    </Text>
-                  </View>
-                  <View style={styles.dateItem}>
-                    <FontAwesome5 name="calendar-check" size={12} color={theme.colors.textDim} />
-                    <Text style={styles.dateText}>
-                      Vence dia {formatDate(card.dueDay)}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Botões de Ação */}
-                <View style={styles.actionButtons}>
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => {
-                      setSelectedCard(card);
-                      setShowDetails(true);
-                    }}
-                  >
-                    <FontAwesome5 name="search" size={14} color={theme.colors.primary} />
-                    <Text style={styles.actionButtonText}>Detalhes</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[styles.actionButton, styles.purchaseButton]}
-                    onPress={() => {
-                      setSelectedCard(card);
-                      setShowPurchaseModal(true);
-                    }}
-                  >
-                    <FontAwesome5 name="shopping-cart" size={14} color="#fff" />
-                    <Text style={[styles.actionButtonText, { color: '#fff' }]}>Compra</Text>
-                  </TouchableOpacity>
-                </View>
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {creditCards.length === 0 ? (
+              <View style={styles.emptyState}>
+                <FontAwesome5 name="credit-card" size={50} color={colors.textDim} />
+                <Text style={[styles.emptyText, { color: colors.textDim }]}>Nenhum cartão cadastrado</Text>
               </View>
-            );
-          })
-        )}
+            ) : (
+              creditCards.map((card) => {
+                const available = calculateAvailable(card);
+                const percentage = calculatePercentage(card);
+                const isOverLimit = available < 0;
 
-        {/* Botão Adicionar Cartão */}
-        <Button
-          title="Adicionar Cartão"
-          icon="plus"
-          onPress={() => setShowAddModal(true)}
-          style={styles.addButton}
-        />
+                return (
+                  <View key={card.id} style={[styles.card, { backgroundColor: isDark ? colors.darkLight : colors.surfaceDark, borderColor: colors.border }]}>
+                    {/* Cabeçalho do Cartão */}
+                    <View style={styles.cardHeader}>
+                      <View style={styles.cardTitleContainer}>
+                        <FontAwesome5 name="credit-card" size={20} color={card.color || colors.primary} />
+                        <Text style={[styles.cardName, { color: colors.text }]}>{card.name}</Text>
+                      </View>
+                      <TouchableOpacity
+                        onPress={() => deleteCreditCard(card.id)}
+                        style={styles.deleteButton}
+                      >
+                        <FontAwesome5 name="trash" size={16} color={colors.danger} />
+                      </TouchableOpacity>
+                    </View>
+
+                    {/* Limite Total */}
+                    <Text style={[styles.limitText, { color: colors.textDim }]}>
+                      Limite total {formatCurrency(card.limit, 'BRL')}
+                    </Text>
+
+                    {/* Barras de Progresso */}
+                    <View style={styles.progressContainer}>
+                      <View style={[styles.progressBar, { backgroundColor: isDark ? colors.dark : colors.surfaceDark }]}>
+                        <View
+                          style={[
+                            styles.progressFill,
+                            {
+                              width: `${Math.min(percentage, 100)}%`,
+                              backgroundColor: isOverLimit ? colors.danger : colors.success
+                            }
+                          ]}
+                        />
+                      </View>
+                    </View>
+
+                    {/* Usado e Disponível */}
+                    <View style={styles.usageContainer}>
+                      <View style={styles.usageItem}>
+                        <Text style={[styles.usageLabel, { color: colors.textDim }]}>Usado:</Text>
+                        <Text style={[styles.usageValue, { color: colors.danger }]}>
+                          {formatCurrency(card.used || 0, 'BRL')}
+                        </Text>
+                      </View>
+                      <View style={styles.usageItem}>
+                        <Text style={[styles.usageLabel, { color: colors.textDim }]}>Disponível:</Text>
+                        <Text style={[styles.usageValue, { color: available > 0 ? colors.success : colors.danger }]}>
+                          {formatCurrency(available, 'BRL')}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Datas */}
+                    <View style={[styles.datesContainer, { borderTopColor: colors.border, borderBottomColor: colors.border }]}>
+                      <View style={styles.dateItem}>
+                        <FontAwesome5 name="calendar-times" size={12} color={colors.textDim} />
+                        <Text style={[styles.dateText, { color: colors.textDim }]}>
+                          Fecha dia {formatDate(card.closingDay)}
+                        </Text>
+                      </View>
+                      <View style={styles.dateItem}>
+                        <FontAwesome5 name="calendar-check" size={12} color={colors.textDim} />
+                        <Text style={[styles.dateText, { color: colors.textDim }]}>
+                          Vence dia {formatDate(card.dueDay)}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Botões de Ação */}
+                    <View style={styles.actionButtons}>
+                      <TouchableOpacity
+                        style={[styles.actionButton, { borderColor: colors.primary }]}
+                        onPress={() => {
+                          setSelectedCard(card);
+                          setShowDetails(true);
+                        }}
+                      >
+                        <FontAwesome5 name="search" size={14} color={colors.primary} />
+                        <Text style={[styles.actionButtonText, { color: colors.primary }]}>Detalhes</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[styles.actionButton, styles.purchaseButton, { backgroundColor: colors.primary, borderColor: colors.primary }]}
+                        onPress={() => {
+                          setSelectedCard(card);
+                          setShowPurchaseModal(true);
+                        }}
+                      >
+                        <FontAwesome5 name="shopping-cart" size={14} color="#fff" />
+                        <Text style={[styles.actionButtonText, { color: '#fff' }]}>Compra</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                );
+              })
+            )}
+
+            {/* Botão Adicionar Cartão */}
+            <Button
+              title="Adicionar Cartão"
+              icon="plus"
+              onPress={() => setShowAddModal(true)}
+              style={styles.addButton}
+            />
+
+            <View style={{ height: 20 }} />
+          </ScrollView>
+
+          {/* Botão Fechar */}
+          <Button
+            title="Fechar"
+            onPress={onClose}
+            style={styles.closeButton}
+          />
+        </View>
+      </View>
 
       {/* Modal Adicionar Cartão */}
       <Modal
@@ -239,13 +271,13 @@ export function CreditCardManager({ onClose }: CreditCardManagerProps) {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View style={styles.modalOverlay}>
+            <View style={[styles.innerModalOverlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.9)' : 'rgba(0,0,0,0.7)' }]}>
               <TouchableWithoutFeedback onPress={() => {}}>
-                <View style={styles.modalContent}>
-                  <View style={styles.modalHeader}>
-                    <Text style={styles.modalTitle}>Novo Cartão</Text>
+                <View style={[styles.innerModalContent, { backgroundColor: colors.surface }]}>
+                  <View style={[styles.innerModalHeader, { borderBottomColor: colors.border }]}>
+                    <Text style={[styles.innerModalTitle, { color: colors.text }]}>Novo Cartão</Text>
                     <TouchableOpacity onPress={() => setShowAddModal(false)}>
-                      <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
+                      <FontAwesome5 name="times" size={20} color={colors.textDim} />
                     </TouchableOpacity>
                   </View>
 
@@ -319,13 +351,13 @@ export function CreditCardManager({ onClose }: CreditCardManagerProps) {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View style={styles.modalOverlay}>
+            <View style={[styles.innerModalOverlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.9)' : 'rgba(0,0,0,0.7)' }]}>
               <TouchableWithoutFeedback onPress={() => {}}>
-                <View style={styles.modalContent}>
-                  <View style={styles.modalHeader}>
-                    <Text style={styles.modalTitle}>Nova Compra</Text>
+                <View style={[styles.innerModalContent, { backgroundColor: colors.surface }]}>
+                  <View style={[styles.innerModalHeader, { borderBottomColor: colors.border }]}>
+                    <Text style={[styles.innerModalTitle, { color: colors.text }]}>Nova Compra</Text>
                     <TouchableOpacity onPress={() => setShowPurchaseModal(false)}>
-                      <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
+                      <FontAwesome5 name="times" size={20} color={colors.textDim} />
                     </TouchableOpacity>
                   </View>
 
@@ -335,9 +367,9 @@ export function CreditCardManager({ onClose }: CreditCardManagerProps) {
                       keyboardDismissMode="none"
                       showsVerticalScrollIndicator={false}
                     >
-                      <View style={styles.selectedCardInfo}>
+                      <View style={[styles.selectedCardInfo, { backgroundColor: isDark ? colors.darkLight : colors.surfaceDark }]}>
                         <FontAwesome5 name="credit-card" size={16} color={selectedCard.color} />
-                        <Text style={styles.selectedCardName}>{selectedCard.name}</Text>
+                        <Text style={[styles.selectedCardName, { color: colors.text }]}>{selectedCard.name}</Text>
                       </View>
 
                       <Input
@@ -364,8 +396,8 @@ export function CreditCardManager({ onClose }: CreditCardManagerProps) {
                       />
 
                       {newPurchase.amount && newPurchase.installments && (
-                        <View style={styles.installmentInfo}>
-                          <Text style={styles.installmentText}>
+                        <View style={[styles.installmentInfo, { backgroundColor: isDark ? colors.darkLight : colors.surfaceDark }]}>
+                          <Text style={[styles.installmentText, { color: colors.primary }]}>
                             {parseInt(newPurchase.installments)}x de {formatCurrency(
                               parseFloat(newPurchase.amount.replace(',', '.')) / parseInt(newPurchase.installments),
                               'BRL'
@@ -405,55 +437,55 @@ export function CreditCardManager({ onClose }: CreditCardManagerProps) {
         statusBarTranslucent
       >
         <TouchableWithoutFeedback onPress={() => setShowDetails(false)}>
-          <View style={styles.modalOverlay}>
+          <View style={[styles.innerModalOverlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.9)' : 'rgba(0,0,0,0.7)' }]}>
             <TouchableWithoutFeedback onPress={() => {}}>
-              <View style={styles.modalContent}>
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Detalhes do Cartão</Text>
+              <View style={[styles.innerModalContent, { backgroundColor: colors.surface }]}>
+                <View style={[styles.innerModalHeader, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.innerModalTitle, { color: colors.text }]}>Detalhes do Cartão</Text>
                   <TouchableOpacity onPress={() => setShowDetails(false)}>
-                    <FontAwesome5 name="times" size={20} color={theme.colors.textDim} />
+                    <FontAwesome5 name="times" size={20} color={colors.textDim} />
                   </TouchableOpacity>
                 </View>
 
                 {selectedCard && (
                   <ScrollView showsVerticalScrollIndicator={false}>
-                    <View style={styles.detailsCard}>
+                    <View style={[styles.detailsCard, { backgroundColor: isDark ? colors.darkLight : colors.surfaceDark }]}>
                       <View style={styles.detailsHeader}>
                         <FontAwesome5 name="credit-card" size={30} color={selectedCard.color} />
-                        <Text style={styles.detailsCardName}>{selectedCard.name}</Text>
+                        <Text style={[styles.detailsCardName, { color: colors.text }]}>{selectedCard.name}</Text>
                       </View>
 
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Limite Total:</Text>
-                        <Text style={styles.detailValue}>
+                      <View style={[styles.detailRow, { borderBottomColor: colors.border }]}>
+                        <Text style={[styles.detailLabel, { color: colors.textDim }]}>Limite Total:</Text>
+                        <Text style={[styles.detailValue, { color: colors.text }]}>
                           {formatCurrency(selectedCard.limit, 'BRL')}
                         </Text>
                       </View>
 
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Valor Utilizado:</Text>
-                        <Text style={[styles.detailValue, { color: theme.colors.danger }]}>
+                      <View style={[styles.detailRow, { borderBottomColor: colors.border }]}>
+                        <Text style={[styles.detailLabel, { color: colors.textDim }]}>Valor Utilizado:</Text>
+                        <Text style={[styles.detailValue, { color: colors.danger }]}>
                           {formatCurrency(selectedCard.used || 0, 'BRL')}
                         </Text>
                       </View>
 
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Disponível:</Text>
-                        <Text style={[styles.detailValue, { color: theme.colors.success }]}>
+                      <View style={[styles.detailRow, { borderBottomColor: colors.border }]}>
+                        <Text style={[styles.detailLabel, { color: colors.textDim }]}>Disponível:</Text>
+                        <Text style={[styles.detailValue, { color: colors.success }]}>
                           {formatCurrency(calculateAvailable(selectedCard), 'BRL')}
                         </Text>
                       </View>
 
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Fechamento:</Text>
-                        <Text style={styles.detailValue}>
+                      <View style={[styles.detailRow, { borderBottomColor: colors.border }]}>
+                        <Text style={[styles.detailLabel, { color: colors.textDim }]}>Fechamento:</Text>
+                        <Text style={[styles.detailValue, { color: colors.text }]}>
                           Dia {formatDate(selectedCard.closingDay)}
                         </Text>
                       </View>
 
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Vencimento:</Text>
-                        <Text style={styles.detailValue}>
+                      <View style={[styles.detailRow, { borderBottomColor: colors.border }]}>
+                        <Text style={[styles.detailLabel, { color: colors.textDim }]}>Vencimento:</Text>
+                        <Text style={[styles.detailValue, { color: colors.text }]}>
                           Dia {formatDate(selectedCard.dueDay)}
                         </Text>
                       </View>
@@ -491,14 +523,32 @@ export function CreditCardManager({ onClose }: CreditCardManagerProps) {
         type={toast.type}
         onHide={hideToast}
       />
-    </View>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    // Removido flex:1
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     padding: 20,
+    maxHeight: '90%',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+  },
+  title: {
+    fontSize: 24,
+    fontFamily: 'Inter-Bold',
   },
   keyboardView: {
     flex: 1,
@@ -510,16 +560,13 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: theme.colors.textDim,
     marginTop: 15,
   },
   card: {
-    backgroundColor: theme.colors.darkLight,
     borderRadius: 12,
     padding: 16,
     marginBottom: 15,
     borderWidth: 1,
-    borderColor: theme.colors.border,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -535,7 +582,6 @@ const styles = StyleSheet.create({
   cardName: {
     fontSize: 18,
     fontFamily: 'Inter-SemiBold',
-    color: theme.colors.text,
   },
   deleteButton: {
     padding: 5,
@@ -543,7 +589,6 @@ const styles = StyleSheet.create({
   limitText: {
     fontSize: 14,
     fontFamily: 'Inter-Medium',
-    color: theme.colors.textDim,
     marginBottom: 10,
   },
   progressContainer: {
@@ -551,7 +596,6 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 8,
-    backgroundColor: theme.colors.dark,
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -571,7 +615,6 @@ const styles = StyleSheet.create({
   },
   usageLabel: {
     fontSize: 13,
-    color: theme.colors.textDim,
   },
   usageValue: {
     fontSize: 14,
@@ -584,7 +627,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: theme.colors.border,
   },
   dateItem: {
     flexDirection: 'row',
@@ -593,7 +635,6 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: 12,
-    color: theme.colors.textDim,
   },
   actionButtons: {
     flexDirection: 'row',
@@ -608,46 +649,42 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: theme.colors.primary,
   },
   purchaseButton: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
+    borderWidth: 1,
   },
   actionButtonText: {
     fontSize: 14,
     fontFamily: 'Inter-Medium',
-    color: theme.colors.primary,
   },
   addButton: {
     marginTop: 10,
     marginBottom: 20,
   },
-  modalOverlay: {
+  closeButton: {
+    marginTop: 10,
+  },
+  innerModalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     justifyContent: 'flex-end',
   },
-  modalContent: {
-    backgroundColor: theme.colors.dark,
+  innerModalContent: {
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
     maxHeight: '80%',
   },
-  modalHeader: {
+  innerModalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
     paddingBottom: 15,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
   },
-  modalTitle: {
+  innerModalTitle: {
     fontSize: 18,
     fontFamily: 'Inter-SemiBold',
-    color: theme.colors.text,
   },
   modalButtons: {
     flexDirection: 'row',
@@ -662,7 +699,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: theme.colors.darkLight,
     padding: 15,
     borderRadius: 10,
     marginBottom: 20,
@@ -670,10 +706,8 @@ const styles = StyleSheet.create({
   selectedCardName: {
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
-    color: theme.colors.text,
   },
   installmentInfo: {
-    backgroundColor: theme.colors.darkLight,
     padding: 15,
     borderRadius: 10,
     marginBottom: 20,
@@ -682,10 +716,8 @@ const styles = StyleSheet.create({
   installmentText: {
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
-    color: theme.colors.primary,
   },
   detailsCard: {
-    backgroundColor: theme.colors.darkLight,
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,
@@ -697,7 +729,6 @@ const styles = StyleSheet.create({
   detailsCardName: {
     fontSize: 20,
     fontFamily: 'Inter-Bold',
-    color: theme.colors.text,
     marginTop: 10,
   },
   detailRow: {
@@ -705,16 +736,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
   },
   detailLabel: {
     fontSize: 15,
-    color: theme.colors.textDim,
   },
   detailValue: {
     fontSize: 15,
     fontFamily: 'Inter-SemiBold',
-    color: theme.colors.text,
   },
   backButton: {
     marginTop: 10,

@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Modal,
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -21,6 +22,7 @@ import { Button } from '../ui/Button';
 import { ConfirmModal } from '../ui/ConfirmModal';
 
 interface FirebaseSyncProps {
+  visible: boolean;
   onClose: () => void;
 }
 
@@ -58,17 +60,17 @@ function statusIcon(status: SyncStatus): string {
 
 // ─── Componente ──────────────────────────────────────────────────────────────
 
-export function FirebaseSync({ onClose }: FirebaseSyncProps) {
+export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
   const { colors, isDark } = useTheme();
-  const { 
-    user, 
-    loading, 
-    syncStatus, 
-    lastSyncedAt, 
-    signIn, 
-    signUp, 
-    logOut, 
-    resetPassword, 
+  const {
+    user,
+    loading,
+    syncStatus,
+    lastSyncedAt,
+    signIn,
+    signUp,
+    logOut,
+    resetPassword,
     manualSync,
     uploadData,
     downloadData
@@ -207,209 +209,229 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
-  if (loading) {
-    return (
-      <View style={[styles.centered, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={[styles.loadingText, { color: colors.textDim }]}>Carregando…</Text>
-      </View>
-    );
-  }
-
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={[styles.keyboardAvoid, { backgroundColor: colors.background }]}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 32 : 0}
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+      statusBarTranslucent
     >
-      {/* Notificação fixa no topo */}
-      {modalNotif.visible && (
-        <View style={[
-          styles.modalNotification,
-          modalNotif.type === 'error' && styles.notifError,
-          modalNotif.type === 'success' && styles.notifSuccess,
-          modalNotif.type === 'warning' && styles.notifWarning,
-          modalNotif.type === 'info' && { backgroundColor: colors.primary },
-        ]}>
-          <FontAwesome5
-            name={modalNotif.type === 'error' ? 'exclamation-circle' : modalNotif.type === 'success' ? 'check-circle' : 'info-circle'}
-            size={16}
-            color="#fff"
-            style={styles.notifIcon}
-          />
-          <Text style={styles.notifText}>{modalNotif.message}</Text>
-        </View>
-      )}
-
-      <View style={styles.container}>
-        {/* Cabeçalho */}
-        <View style={styles.header}>
-          <View style={[styles.headerIconWrap, { backgroundColor: isDark ? 'rgba(124,77,255,0.15)' : 'rgba(108,63,255,0.1)' }]}>
-            <FontAwesome5 name="cloud" size={36} color={colors.primary} />
+      <View style={[styles.modalOverlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.5)' }]}>
+        <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+          {/* Cabeçalho */}
+          <View style={[styles.header, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.title, { color: colors.text }]}>Sincronização</Text>
+            <TouchableOpacity onPress={onClose}>
+              <FontAwesome5 name="times" size={20} color={colors.textDim} />
+            </TouchableOpacity>
           </View>
-          <Text style={[styles.title, { color: colors.text }]}>Sincronização na Nuvem</Text>
-          <Text style={[styles.subtitle, { color: colors.textDim }]}>
-            Mantenha seus dados seguros e sincronizados entre todos os seus dispositivos.
-          </Text>
-        </View>
 
-        {user ? (
-          // ─── Usuário logado ──────────────────────────────────────────────
-          <>
-            {/* Card de status */}
-            <View style={[styles.statusCard, { backgroundColor: cardBg, borderLeftColor: colors.primary }]}>
-              <View style={styles.statusRow}>
-                <FontAwesome5
-                  name={statusIcon(syncStatus)}
-                  size={20}
-                  color={currentStatusColor}
-                />
-                <Text style={[styles.statusText, { color: currentStatusColor }]}>
-                  {statusLabel(syncStatus)}
-                </Text>
-                {syncStatus === 'syncing' && (
-                  <ActivityIndicator size="small" color={colors.primary} style={{ marginLeft: 6 }} />
-                )}
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            {/* Header */}
+            <View style={styles.headerSection}>
+              <View style={[styles.headerIconWrap, { backgroundColor: isDark ? 'rgba(124,77,255,0.15)' : 'rgba(108,63,255,0.1)' }]}>
+                <FontAwesome5 name="cloud" size={36} color={colors.primary} />
               </View>
-
-              {lastSyncedAt && (
-                <Text style={[styles.lastSync, { color: colors.textDim }]}>
-                  Última sincronização:{' '}
-                  {lastSyncedAt.toLocaleString('pt-BR')}
-                </Text>
-              )}
-
-              <View style={[styles.realtimeBadge, { backgroundColor: isDark ? 'rgba(76, 175, 80, 0.1)' : 'rgba(76, 175, 80, 0.05)' }]}>
-                <FontAwesome5 name="bolt" size={12} color="#4CAF50" />
-                <Text style={styles.realtimeBadgeText}>
-                  Sincronização em tempo real ativa
-                </Text>
-              </View>
-            </View>
-
-            {/* Info do usuário */}
-            <View style={[styles.userCard, { backgroundColor: cardBg }]}>
-              <View style={styles.userAvatar}>
-                <FontAwesome5 name="user-circle" size={32} color={colors.primary} />
-              </View>
-              <View style={styles.userInfo}>
-                <Text style={[styles.userName, { color: colors.text }]}>{user.displayName || 'Usuário'}</Text>
-                <Text style={[styles.userEmail, { color: colors.textDim }]}>{user.email}</Text>
-              </View>
-            </View>
-
-            {/* Opções de Sincronização */}
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Controle de Dados</Text>
-            
-            <View style={styles.syncOptionsGrid}>
-              <TouchableOpacity 
-                style={[styles.syncOptionCard, { backgroundColor: cardBg, borderColor: colors.border }]}
-                onPress={() => setShowUploadConfirm(true)}
-              >
-                <View style={[styles.syncOptionIcon, { backgroundColor: 'rgba(124, 77, 255, 0.1)' }]}>
-                  <FontAwesome5 name="cloud-upload-alt" size={20} color={colors.primary} />
-                </View>
-                <Text style={[styles.syncOptionTitle, { color: colors.text }]}>Enviar Dados</Text>
-                <Text style={[styles.syncOptionDesc, { color: colors.textDim }]}>Salva seus dados locais na nuvem</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={[styles.syncOptionCard, { backgroundColor: cardBg, borderColor: colors.border }]}
-                onPress={() => setShowDownloadConfirm(true)}
-              >
-                <View style={[styles.syncOptionIcon, { backgroundColor: 'rgba(76, 175, 80, 0.1)' }]}>
-                  <FontAwesome5 name="cloud-download-alt" size={20} color="#4CAF50" />
-                </View>
-                <Text style={[styles.syncOptionTitle, { color: colors.text }]}>Baixar Dados</Text>
-                <Text style={[styles.syncOptionDesc, { color: colors.textDim }]}>Substitui dados locais pelos da nuvem</Text>
-              </TouchableOpacity>
-            </View>
-
-            <Button
-              title={syncLoading ? 'Sincronizando…' : '🔄 Sincronização Completa'}
-              onPress={handleManualSync}
-              loading={syncLoading}
-              style={styles.fullSyncButton}
-            />
-
-            <Button
-              title="🚪 Sair da Conta"
-              onPress={() => setShowLogoutConfirm(true)}
-              variant="outline"
-              style={styles.logoutButton}
-            />
-
-            {/* Nota informativa */}
-            <View style={[styles.infoBox, { backgroundColor: isDark ? 'rgba(124, 77, 255, 0.1)' : 'rgba(124, 77, 255, 0.05)' }]}>
-              <Text style={[styles.infoText, { color: colors.text }]}>
-                💡 Use o <Text style={{ fontWeight: 'bold' }}>Enviar Dados</Text> para garantir que seu backup está atualizado antes de trocar de aparelho. Use o <Text style={{ fontWeight: 'bold' }}>Baixar Dados</Text> apenas se quiser restaurar um backup antigo.
+              <Text style={[styles.mainTitle, { color: colors.text }]}>Sincronização na Nuvem</Text>
+              <Text style={[styles.subtitle, { color: colors.textDim }]}>
+                Mantenha seus dados seguros e sincronizados entre todos os seus dispositivos.
               </Text>
             </View>
-          </>
-        ) : (
-          // ─── Usuário deslogado ───────────────────────────────────────────
-          <View style={[styles.formCard, { backgroundColor: cardBg }]}>
-            <Text style={[styles.formTitle, { color: colors.text }]}>
-              {isSignUp ? 'Criar Nova Conta' : 'Acesse sua Conta'}
-            </Text>
 
-            {isSignUp && (
-              <TextInput
-                style={[styles.input, { backgroundColor: isDark ? colors.surfaceDark : colors.background, color: colors.text, borderColor: colors.border }]}
-                placeholder="Seu Nome"
-                placeholderTextColor={colors.textDim}
-                value={displayName}
-                onChangeText={setDisplayName}
-              />
+            {loading ? (
+              <View style={styles.centered}>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={[styles.loadingText, { color: colors.textDim }]}>Carregando…</Text>
+              </View>
+            ) : user ? (
+              // ─── Usuário logado ──────────────────────────────────────────────
+              <>
+                {/* Card de status */}
+                <View style={[styles.statusCard, { backgroundColor: cardBg, borderLeftColor: colors.primary }]}
+                  >
+                  <View style={styles.statusRow}>
+                    <FontAwesome5
+                      name={statusIcon(syncStatus)}
+                      size={20}
+                      color={currentStatusColor}
+                    />
+                    <Text style={[styles.statusText, { color: currentStatusColor }]}>
+                      {statusLabel(syncStatus)}
+                    </Text>
+                    {syncStatus === 'syncing' && (
+                      <ActivityIndicator size="small" color={colors.primary} style={{ marginLeft: 6 }} />
+                    )}
+                  </View>
+
+                  {lastSyncedAt && (
+                    <Text style={[styles.lastSync, { color: colors.textDim }]}>
+                      Última sincronização:{' '}
+                      {lastSyncedAt.toLocaleString('pt-BR')}
+                    </Text>
+                  )}
+
+                  <View style={[styles.realtimeBadge, { backgroundColor: isDark ? 'rgba(76, 175, 80, 0.1)' : 'rgba(76, 175, 80, 0.05)' }]}>
+                    <FontAwesome5 name="bolt" size={12} color="#4CAF50" />
+                    <Text style={styles.realtimeBadgeText}>
+                      Sincronização em tempo real ativa
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Info do usuário */}
+                <View style={[styles.userCard, { backgroundColor: cardBg }]}>
+                  <View style={styles.userAvatar}>
+                    <FontAwesome5 name="user-circle" size={32} color={colors.primary} />
+                  </View>
+                  <View style={styles.userInfo}>
+                    <Text style={[styles.userName, { color: colors.text }]}>{user.displayName || 'Usuário'}</Text>
+                    <Text style={[styles.userEmail, { color: colors.textDim }]}>{user.email}</Text>
+                  </View>
+                </View>
+
+                {/* Opções de Sincronização */}
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>Controle de Dados</Text>
+
+                <View style={styles.syncOptionsGrid}>
+                  <TouchableOpacity
+                    style={[styles.syncOptionCard, { backgroundColor: cardBg, borderColor: colors.border }]}
+                    onPress={() => setShowUploadConfirm(true)}
+                  >
+                    <View style={[styles.syncOptionIcon, { backgroundColor: 'rgba(124, 77, 255, 0.1)' }]}>
+                      <FontAwesome5 name="cloud-upload-alt" size={20} color={colors.primary} />
+                    </View>
+                    <Text style={[styles.syncOptionTitle, { color: colors.text }]}>Enviar Dados</Text>
+                    <Text style={[styles.syncOptionDesc, { color: colors.textDim }]}>Salva seus dados locais na nuvem</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.syncOptionCard, { backgroundColor: cardBg, borderColor: colors.border }]}
+                    onPress={() => setShowDownloadConfirm(true)}
+                  >
+                    <View style={[styles.syncOptionIcon, { backgroundColor: 'rgba(76, 175, 80, 0.1)' }]}>
+                      <FontAwesome5 name="cloud-download-alt" size={20} color="#4CAF50" />
+                    </View>
+                    <Text style={[styles.syncOptionTitle, { color: colors.text }]}>Baixar Dados</Text>
+                    <Text style={[styles.syncOptionDesc, { color: colors.textDim }]}>Substitui dados locais pelos da nuvem</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <Button
+                  title={syncLoading ? 'Sincronizando…' : '🔄 Sincronização Completa'}
+                  onPress={handleManualSync}
+                  loading={syncLoading}
+                  style={styles.fullSyncButton}
+                />
+
+                <Button
+                  title="🚪 Sair da Conta"
+                  onPress={() => setShowLogoutConfirm(true)}
+                  variant="outline"
+                  style={styles.logoutButton}
+                />
+
+                {/* Nota informativa */}
+                <View style={[styles.infoBox, { backgroundColor: isDark ? 'rgba(124, 77, 255, 0.1)' : 'rgba(124, 77, 255, 0.05)' }]}>
+                  <Text style={[styles.infoText, { color: colors.text }]}>
+                    💡 Use o <Text style={{ fontWeight: 'bold' }}>Enviar Dados</Text> para garantir que seu backup está atualizado antes de trocar de aparelho. Use o <Text style={{ fontWeight: 'bold' }}>Baixar Dados</Text> apenas se quiser restaurar um backup antigo.
+                  </Text>
+                </View>
+              </>
+            ) : (
+              // ─── Usuário deslogado ───────────────────────────────────────────
+              <View style={[styles.formCard, { backgroundColor: cardBg }]}>
+                <Text style={[styles.formTitle, { color: colors.text }]}>
+                  {isSignUp ? 'Criar Nova Conta' : 'Acesse sua Conta'}
+                </Text>
+
+                {isSignUp && (
+                  <TextInput
+                    style={[styles.input, { backgroundColor: isDark ? colors.surfaceDark : colors.background, color: colors.text, borderColor: colors.border }]}
+                    placeholder="Seu Nome"
+                    placeholderTextColor={colors.textDim}
+                    value={displayName}
+                    onChangeText={setDisplayName}
+                  />
+                )}
+
+                <TextInput
+                  style={[styles.input, { backgroundColor: isDark ? colors.surfaceDark : colors.background, color: colors.text, borderColor: colors.border }]}
+                  placeholder="E-mail"
+                  placeholderTextColor={colors.textDim}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+
+                <TextInput
+                  style={[styles.input, { backgroundColor: isDark ? colors.surfaceDark : colors.background, color: colors.text, borderColor: colors.border }]}
+                  placeholder="Senha"
+                  placeholderTextColor={colors.textDim}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                />
+
+                <Button
+                  title={isSignUp ? 'Criar Conta' : 'Entrar'}
+                  onPress={handleAuth}
+                  loading={authLoading}
+                  style={{ marginTop: 8 }}
+                />
+
+                <View style={styles.authLinks}>
+                  <TouchableOpacity
+                    onPress={() => setIsSignUp(!isSignUp)}
+                    style={styles.toggleAuth}
+                  >
+                    <Text style={[styles.toggleAuthText, { color: colors.primary }]}>
+                      {isSignUp ? 'Já tem conta? Faça login' : 'Não tem conta? Cadastre-se'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {!isSignUp && (
+                    <TouchableOpacity
+                      onPress={() => setShowForgotPassword(true)}
+                      style={styles.forgotPasswordLink}
+                    >
+                      <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>Esqueci minha senha</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
             )}
 
-            <TextInput
-              style={[styles.input, { backgroundColor: isDark ? colors.surfaceDark : colors.background, color: colors.text, borderColor: colors.border }]}
-              placeholder="E-mail"
-              placeholderTextColor={colors.textDim}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
+            <View style={{ height: 20 }} />
+          </ScrollView>
 
-            <TextInput
-              style={[styles.input, { backgroundColor: isDark ? colors.surfaceDark : colors.background, color: colors.text, borderColor: colors.border }]}
-              placeholder="Senha"
-              placeholderTextColor={colors.textDim}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
+          {/* Botão Fechar */}
+          <Button
+            title="Fechar"
+            onPress={onClose}
+            style={styles.closeButton}
+          />
 
-            <Button
-              title={isSignUp ? 'Criar Conta' : 'Entrar'}
-              onPress={handleAuth}
-              loading={authLoading}
-              style={{ marginTop: 8 }}
-            />
-
-            <View style={styles.authLinks}>
-              <TouchableOpacity
-                onPress={() => setIsSignUp(!isSignUp)}
-                style={styles.toggleAuth}
-              >
-                <Text style={[styles.toggleAuthText, { color: colors.primary }]}>
-                  {isSignUp ? 'Já tem conta? Faça login' : 'Não tem conta? Cadastre-se'}
-                </Text>
-              </TouchableOpacity>
-
-              {!isSignUp && (
-                <TouchableOpacity
-                  onPress={() => setShowForgotPassword(true)}
-                  style={styles.forgotPasswordLink}
-                >
-                  <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>Esqueci minha senha</Text>
-                </TouchableOpacity>
-              )}
+          {/* Notificação fixa no topo */}
+          {modalNotif.visible && (
+            <View style={[
+              styles.modalNotification,
+              modalNotif.type === 'error' && styles.notifError,
+              modalNotif.type === 'success' && styles.notifSuccess,
+              modalNotif.type === 'warning' && styles.notifWarning,
+              modalNotif.type === 'info' && { backgroundColor: colors.primary },
+            ]}>
+              <FontAwesome5
+                name={modalNotif.type === 'error' ? 'exclamation-circle' : modalNotif.type === 'success' ? 'check-circle' : 'info-circle'}
+                size={16}
+                color="#fff"
+                style={styles.notifIcon}
+              />
+              <Text style={styles.notifText}>{modalNotif.message}</Text>
             </View>
-          </View>
-        )}
+          )}
+        </View>
       </View>
 
       {/* Modais de Confirmação */}
@@ -459,61 +481,36 @@ export function FirebaseSync({ onClose }: FirebaseSyncProps) {
           />
         }
       />
-    </KeyboardAvoidingView>
+    </Modal>
   );
 }
 
 // ─── Estilos ─────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  keyboardAvoid: {
+  modalOverlay: {
     flex: 1,
-    justifyContent: 'flex-start',
+    justifyContent: 'flex-end',
   },
-  modalNotification: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 10,
-    zIndex: 1000,
-  },
-  notifError: {
-    backgroundColor: '#F44336',
-  },
-  notifSuccess: {
-    backgroundColor: '#4CAF50',
-  },
-  notifWarning: {
-    backgroundColor: '#FF9800',
-  },
-  notifIcon: {
-    marginRight: 4,
-  },
-  notifText: {
-    color: '#fff',
-    fontFamily: 'Inter-SemiBold',
-    fontSize: 13,
-    flex: 1,
-  },
-  container: {
-    // Removido flex:1
-  },
-  scrollContent: {
+  modalContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     padding: 20,
-    paddingBottom: 40,
-  },
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 40,
-  },
-  loadingText: {
-    marginTop: 12,
-    fontFamily: 'Inter-Regular',
+    maxHeight: '90%',
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+  },
+  title: {
+    fontSize: 24,
+    fontFamily: 'Inter-Bold',
+  },
+  headerSection: {
     alignItems: 'center',
     marginBottom: 28,
   },
@@ -525,7 +522,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 16,
   },
-  title: {
+  mainTitle: {
     fontSize: 20,
     fontFamily: 'Inter-Bold',
     textAlign: 'center',
@@ -536,6 +533,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 8,
     lineHeight: 20,
+  },
+  centered: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontFamily: 'Inter-Regular',
   },
   statusCard: {
     borderRadius: 12,
@@ -694,5 +700,38 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'Inter-Regular',
     lineHeight: 18,
+  },
+  modalNotification: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 10,
+    position: 'absolute',
+    top: 70,
+    left: 20,
+    right: 20,
+    borderRadius: 8,
+  },
+  notifError: {
+    backgroundColor: '#F44336',
+  },
+  notifSuccess: {
+    backgroundColor: '#4CAF50',
+  },
+  notifWarning: {
+    backgroundColor: '#FF9800',
+  },
+  notifIcon: {
+    marginRight: 4,
+  },
+  notifText: {
+    color: '#fff',
+    fontFamily: 'Inter-SemiBold',
+    fontSize: 13,
+    flex: 1,
+  },
+  closeButton: {
+    marginTop: 10,
   },
 });

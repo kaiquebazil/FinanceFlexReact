@@ -1,6 +1,6 @@
 // components/features/BackupRestore.tsx
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Modal, TouchableOpacity } from 'react-native';
 import { Button } from '../ui/Button';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { Toast } from '../ui/Toast';
@@ -10,12 +10,15 @@ import { useToast } from '../../hooks/useToast';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { createDefaultCategories } from '../../constants/defaultCategories';
 import { createDefaultRecurringBills } from '../../constants/defaultRecurringBills';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface BackupRestoreProps {
+  visible: boolean;
   onClose: () => void;
 }
 
-export function BackupRestore({ onClose }: BackupRestoreProps) {
+export function BackupRestore({ visible, onClose }: BackupRestoreProps) {
+  const { colors, isDark } = useTheme();
   const {
     accounts,
     transactions,
@@ -87,46 +90,73 @@ export function BackupRestore({ onClose }: BackupRestoreProps) {
   const userCategories = categories.filter((c) => !c.id.startsWith('default-'));
 
   return (
-    <>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <FontAwesome5 name="redo" size={50} color={theme.colors.primary} />
-          <Text style={styles.title}>Resetar Dados</Text>
-        </View>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+      statusBarTranslucent
+    >
+      <View style={[styles.modalOverlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.5)' }]}>
+        <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+          {/* Cabeçalho */}
+          <View style={[styles.header, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.title, { color: colors.text }]}>Backup e Restauração</Text>
+            <TouchableOpacity onPress={onClose}>
+              <FontAwesome5 name="times" size={20} color={colors.textDim} />
+            </TouchableOpacity>
+          </View>
 
-        <View style={styles.infoBox}>
-          <Text style={styles.infoText}>
-            📊 Status Atual:{'\n'}
-            • {accounts.length} contas • {transactions.length} transações{'\n'}
-            • {categories.length} categorias • {recurringBills.length} contas recorrentes
-          </Text>
-          <Text style={styles.infoSubtext}>
-            Contas padrão: 2 | Suas contas: {userAccounts.length}{'\n'}
-            Categorias padrão: 15 | Suas categorias: {userCategories.length}
-          </Text>
-        </View>
+          <ScrollView showsVerticalScrollIndicator={false}>
+            <View style={styles.headerSection}>
+              <FontAwesome5 name="redo" size={50} color={colors.primary} />
+              <Text style={[styles.mainTitle, { color: colors.text }]}>Resetar Dados</Text>
+            </View>
 
-        <View style={styles.warningBox}>
-          <FontAwesome5 name="exclamation-triangle" size={24} color="#FF9800" />
-          <Text style={styles.warningText}>
-            Ao resetar, todos os seus dados serão apagados e substituídos pelas configurações padrão. Esta ação não pode ser desfeita!
-          </Text>
-        </View>
+            <View style={[styles.infoBox, { backgroundColor: isDark ? colors.darkLight : colors.surfaceDark }]}>
+              <Text style={[styles.infoText, { color: colors.text }]}>
+                📊 Status Atual:{'\n'}
+                • {accounts.length} contas • {transactions.length} transações{'\n'}
+                • {categories.length} categorias • {recurringBills.length} contas recorrentes
+              </Text>
+              <Text style={[styles.infoSubtext, { color: colors.textDim }]}>
+                Contas padrão: 2 | Suas contas: {userAccounts.length}{'\n'}
+                Categorias padrão: 15 | Suas categorias: {userCategories.length}
+              </Text>
+            </View>
 
-        <View style={styles.buttons}>
+            <View style={[styles.warningBox, { backgroundColor: isDark ? 'rgba(255, 152, 0, 0.15)' : 'rgba(255, 152, 0, 0.12)' }]}>
+              <FontAwesome5 name="exclamation-triangle" size={24} color="#FF9800" />
+              <Text style={[styles.warningText, { color: colors.text }]}>
+                Ao resetar, todos os seus dados serão apagados e substituídos pelas configurações padrão. Esta ação não pode ser desfeita!
+              </Text>
+            </View>
+
+            <View style={styles.buttons}>
+              <Button
+                title="🗑️ RESETAR TUDO"
+                onPress={handleClearAll}
+                variant="danger"
+                style={styles.button}
+              />
+            </View>
+
+            <Text style={[styles.note, { color: colors.textDim }]}>
+              ✅ Contas e categorias padrão serão mantidas{'\n'}
+              ❌ Todas as suas transações serão perdidas{'\n'}
+              ❌ Cofrinhos, cartões e contas recorrentes serão apagados
+            </Text>
+
+            <View style={{ height: 20 }} />
+          </ScrollView>
+
+          {/* Botão Fechar */}
           <Button
-            title="🗑️ RESETAR TUDO"
-            onPress={handleClearAll}
-            variant="danger"
-            style={styles.button}
+            title="Fechar"
+            onPress={onClose}
+            style={styles.closeButton}
           />
         </View>
-
-        <Text style={styles.note}>
-          ✅ Contas e categorias padrão serão mantidas{'\n'}
-          ❌ Todas as suas transações serão perdidas{'\n'}
-          ❌ Cofrinhos, cartões e contas recorrentes serão apagados
-        </Text>
       </View>
 
       {/* Modal de Confirmação */}
@@ -159,41 +189,56 @@ export function BackupRestore({ onClose }: BackupRestoreProps) {
         type={toast.type}
         onHide={hideToast}
       />
-    </>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  modalOverlay: {
     flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     padding: 20,
+    maxHeight: '90%',
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
   },
   title: {
+    fontSize: 24,
+    fontFamily: 'Inter-Bold',
+  },
+  headerSection: {
+    alignItems: 'center',
+    marginBottom: 30,
+    marginTop: 10,
+  },
+  mainTitle: {
     fontSize: 22,
     fontFamily: 'Inter-Bold',
-    color: theme.colors.text,
     marginTop: 10,
   },
   infoBox: {
-    backgroundColor: theme.colors.darkLight,
     padding: 15,
     borderRadius: 10,
     marginBottom: 20,
     alignItems: 'center',
   },
   infoText: {
-    color: theme.colors.text,
     fontSize: 15,
     fontFamily: 'Inter-Medium',
     textAlign: 'center',
     lineHeight: 22,
   },
   infoSubtext: {
-    color: theme.colors.textDim,
     fontSize: 12,
     fontFamily: 'Inter-Regular',
     marginTop: 8,
@@ -201,7 +246,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   warningBox: {
-    backgroundColor: 'rgba(255, 152, 0, 0.12)',
     borderRadius: 10,
     padding: 16,
     marginBottom: 24,
@@ -213,7 +257,6 @@ const styles = StyleSheet.create({
   },
   warningText: {
     flex: 1,
-    color: theme.colors.text,
     fontSize: 13,
     fontFamily: 'Inter-Regular',
     lineHeight: 20,
@@ -226,10 +269,12 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   note: {
-    color: theme.colors.textDim,
     fontSize: 13,
     lineHeight: 20,
     textAlign: 'center',
     fontFamily: 'Inter-Regular',
+  },
+  closeButton: {
+    marginTop: 10,
   },
 });
