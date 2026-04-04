@@ -22,12 +22,10 @@ import { CreditCardManager } from "../components/features/CreditCardManager";
 import { RecurringBillsManager } from "../components/features/RecurringBillsManager";
 import { TransactionsModal } from "../components/features/TransactionsModal";
 import { CalendarModal } from "../components/features/CalendarModal";
+import { PiggyBankManager } from "../components/features/PiggyBankManager";
 import { PiggyBankProjection } from "../components/features/PiggyBankProjection";
 import { AccountEditForm } from "../components/forms/AccountEditForm";
 import { AccountForm } from "../components/forms/AccountForm";
-import { PiggyBankEditForm } from "../components/forms/PiggyBankEditForm";
-import { PiggyBankForm } from "../components/forms/PiggyBankForm";
-import { PiggyBankActionForm } from "../components/forms/PiggyBankActionForm";
 import { TransactionForm } from "../components/forms/TransactionForm";
 import { AccountItem } from "../components/ui/AccountItem";
 import { Button } from "../components/ui/Button";
@@ -87,7 +85,6 @@ export default function HomeScreen() {
     setUICallbacks,
     depositToPiggyBank,
     withdrawFromPiggyBank,
-    deletePiggyBank,
   } = useData();
 
   // Estados para modais
@@ -106,10 +103,6 @@ export default function HomeScreen() {
 
   // Estados para cofrinho
   const [showPiggyBankModal, setShowPiggyBankModal] = useState(false);
-  const [showPiggyBankEditModal, setShowPiggyBankEditModal] = useState(false);
-  const [selectedPiggyBank, setSelectedPiggyBank] = useState<any>(null);
-  const [showPiggyBankActionModal, setShowPiggyBankActionModal] = useState(false);
-  const [piggyBankActionType, setPiggyBankActionType] = useState<"deposit" | "withdraw">("deposit");
 
   // Estados para outros modais
   const [showCategoriesModal, setShowCategoriesModal] = useState(false);
@@ -266,35 +259,6 @@ export default function HomeScreen() {
     deleteAccount(accountId);
   };
 
-  // Funções para lidar com cofrinhos
-  const handleEditPiggyBank = (piggy: any) => {
-    setSelectedPiggyBank(piggy);
-    setShowPiggyBankEditModal(true);
-  };
-
-  const handleDepositPiggyBank = (piggy: any) => {
-    setSelectedPiggyBank(piggy);
-    setPiggyBankActionType("deposit");
-    setShowPiggyBankActionModal(true);
-  };
-
-  const handleWithdrawPiggyBank = (piggy: any) => {
-    setSelectedPiggyBank(piggy);
-    setPiggyBankActionType("withdraw");
-    setShowPiggyBankActionModal(true);
-  };
-
-  const handleDeletePiggyBank = (piggy: any) => {
-    showConfirm({
-      title: "Excluir Cofrinho",
-      message: `Tem certeza que deseja excluir o cofrinho "${piggy.name}"? O saldo atual não será devolvido automaticamente às contas.`,
-      type: "danger",
-      onConfirm: () => {
-        deletePiggyBank(piggy.id);
-        setShowConfirmModal(false);
-      },
-    });
-  };
 
   // Filtrar transações
   const getFilteredTransactions = () => {
@@ -624,7 +588,7 @@ export default function HomeScreen() {
                 <Text style={styles.sectionTitle}>Cofrinhos</Text>
                 <TouchableOpacity onPress={() => setShowPiggyBankModal(true)}>
                   <FontAwesome5
-                    name="plus"
+                    name="external-link-alt"
                     size={16}
                     color={colors.primary}
                   />
@@ -635,7 +599,12 @@ export default function HomeScreen() {
                   const progress =
                     (piggy.currentAmount / piggy.targetAmount) * 100;
                   return (
-                    <View key={piggy.id} style={styles.piggyItem}>
+                    <TouchableOpacity
+                      key={piggy.id}
+                      style={styles.piggyItem}
+                      onPress={() => setShowPiggyBankModal(true)}
+                      activeOpacity={0.7}
+                    >
                       <View style={styles.piggyHeader}>
                         <View style={styles.piggyIcon}>
                           <FontAwesome5
@@ -655,46 +624,6 @@ export default function HomeScreen() {
                           <Text style={styles.piggyPercentage}>
                             {progress.toFixed(0)}%
                           </Text>
-                          <TouchableOpacity
-                            onPress={() => handleDepositPiggyBank(piggy)}
-                            style={styles.actionButton}
-                          >
-                            <FontAwesome5
-                              name="plus-circle"
-                              size={16}
-                              color={theme.colors.success}
-                            />
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            onPress={() => handleWithdrawPiggyBank(piggy)}
-                            style={styles.actionButton}
-                          >
-                            <FontAwesome5
-                              name="minus-circle"
-                              size={16}
-                              color={theme.colors.warning}
-                            />
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            onPress={() => handleEditPiggyBank(piggy)}
-                            style={styles.actionButton}
-                          >
-                            <FontAwesome5
-                              name="edit"
-                              size={14}
-                              color={theme.colors.primary}
-                            />
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            onPress={() => handleDeletePiggyBank(piggy)}
-                            style={styles.actionButton}
-                          >
-                            <FontAwesome5
-                              name="trash-alt"
-                              size={14}
-                              color={theme.colors.danger}
-                            />
-                          </TouchableOpacity>
                         </View>
                       </View>
                       <View style={styles.progressBarContainer}>
@@ -714,7 +643,7 @@ export default function HomeScreen() {
                           valuesHidden={valuesHidden}
                         />
                       )}
-                    </View>
+                    </TouchableOpacity>
                   );
                 })}
 
@@ -997,152 +926,11 @@ export default function HomeScreen() {
         initialType={transactionInitialType}
       />
 
-      {/* Modal de Cofrinho */}
-      <Modal
+      {/* Modal de Cofrinhos */}
+      <PiggyBankManager
         visible={showPiggyBankModal}
         onClose={() => setShowPiggyBankModal(false)}
-        title="Cofrinhos"
-      >
-        <ScrollView>
-          {piggyBanks.map((piggy) => {
-            const progress = (piggy.currentAmount / piggy.targetAmount) * 100;
-            return (
-              <View key={piggy.id} style={styles.modalPiggyItem}>
-                <View style={styles.modalPiggyHeader}>
-                  <View
-                    style={[
-                      styles.modalPiggyIcon,
-                      { backgroundColor: piggy.color + "20" },
-                    ]}
-                  >
-                    <FontAwesome5
-                      name="piggy-bank"
-                      size={20}
-                      color={piggy.color}
-                    />
-                  </View>
-                  <View style={styles.modalPiggyInfo}>
-                    <Text style={styles.modalPiggyName}>{piggy.name}</Text>
-                    <Text style={styles.modalPiggyProgress}>
-                      {formatValue(piggy.currentAmount)} /{" "}
-                      {formatValue(piggy.targetAmount)} (
-                      {progress.toFixed(0)}%)
-                    </Text>
-                  </View>
-                  <View style={styles.piggyActions}>
-                    <TouchableOpacity
-                      onPress={() => handleDepositPiggyBank(piggy)}
-                      style={styles.actionButton}
-                    >
-                      <FontAwesome5
-                        name="plus-circle"
-                        size={18}
-                        color={theme.colors.success}
-                      />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => handleWithdrawPiggyBank(piggy)}
-                      style={styles.actionButton}
-                    >
-                      <FontAwesome5
-                        name="minus-circle"
-                        size={18}
-                        color={theme.colors.warning}
-                      />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => handleEditPiggyBank(piggy)}
-                      style={styles.actionButton}
-                    >
-                      <FontAwesome5
-                        name="edit"
-                        size={16}
-                        color={theme.colors.primary}
-                      />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => handleDeletePiggyBank(piggy)}
-                      style={styles.actionButton}
-                    >
-                      <FontAwesome5
-                        name="trash-alt"
-                        size={16}
-                        color={theme.colors.danger}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-                {(piggy.monthlyContribution || piggy.targetDate) && (
-                  <PiggyBankProjection
-                    piggyBank={piggy}
-                    valuesHidden={valuesHidden}
-                  />
-                )}
-              </View>
-            );
-          })}
-
-          <PiggyBankForm
-            onSave={(stayOpen) => {
-              if (!stayOpen) {
-                setShowPiggyBankModal(false);
-              }
-              showToast("Cofrinho criado com sucesso!", "success");
-            }}
-            onCancel={() => setShowPiggyBankModal(false)}
-          />
-        </ScrollView>
-      </Modal>
-
-      {/* Modal de Editar Cofrinho */}
-      <Modal
-        visible={showPiggyBankEditModal}
-        onClose={() => {
-          setShowPiggyBankEditModal(false);
-          setSelectedPiggyBank(null);
-        }}
-        title="Editar Cofrinho"
-      >
-        {selectedPiggyBank && (
-          <PiggyBankEditForm
-            piggyBank={selectedPiggyBank}
-            onSave={() => {
-              setShowPiggyBankEditModal(false);
-              setSelectedPiggyBank(null);
-              showToast("Cofrinho atualizado com sucesso!", "success");
-            }}
-            onCancel={() => {
-              setShowPiggyBankEditModal(false);
-              setSelectedPiggyBank(null);
-            }}
-          />
-        )}
-      </Modal>
-
-      {/* Modal de Ação no Cofrinho (Depósito/Retirada) */}
-      <Modal
-        visible={showPiggyBankActionModal}
-        onClose={() => {
-          setShowPiggyBankActionModal(false);
-          setSelectedPiggyBank(null);
-        }}
-        title={piggyBankActionType === "deposit" ? "Depositar" : "Retirar"}
-      >
-        {selectedPiggyBank && (
-          <PiggyBankActionForm
-            piggyBank={selectedPiggyBank}
-            type={piggyBankActionType}
-            onSave={() => {
-              setShowPiggyBankActionModal(false);
-              setSelectedPiggyBank(null);
-            }}
-            onCancel={() => {
-              setShowPiggyBankActionModal(false);
-              setSelectedPiggyBank(null);
-            }}
-          />
-        )}
-      </Modal>
+      />
 
       {/* Modal de Categorias */}
       <CategoryManager
@@ -1420,9 +1208,6 @@ const getStyles = (colors: any, isDark: boolean = true) => StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  actionButton: {
-    padding: 8,
-  },
   progressBarContainer: {
     height: 8,
     backgroundColor: colors.surfaceDark,
@@ -1456,36 +1241,5 @@ const getStyles = (colors: any, isDark: boolean = true) => StyleSheet.create({
   },
   tabTextActive: {
     color: colors.primary,
-  },
-  modalPiggyItem: {
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  modalPiggyHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  modalPiggyIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
-  },
-  modalPiggyInfo: {
-    flex: 1,
-  },
-  modalPiggyName: {
-    fontSize: 16,
-    fontFamily: "Inter-Medium",
-    color: colors.text,
-    marginBottom: 4,
-  },
-  modalPiggyProgress: {
-    fontSize: 13,
-    fontFamily: "Inter-Regular",
-    color: colors.textDim,
   },
 });
