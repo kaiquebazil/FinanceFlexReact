@@ -490,13 +490,16 @@ export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
   modalContent: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderRadius: 20,
     padding: 20,
-    maxHeight: '90%',
+    width: '100%',
+    maxWidth: 480,
+    maxHeight: '85%',
   },
   header: {
     flexDirection: 'row',
