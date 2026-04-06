@@ -21,6 +21,7 @@ import { theme } from '../../constants/theme';
 import { useData } from '../../hooks/useData';
 import { formatCurrency } from '../../utils/currency';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface CreditCardManagerProps {
   visible: boolean;
@@ -31,6 +32,7 @@ export function CreditCardManager({ visible, onClose }: CreditCardManagerProps) 
   const { creditCards, setCreditCards, addCreditCard, deleteCreditCard } = useData();
   const { toast, showToast, hideToast } = useToast();
   const { colors, isDark } = useTheme();
+  const { t } = useLanguage();
   const [selectedCard, setSelectedCard] = useState<any>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -57,7 +59,7 @@ export function CreditCardManager({ visible, onClose }: CreditCardManagerProps) 
 
   const handleAddCard = () => {
     if (!newCard.name || !newCard.limit || !newCard.closingDay || !newCard.dueDay) {
-      setErrorMessage('Preencha todos os campos');
+      setErrorMessage(t.fillAllFields);
       setShowErrorModal(true);
       return;
     }
@@ -78,7 +80,7 @@ export function CreditCardManager({ visible, onClose }: CreditCardManagerProps) 
   const handleAddPurchase = () => {
     if (!selectedCard) return;
     if (!newPurchase.description || !newPurchase.amount) {
-      setErrorMessage('Preencha descrição e valor');
+      setErrorMessage(t.fillDescriptionValue);
       setShowErrorModal(true);
       return;
     }
@@ -94,7 +96,7 @@ export function CreditCardManager({ visible, onClose }: CreditCardManagerProps) 
     );
     setCreditCards(updatedCards);
 
-    showToast('Compra adicionada com sucesso!', 'success');
+    showToast(t.purchaseAdded, 'success');
     setNewPurchase({ description: '', amount: '', installments: '1', category: 'Compras' });
     setShowPurchaseModal(false);
   };
@@ -123,7 +125,7 @@ export function CreditCardManager({ visible, onClose }: CreditCardManagerProps) 
         <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
           {/* Cabeçalho */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.title, { color: colors.text }]}>Cartões de Crédito</Text>
+            <Text style={[styles.title, { color: colors.text }]}>{t.creditCards}</Text>
             <TouchableOpacity onPress={onClose}>
               <FontAwesome5 name="times" size={20} color={colors.textDim} />
             </TouchableOpacity>
@@ -133,7 +135,7 @@ export function CreditCardManager({ visible, onClose }: CreditCardManagerProps) 
             {creditCards.length === 0 ? (
               <View style={styles.emptyState}>
                 <FontAwesome5 name="credit-card" size={50} color={colors.textDim} />
-                <Text style={[styles.emptyText, { color: colors.textDim }]}>Nenhum cartão cadastrado</Text>
+                <Text style={[styles.emptyText, { color: colors.textDim }]}>{t.noCreditCards}</Text>
               </View>
             ) : (
               creditCards.map((card) => {
@@ -240,7 +242,7 @@ export function CreditCardManager({ visible, onClose }: CreditCardManagerProps) 
 
             {/* Botão Adicionar Cartão */}
             <Button
-              title="Adicionar Cartão"
+              title={t.addCreditCard}
               icon="plus"
               onPress={() => setShowAddModal(true)}
               style={styles.addButton}
@@ -251,7 +253,7 @@ export function CreditCardManager({ visible, onClose }: CreditCardManagerProps) 
 
           {/* Botão Fechar */}
           <Button
-            title="Fechar"
+            title={t.close}
             onPress={onClose}
             style={styles.closeButton}
           />
@@ -319,13 +321,13 @@ export function CreditCardManager({ visible, onClose }: CreditCardManagerProps) 
 
                     <View style={styles.modalButtons}>
                       <Button
-                        title="Cancelar"
+                        title={t.cancel}
                         onPress={() => setShowAddModal(false)}
                         variant="outline"
                         style={styles.modalButton}
                       />
                       <Button
-                        title="Salvar"
+                        title={t.save}
                         onPress={handleAddCard}
                         style={styles.modalButton}
                       />
@@ -408,13 +410,13 @@ export function CreditCardManager({ visible, onClose }: CreditCardManagerProps) 
 
                       <View style={styles.modalButtons}>
                         <Button
-                          title="Cancelar"
+                          title={t.cancel}
                           onPress={() => setShowPurchaseModal(false)}
                           variant="outline"
                           style={styles.modalButton}
                         />
                         <Button
-                          title="Adicionar"
+                          title={t.add}
                           onPress={handleAddPurchase}
                           style={styles.modalButton}
                         />

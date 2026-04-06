@@ -5,6 +5,7 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useData } from '../../hooks/useData';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { formatCurrency } from '../../utils/currency';
@@ -16,6 +17,7 @@ interface RecurringBillsManagerProps {
 
 export function RecurringBillsManager({ visible, onClose }: RecurringBillsManagerProps) {
   const { colors, isDark } = useTheme();
+  const { t, language } = useLanguage();
   const { recurringBills, addRecurringBill, deleteRecurringBill, toggleRecurringBillPaid, categories } = useData();
 
   // Estados para o formulário
@@ -34,17 +36,17 @@ export function RecurringBillsManager({ visible, onClose }: RecurringBillsManage
     const newErrors: { name?: string; amount?: string; dueDay?: string } = {};
 
     if (!newBillName.trim()) {
-      newErrors.name = 'Nome é obrigatório';
+      newErrors.name = t.nameRequired;
     }
 
     const amountNum = parseFloat(newBillAmount?.replace(',', '.') ?? '0');
     if (!newBillAmount || isNaN(amountNum) || amountNum <= 0) {
-      newErrors.amount = 'Valor inválido';
+      newErrors.amount = t.invalidValue;
     }
 
     const dueDayNum = parseInt(newBillDueDay);
     if (!newBillDueDay || isNaN(dueDayNum) || dueDayNum < 1 || dueDayNum > 31) {
-      newErrors.dueDay = 'Dia deve ser entre 1 e 31';
+      newErrors.dueDay = t.dueDayValidation;
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -72,12 +74,12 @@ export function RecurringBillsManager({ visible, onClose }: RecurringBillsManage
 
   const handleDeleteBill = (id: string, name: string) => {
     Alert.alert(
-      'Excluir Conta Recorrente',
-      `Tem certeza que deseja excluir "${name}"?`,
+      t.deleteRecurringBill,
+      `${t.confirmDeleteRecurringBill} "${name}"?`,
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t.cancel, style: 'cancel' },
         {
-          text: 'Excluir',
+          text: t.delete,
           onPress: () => deleteRecurringBill(id),
           style: 'destructive'
         }
@@ -123,7 +125,7 @@ export function RecurringBillsManager({ visible, onClose }: RecurringBillsManage
           <View style={styles.billDetail}>
             <FontAwesome5 name="calendar-alt" size={12} color={colors.textDim} />
             <Text style={[styles.billDetailText, { color: colors.textDim }]}>
-              Dia {bill.dueDay}
+              {t.day} {bill.dueDay}
             </Text>
           </View>
 
@@ -160,7 +162,7 @@ export function RecurringBillsManager({ visible, onClose }: RecurringBillsManage
         <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
           {/* Cabeçalho */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.title, { color: colors.text }]}>Contas Recorrentes</Text>
+            <Text style={[styles.title, { color: colors.text }]}>{t.recurringBillsTitle}</Text>
             <TouchableOpacity onPress={onClose}>
               <FontAwesome5 name="times" size={20} color={colors.textDim} />
             </TouchableOpacity>
@@ -170,43 +172,43 @@ export function RecurringBillsManager({ visible, onClose }: RecurringBillsManage
             {/* Botão para adicionar nova conta */}
             {!showForm ? (
               <Button
-                title="Nova Conta Recorrente"
+                title={t.newRecurringBill}
                 icon="plus"
                 onPress={() => setShowForm(true)}
                 style={styles.addButton}
               />
             ) : (
               <View style={[styles.formContainer, { backgroundColor: isDark ? colors.surfaceDark : '#f8f8f8', borderColor: colors.border }]}>
-                <Text style={[styles.formTitle, { color: colors.text }]}>Nova Conta Recorrente</Text>
+                <Text style={[styles.formTitle, { color: colors.text }]}>{t.newRecurringBill}</Text>
 
                 <Input
-                  label="Nome da conta"
+                  label={t.billName}
                   value={newBillName}
                   onChangeText={setNewBillName}
-                  placeholder="Ex: Aluguel, Internet, Academia"
+                  placeholder={t.billNamePlaceholder}
                   error={errors.name}
                 />
 
                 <Input
-                  label="Valor (R$)"
+                  label={`${t.amount} (R$)`}
                   value={newBillAmount}
                   onChangeText={setNewBillAmount}
                   keyboardType="numeric"
-                  placeholder="0,00"
+                  placeholder={language === 'pt-BR' ? '0,00' : '0.00'}
                   error={errors.amount}
                 />
 
                 <Input
-                  label="Dia do Vencimento"
+                  label={t.dueDay}
                   value={newBillDueDay}
                   onChangeText={setNewBillDueDay}
                   keyboardType="numeric"
-                  placeholder="1 a 31"
+                  placeholder={t.dueDayPlaceholder}
                   maxLength={2}
                   error={errors.dueDay}
                 />
 
-                <Text style={[styles.label, { color: colors.textDim }]}>Categoria</Text>
+                <Text style={[styles.label, { color: colors.textDim }]}>{t.category}</Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -226,7 +228,7 @@ export function RecurringBillsManager({ visible, onClose }: RecurringBillsManage
                         { color: colors.text },
                         newBillCategory === 'Outros' && { color: '#fff' }
                       ]}>
-                        Outros
+                        {t.others}
                       </Text>
                     </TouchableOpacity>
 
@@ -254,7 +256,7 @@ export function RecurringBillsManager({ visible, onClose }: RecurringBillsManage
 
                 <View style={styles.formButtons}>
                   <Button
-                    title="Cancelar"
+                    title={t.cancel}
                     onPress={() => {
                       setShowForm(false);
                       setErrors({});
@@ -267,7 +269,7 @@ export function RecurringBillsManager({ visible, onClose }: RecurringBillsManage
                     style={styles.formButton}
                   />
                   <Button
-                    title="Salvar"
+                    title={t.save}
                     onPress={handleAddBill}
                     style={styles.formButton}
                   />
@@ -279,7 +281,7 @@ export function RecurringBillsManager({ visible, onClose }: RecurringBillsManage
             {unpaidBills.length > 0 && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Text style={[styles.sectionTitle, { color: colors.text }]}>A Pagar</Text>
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>{t.toPay}</Text>
                   <View style={[styles.sectionCountBadge, { backgroundColor: colors.danger + '20' }]}>
                     <Text style={[styles.sectionCount, { color: colors.danger }]}>{unpaidBills.length}</Text>
                   </View>
@@ -294,7 +296,7 @@ export function RecurringBillsManager({ visible, onClose }: RecurringBillsManage
             {paidBills.length > 0 && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Text style={[styles.sectionTitle, { color: colors.text }]}>Pagas</Text>
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>{t.paid}</Text>
                   <View style={[styles.sectionCountBadge, { backgroundColor: colors.success + '20' }]}>
                     <Text style={[styles.sectionCount, { color: colors.success }]}>{paidBills.length}</Text>
                   </View>
@@ -309,9 +311,9 @@ export function RecurringBillsManager({ visible, onClose }: RecurringBillsManage
             {recurringBills.length === 0 && !showForm && (
               <View style={styles.emptyState}>
                 <FontAwesome5 name="calendar-alt" size={48} color={colors.textDim} />
-                <Text style={[styles.emptyStateTitle, { color: colors.text }]}>Nenhuma conta recorrente</Text>
+                <Text style={[styles.emptyStateTitle, { color: colors.text }]}>{t.noRecurringBills}</Text>
                 <Text style={[styles.emptyStateText, { color: colors.textDim }]}>
-                  Adicione contas fixas como aluguel, internet ou streaming para acompanhar seus gastos mensais.
+                  {t.recurringBillsDescription}
                 </Text>
               </View>
             )}
@@ -319,15 +321,15 @@ export function RecurringBillsManager({ visible, onClose }: RecurringBillsManage
             {/* Resumo mensal */}
             {recurringBills.length > 0 && (
               <View style={[styles.summaryContainer, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' }]}>
-                <Text style={[styles.summaryTitle, { color: colors.primary }]}>Resumo Mensal</Text>
+                <Text style={[styles.summaryTitle, { color: colors.primary }]}>{t.monthlySummaryTitle}</Text>
 
                 <View style={styles.summaryRow}>
-                  <Text style={[styles.summaryLabel, { color: colors.textDim }]}>Total de contas:</Text>
+                  <Text style={[styles.summaryLabel, { color: colors.textDim }]}>{t.totalBills}:</Text>
                   <Text style={[styles.summaryValue, { color: colors.text }]}>{recurringBills.length}</Text>
                 </View>
 
                 <View style={styles.summaryRow}>
-                  <Text style={[styles.summaryLabel, { color: colors.textDim }]}>Total a pagar:</Text>
+                  <Text style={[styles.summaryLabel, { color: colors.textDim }]}>{t.totalToPay}:</Text>
                   <Text style={[styles.summaryValue, { color: colors.danger }]}>
                     {formatCurrency(unpaidBills.reduce((acc, b) => acc + b.amount, 0), 'BRL')}
                   </Text>
@@ -338,7 +340,7 @@ export function RecurringBillsManager({ visible, onClose }: RecurringBillsManage
 
           {/* Botão Fechar */}
           <Button
-            title="Fechar"
+            title={t.close}
             onPress={onClose}
             style={styles.closeButton}
           />

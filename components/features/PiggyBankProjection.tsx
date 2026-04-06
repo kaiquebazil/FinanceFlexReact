@@ -7,6 +7,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
+import { useLanguage } from '../../contexts/LanguageContext';
 import type { PiggyBank } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 
@@ -30,6 +31,7 @@ function parseTargetDate(raw: string | undefined): Date | null {
 }
 
 export function PiggyBankProjection({ piggyBank, valuesHidden }: PiggyBankProjectionProps) {
+  const { t, language } = useLanguage();
   const { targetAmount, currentAmount, monthlyContribution, targetDate } = piggyBank;
   const remaining = Math.max(targetAmount - currentAmount, 0);
   const progress = targetAmount > 0 ? (currentAmount / targetAmount) * 100 : 0;
@@ -66,17 +68,17 @@ export function PiggyBankProjection({ piggyBank, valuesHidden }: PiggyBankProjec
   if (!monthlyContribution && !targetDateObj) return null;
 
   const formatMonths = (m: number) => {
-    if (m === 0) return 'Meta atingida!';
-    if (m === 1) return '1 mês';
-    if (m < 12) return `${m} meses`;
+    if (m === 0) return t.goalReached;
+    if (m === 1) return `1 ${t.perMonth}`;
+    if (m < 12) return `${m} ${t.monthsPlural}`;
     const years = Math.floor(m / 12);
     const months = m % 12;
-    if (months === 0) return `${years} ${years === 1 ? 'ano' : 'anos'}`;
-    return `${years} ${years === 1 ? 'ano' : 'anos'} e ${months} ${months === 1 ? 'mês' : 'meses'}`;
+    if (months === 0) return `${years} ${years === 1 ? t.yearSingular : t.yearsPlural}`;
+    return `${years} ${years === 1 ? t.yearSingular : t.yearsPlural} ${language === 'pt-BR' ? 'e' : 'and'} ${months} ${months === 1 ? t.perMonth : t.monthsPlural}`;
   };
 
-  const formatDatePT = (d: Date) =>
-    d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  const formatDateLocalized = (d: Date) =>
+    d.toLocaleDateString(language === 'pt-BR' ? 'pt-BR' : 'en-US', { month: 'long', year: 'numeric' });
 
   const isOnTrack =
     monthsNeeded !== null &&
@@ -88,7 +90,7 @@ export function PiggyBankProjection({ piggyBank, valuesHidden }: PiggyBankProjec
     <View style={styles.container}>
       <View style={styles.header}>
         <FontAwesome5 name="chart-line" size={13} color={theme.colors.primary} />
-        <Text style={styles.headerText}>Projeção</Text>
+        <Text style={styles.headerText}>{t.projection}</Text>
       </View>
 
       {/* Projeção por contribuição mensal */}
@@ -96,12 +98,12 @@ export function PiggyBankProjection({ piggyBank, valuesHidden }: PiggyBankProjec
         <View style={styles.row}>
           <FontAwesome5 name="calendar-check" size={12} color={theme.colors.textDim} />
           <Text style={styles.rowText}>
-            Com {fv(monthlyContribution)}/mês:{' '}
+            {t.withContribution.replace('{amount}', fv(monthlyContribution))}{' '}
             <Text style={styles.highlight}>
               {monthsNeeded !== null ? formatMonths(monthsNeeded) : '—'}
             </Text>
             {projectedDate && monthsNeeded !== null && monthsNeeded > 0 && (
-              <Text style={styles.rowTextDim}> ({formatDatePT(projectedDate)})</Text>
+              <Text style={styles.rowTextDim}> ({formatDateLocalized(projectedDate)})</Text>
             )}
           </Text>
         </View>
@@ -112,15 +114,15 @@ export function PiggyBankProjection({ piggyBank, valuesHidden }: PiggyBankProjec
         <View style={styles.row}>
           <FontAwesome5 name="flag-checkered" size={12} color={theme.colors.textDim} />
           <Text style={styles.rowText}>
-            Meta em {formatDatePT(targetDateObj)}:{' '}
+            {t.goalOnDate.replace('{date}', formatDateLocalized(targetDateObj))}{' '}
             {requiredMonthly !== null ? (
               <Text style={styles.highlight}>
                 {requiredMonthly === 0
-                  ? 'Meta atingida!'
-                  : `${fv(requiredMonthly)}/mês necessários`}
+                  ? t.goalReached
+                  : `${fv(requiredMonthly)}${t.perMonthRequired}`}
               </Text>
             ) : (
-              <Text style={styles.rowTextDim}>prazo já passou</Text>
+              <Text style={styles.rowTextDim}>{t.deadlinePassed}</Text>
             )}
           </Text>
         </View>
@@ -135,7 +137,7 @@ export function PiggyBankProjection({ piggyBank, valuesHidden }: PiggyBankProjec
             color={isOnTrack ? theme.colors.success : theme.colors.danger}
           />
           <Text style={[styles.statusText, { color: isOnTrack ? theme.colors.success : theme.colors.danger }]}>
-            {isOnTrack ? 'No caminho certo' : 'Contribuição insuficiente para o prazo'}
+            {isOnTrack ? t.onTrack : t.contributionInsufficient}
           </Text>
         </View>
       )}

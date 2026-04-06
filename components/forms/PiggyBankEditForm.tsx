@@ -3,6 +3,7 @@ import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { useData } from '../../hooks/useData';
+import { useLanguage } from '../../contexts/LanguageContext';
 import type { PiggyBank } from '../../types';
 
 interface PiggyBankEditFormProps {
@@ -13,6 +14,7 @@ interface PiggyBankEditFormProps {
 
 export function PiggyBankEditForm({ piggyBank, onSave, onCancel }: PiggyBankEditFormProps) {
   const { updatePiggyBank, accounts } = useData();
+  const { t, language } = useLanguage();
   const [name, setName] = useState(piggyBank.name);
   const [targetAmount, setTargetAmount] = useState(piggyBank.targetAmount.toString());
   const [currentAmount, setCurrentAmount] = useState(piggyBank.currentAmount.toString());
@@ -37,53 +39,53 @@ export function PiggyBankEditForm({ piggyBank, onSave, onCancel }: PiggyBankEdit
   return (
     <View style={styles.container}>
       <Input
-        label="Nome do Cofrinho"
+        label={t.piggyBankName}
         value={name}
         onChangeText={setName}
-        placeholder="Ex: Viagem"
+        placeholder={t.piggyBankPlaceholder}
       />
 
       <Input
-        label="Meta (R$)"
+        label={`${t.targetAmount} (${language === 'pt-BR' ? 'R$' : '$'})`}
         value={targetAmount}
         onChangeText={setTargetAmount}
-        placeholder="0.00"
+        placeholder={language === 'pt-BR' ? "0,00" : "0.00"}
         keyboardType="numeric"
       />
 
       <Input
-        label="Valor Atual (R$)"
+        label={`${t.currentAmount} (${language === 'pt-BR' ? 'R$' : '$'})`}
         value={currentAmount}
         onChangeText={setCurrentAmount}
-        placeholder="0.00"
+        placeholder={language === 'pt-BR' ? "0,00" : "0.00"}
         keyboardType="numeric"
       />
 
       <Input
-        label="Contribuição Mensal Planejada (R$) — opcional"
+        label={`${t.monthlyContribution} (${language === 'pt-BR' ? 'R$' : '$'}) — ${t.monthlyContributionHint}`}
         value={monthlyContribution}
         onChangeText={setMonthlyContribution}
-        placeholder="Ex: 200.00"
+        placeholder={language === 'pt-BR' ? "Ex: 200,00" : "Ex: 200.00"}
         keyboardType="numeric"
       />
 
       <Input
-        label="Data Alvo (DD/MM/AAAA) — opcional"
+        label={`${t.targetDate} (${language === 'pt-BR' ? 'DD/MM/AAAA' : 'MM/DD/YYYY'}) — ${t.targetDateHint}`}
         value={targetDate}
         onChangeText={setTargetDate}
-        placeholder="Ex: 31/12/2025"
+        placeholder={t.targetDatePlaceholder}
       />
 
       {accounts.length > 0 && (
         <>
-          <Text style={styles.label}>Vincular a uma conta (opcional)</Text>
+          <Text style={styles.label}>{`${t.linkAccount} (${t.targetDateHint})`}</Text>
           <View style={styles.accountList}>
             <TouchableOpacity
               style={[styles.accountOption, !selectedAccountId && styles.accountOptionSelected]}
               onPress={() => setSelectedAccountId('')}
             >
               <Text style={[styles.accountText, !selectedAccountId && styles.accountTextSelected]}>
-                Nenhuma
+                {t.none}
               </Text>
             </TouchableOpacity>
             {accounts.map((account) => (
@@ -110,8 +112,8 @@ export function PiggyBankEditForm({ piggyBank, onSave, onCancel }: PiggyBankEdit
       )}
 
       <View style={styles.buttons}>
-        <Button title="Cancelar" onPress={onCancel} variant="outline" style={styles.button} />
-        <Button title="Salvar" onPress={handleSave} style={styles.button} />
+        <Button title={t.cancel} onPress={onCancel} variant="outline" style={styles.button} />
+        <Button title={t.save} onPress={handleSave} style={styles.button} />
       </View>
     </View>
   );

@@ -14,6 +14,7 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useData } from '../../hooks/useData';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { PiggyBankProjection } from './PiggyBankProjection';
@@ -40,6 +41,7 @@ const COLORS = [
 
 export function PiggyBankManager({ visible, onClose }: PiggyBankManagerProps) {
   const { colors, isDark } = useTheme();
+  const { t, language } = useLanguage();
   const {
     piggyBanks,
     accounts,
@@ -106,12 +108,12 @@ export function PiggyBankManager({ visible, onClose }: PiggyBankManagerProps) {
 
   const handleSave = () => {
     if (!formData.name.trim()) {
-      Alert.alert('Atenção', 'Informe um nome para o cofrinho.');
+      Alert.alert(t.attention, t.enterPiggyBankName);
       return;
     }
     const targetAmount = parseFloat(formData.targetAmount.replace(',', '.'));
     if (!targetAmount || targetAmount <= 0) {
-      Alert.alert('Atenção', 'Informe uma meta válida maior que zero.');
+      Alert.alert(t.attention, t.enterValidTarget);
       return;
     }
 
@@ -146,12 +148,12 @@ export function PiggyBankManager({ visible, onClose }: PiggyBankManagerProps) {
 
   const handleDelete = (piggyBank: PiggyBank) => {
     Alert.alert(
-      'Excluir Cofrinho',
-      `Deseja excluir o cofrinho "${piggyBank.name}"?\n\nO saldo atual de ${formatCurrency(piggyBank.currentAmount, 'BRL')} não será devolvido automaticamente às contas.`,
+      t.delete,
+      `${t.deletePiggyBankConfirm} "${piggyBank.name}"?\n\n${t.deletePiggyBankWarning}`,
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t.cancel, style: 'cancel' },
         {
-          text: 'Excluir',
+          text: t.delete,
           style: 'destructive',
           onPress: () => deletePiggyBank(piggyBank.id),
         },
@@ -178,7 +180,7 @@ export function PiggyBankManager({ visible, onClose }: PiggyBankManagerProps) {
 
     const amount = parseFloat(actionAmount.replace(',', '.'));
     if (!amount || amount <= 0) {
-      Alert.alert('Atenção', 'Informe um valor válido maior que zero.');
+      Alert.alert(t.attention, t.enterValidAmount);
       return;
     }
 
@@ -212,7 +214,7 @@ export function PiggyBankManager({ visible, onClose }: PiggyBankManagerProps) {
         <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
           {/* Cabeçalho */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.title, { color: colors.text }]}>Cofrinhos</Text>
+            <Text style={[styles.title, { color: colors.text }]}>{t.piggyBanks}</Text>
             <TouchableOpacity onPress={onClose}>
               <FontAwesome5 name="times" size={20} color={colors.textDim} />
             </TouchableOpacity>
@@ -223,11 +225,11 @@ export function PiggyBankManager({ visible, onClose }: PiggyBankManagerProps) {
             {showForm ? (
               <Card style={styles.formCard}>
                 <Text style={[styles.formTitle, { color: colors.text }]}>
-                  {editingPiggyBank ? 'Editar Cofrinho' : 'Novo Cofrinho'}
+                  {editingPiggyBank ? t.editPiggyBank : t.newPiggyBank}
                 </Text>
 
                 {/* Nome */}
-                <Text style={[styles.fieldLabel, { color: colors.textDim }]}>Nome</Text>
+                <Text style={[styles.fieldLabel, { color: colors.textDim }]}>{t.piggyBankName}</Text>
                 <TextInput
                   style={[
                     styles.input,
@@ -239,12 +241,12 @@ export function PiggyBankManager({ visible, onClose }: PiggyBankManagerProps) {
                   ]}
                   value={formData.name}
                   onChangeText={(text) => setFormData({ ...formData, name: text })}
-                  placeholder="Ex: Viagem, Carro novo..."
+                  placeholder={t.piggyBankPlaceholder}
                   placeholderTextColor={colors.textMuted}
                 />
 
                 {/* Meta */}
-                <Text style={[styles.fieldLabel, { color: colors.textDim }]}>Meta (R$)</Text>
+                <Text style={[styles.fieldLabel, { color: colors.textDim }]}>{t.targetAmount} (R$)</Text>
                 <TextInput
                   style={[
                     styles.input,
@@ -256,13 +258,13 @@ export function PiggyBankManager({ visible, onClose }: PiggyBankManagerProps) {
                   ]}
                   value={formData.targetAmount}
                   onChangeText={(text) => setFormData({ ...formData, targetAmount: text })}
-                  placeholder="0,00"
+                  placeholder={language === 'pt-BR' ? '0,00' : '0.00'}
                   placeholderTextColor={colors.textMuted}
                   keyboardType="numeric"
                 />
 
                 {/* Valor Atual */}
-                <Text style={[styles.fieldLabel, { color: colors.textDim }]}>Valor Atual (R$)</Text>
+                <Text style={[styles.fieldLabel, { color: colors.textDim }]}>{t.currentAmount} (R$)</Text>
                 <TextInput
                   style={[
                     styles.input,
@@ -274,7 +276,7 @@ export function PiggyBankManager({ visible, onClose }: PiggyBankManagerProps) {
                   ]}
                   value={formData.currentAmount}
                   onChangeText={(text) => setFormData({ ...formData, currentAmount: text })}
-                  placeholder="0,00"
+                  placeholder={language === 'pt-BR' ? '0,00' : '0.00'}
                   placeholderTextColor={colors.textMuted}
                   keyboardType="numeric"
                   editable={!editingPiggyBank}
@@ -282,7 +284,7 @@ export function PiggyBankManager({ visible, onClose }: PiggyBankManagerProps) {
 
                 {/* Contribuição Mensal */}
                 <Text style={[styles.fieldLabel, { color: colors.textDim }]}>
-                  Contribuição Mensal Planejada (R$) — opcional
+                  {t.monthlyContribution} (R$) — {t.monthlyContributionHint}
                 </Text>
                 <TextInput
                   style={[
@@ -295,13 +297,13 @@ export function PiggyBankManager({ visible, onClose }: PiggyBankManagerProps) {
                   ]}
                   value={formData.monthlyContribution}
                   onChangeText={(text) => setFormData({ ...formData, monthlyContribution: text })}
-                  placeholder="Ex: 200,00"
+                  placeholder={t.monthlyContributionExample}
                   placeholderTextColor={colors.textMuted}
                   keyboardType="numeric"
                 />
 
                 {/* Data Alvo */}
-                <Text style={[styles.fieldLabel, { color: colors.textDim }]}>Data Alvo — opcional</Text>
+                <Text style={[styles.fieldLabel, { color: colors.textDim }]}>{t.targetDateLabel} — {t.monthlyContributionHint}</Text>
                 <TextInput
                   style={[
                     styles.input,
@@ -313,12 +315,12 @@ export function PiggyBankManager({ visible, onClose }: PiggyBankManagerProps) {
                   ]}
                   value={formData.targetDate}
                   onChangeText={(text) => setFormData({ ...formData, targetDate: text })}
-                  placeholder="DD/MM/AAAA"
+                  placeholder={t.targetDatePlaceholder}
                   placeholderTextColor={colors.textMuted}
                 />
 
                 {/* Seleção de Cor */}
-                <Text style={[styles.fieldLabel, { color: colors.textDim }]}>Cor</Text>
+                <Text style={[styles.fieldLabel, { color: colors.textDim }]}>{t.color}</Text>
                 <View style={styles.colorContainer}>
                   {COLORS.map((color) => (
                     <TouchableOpacity
@@ -341,7 +343,7 @@ export function PiggyBankManager({ visible, onClose }: PiggyBankManagerProps) {
                 {accounts.length > 0 && (
                   <>
                     <Text style={[styles.fieldLabel, { color: colors.textDim }]}>
-                      Vincular a uma conta (opcional)
+                      {t.linkAccountOptional}
                     </Text>
                     <View style={styles.accountContainer}>
                       <TouchableOpacity
@@ -366,7 +368,7 @@ export function PiggyBankManager({ visible, onClose }: PiggyBankManagerProps) {
                             },
                           ]}
                         >
-                          Nenhuma
+                          {t.none}
                         </Text>
                       </TouchableOpacity>
                       {accounts.map((account) => (
@@ -411,13 +413,13 @@ export function PiggyBankManager({ visible, onClose }: PiggyBankManagerProps) {
                 )}
 
                 <View style={styles.formButtons}>
-                  <Button title="Cancelar" onPress={resetForm} variant="outline" style={styles.formBtn} />
-                  <Button title="Salvar" onPress={handleSave} style={styles.formBtn} />
+                  <Button title={t.cancel} onPress={resetForm} variant="outline" style={styles.formBtn} />
+                  <Button title={t.save} onPress={handleSave} style={styles.formBtn} />
                 </View>
               </Card>
             ) : (
               <Button
-                title="+ Novo Cofrinho"
+                title={t.newPiggyBankButton}
                 onPress={handleOpenCreate}
                 variant="outline"
                 style={styles.addButton}
@@ -428,9 +430,9 @@ export function PiggyBankManager({ visible, onClose }: PiggyBankManagerProps) {
             {piggyBanks.length === 0 && !showForm ? (
               <View style={styles.emptyState}>
                 <FontAwesome5 name="piggy-bank" size={40} color={colors.textDim} />
-                <Text style={[styles.emptyTitle, { color: colors.text }]}>Nenhum cofrinho criado</Text>
+                <Text style={[styles.emptyTitle, { color: colors.text }]}>{t.noPiggyBanks}</Text>
                 <Text style={[styles.emptySubtitle, { color: colors.textDim }]}>
-                  Crie cofrinhos para organizar suas economias e acompanhar seu progresso.
+                  {t.piggyBanksDescription}
                 </Text>
               </View>
             ) : (
@@ -455,7 +457,7 @@ export function PiggyBankManager({ visible, onClose }: PiggyBankManagerProps) {
                             {piggy.name}
                           </Text>
                           <Text style={[styles.piggyBankAmounts, { color: colors.textDim }]}>
-                            {formatValue(piggy.currentAmount)} de {formatValue(piggy.targetAmount)}
+                            {formatValue(piggy.currentAmount)} {t.from} {formatValue(piggy.targetAmount)}
                           </Text>
                         </View>
                         <View style={styles.piggyBankActions}>
@@ -507,7 +509,7 @@ export function PiggyBankManager({ visible, onClose }: PiggyBankManagerProps) {
                       {/* Rodapé */}
                       <View style={styles.piggyBankFooter}>
                         <Text style={[styles.progressText, { color: piggy.color }]}>
-                          {progress.toFixed(0)}% completo
+                          {progress.toFixed(0)}% {t.percentageComplete}
                         </Text>
                       </View>
 
@@ -525,7 +527,7 @@ export function PiggyBankManager({ visible, onClose }: PiggyBankManagerProps) {
           </ScrollView>
 
           {/* Botão Fechar */}
-          <Button title="Fechar" onPress={onClose} style={styles.closeButton} />
+          <Button title={t.close} onPress={onClose} style={styles.closeButton} />
         </View>
       </View>
 
@@ -542,7 +544,7 @@ export function PiggyBankManager({ visible, onClose }: PiggyBankManagerProps) {
             {/* Cabeçalho */}
             <View style={[styles.header, { borderBottomColor: colors.border }]}>
               <Text style={[styles.title, { color: colors.text }]}>
-                {actionType === 'deposit' ? 'Depositar' : 'Retirar'}
+                {actionType === 'deposit' ? t.depositAction : t.withdrawAction}
               </Text>
               <TouchableOpacity onPress={closeActionModal}>
                 <FontAwesome5 name="times" size={20} color={colors.textDim} />
@@ -559,13 +561,13 @@ export function PiggyBankManager({ visible, onClose }: PiggyBankManagerProps) {
                       {actionPiggyBank.name}
                     </Text>
                     <Text style={[styles.actionInfoBalance, { color: colors.textDim }]}>
-                      Saldo: {formatValue(actionPiggyBank.currentAmount)}
+                      {t.piggyBankBalance}: {formatValue(actionPiggyBank.currentAmount)}
                     </Text>
                   </View>
                 </View>
 
                 {/* Seleção de conta */}
-                <Text style={[styles.fieldLabel, { color: colors.textDim }]}>Conta</Text>
+                <Text style={[styles.fieldLabel, { color: colors.textDim }]}>{t.account}</Text>
                 <View style={styles.accountContainer}>
                   {accounts.map((account) => (
                     <TouchableOpacity
@@ -599,7 +601,7 @@ export function PiggyBankManager({ visible, onClose }: PiggyBankManagerProps) {
                 </View>
 
                 {/* Valor */}
-                <Text style={[styles.fieldLabel, { color: colors.textDim }]}>Valor (R$)</Text>
+                <Text style={[styles.fieldLabel, { color: colors.textDim }]}>{t.amountLabel} (R$)</Text>
                 <TextInput
                   style={[
                     styles.largeInput,
@@ -611,7 +613,7 @@ export function PiggyBankManager({ visible, onClose }: PiggyBankManagerProps) {
                   ]}
                   value={actionAmount}
                   onChangeText={setActionAmount}
-                  placeholder="0,00"
+                  placeholder={language === 'pt-BR' ? '0,00' : '0.00'}
                   placeholderTextColor={colors.textMuted}
                   keyboardType="numeric"
                   autoFocus
@@ -619,13 +621,13 @@ export function PiggyBankManager({ visible, onClose }: PiggyBankManagerProps) {
 
                 <View style={styles.formButtons}>
                   <Button
-                    title="Cancelar"
+                    title={t.cancel}
                     onPress={closeActionModal}
                     variant="outline"
                     style={styles.formBtn}
                   />
                   <Button
-                    title={actionType === 'deposit' ? 'Depositar' : 'Retirar'}
+                    title={actionType === 'deposit' ? t.depositAction : t.withdrawAction}
                     onPress={handleAction}
                     style={styles.formBtn}
                   />

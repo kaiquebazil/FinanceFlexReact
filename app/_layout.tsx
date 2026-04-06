@@ -8,6 +8,7 @@ import { AuthProvider } from '../contexts/AuthContext';
 import { useData } from '../hooks/useData';
 import { theme } from '../constants/theme';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
+import { LanguageProvider } from '../contexts/LanguageContext';
 
 import type { CloudData } from '../services/syncService';
 
@@ -49,13 +50,15 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider>
-      <DataProvider>
-        <AppWithSync>
-          <ThemedStack />
-        </AppWithSync>
-      </DataProvider>
-    </ThemeProvider>
+    <LanguageProvider>
+      <ThemeProvider>
+        <DataProvider>
+          <AppWithSync>
+            <ThemedStack />
+          </AppWithSync>
+        </DataProvider>
+      </ThemeProvider>
+    </LanguageProvider>
   );
 }
 

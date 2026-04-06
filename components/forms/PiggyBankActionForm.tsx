@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { useData } from '../../hooks/useData';
 import { theme } from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { formatCurrency } from '../../utils/currency';
 
 interface PiggyBankActionFormProps {
@@ -17,6 +18,7 @@ interface PiggyBankActionFormProps {
 export function PiggyBankActionForm({ piggyBank, type, onSave, onCancel }: PiggyBankActionFormProps) {
   const { colors } = useTheme();
   const { depositToPiggyBank, withdrawFromPiggyBank, accounts } = useData();
+  const { t, language } = useLanguage();
   const [amount, setAmount] = useState('');
   const [selectedAccountId, setSelectedAccountId] = useState<string>(piggyBank.accountId || (accounts.length > 0 ? accounts[0].id : ''));
 
@@ -36,20 +38,20 @@ export function PiggyBankActionForm({ piggyBank, type, onSave, onCancel }: Piggy
   return (
     <View style={styles.container}>
       <Text style={[styles.title, { color: colors.text }]}>
-        {type === 'deposit' ? 'Depositar no Cofrinho' : 'Retirar do Cofrinho'}
+        {type === 'deposit' ? t.depositToPiggyBank : t.withdrawFromPiggyBank}
       </Text>
       <Text style={[styles.subtitle, { color: colors.primary }]}>{piggyBank.name}</Text>
 
-      <Input 
-        label="Valor (R$)" 
-        value={amount} 
-        onChangeText={setAmount} 
-        placeholder="0,00" 
+      <Input
+        label={`${t.amount} (${language === 'pt-BR' ? 'R$' : '$'})`}
+        value={amount}
+        onChangeText={setAmount}
+        placeholder={language === 'pt-BR' ? "0,00" : "0.00"}
         keyboardType="numeric"
         autoFocus
       />
 
-      <Text style={[styles.label, { color: colors.text }]}>Selecione a conta</Text>
+      <Text style={[styles.label, { color: colors.text }]}>{t.selectAccount}</Text>
       <View style={styles.accountListContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountList}>
           {accounts.map(account => (
@@ -82,10 +84,10 @@ export function PiggyBankActionForm({ piggyBank, type, onSave, onCancel }: Piggy
       </View>
 
       <View style={styles.buttons}>
-        <Button title="Cancelar" onPress={onCancel} variant="outline" style={styles.button} />
-        <Button 
-          title="Confirmar" 
-          onPress={handleConfirm} 
+        <Button title={t.cancel} onPress={onCancel} variant="outline" style={styles.button} />
+        <Button
+          title={t.confirm}
+          onPress={handleConfirm}
           style={styles.button}
           disabled={!amount || !selectedAccountId}
         />

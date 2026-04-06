@@ -17,6 +17,7 @@ import {
 import { BackupRestore } from "../components/features/BackupRestore";
 import { FirebaseSync } from "../components/features/FirebaseSync";
 import { BudgetManager } from "../components/features/BudgetManager";
+import { AccountManager } from "../components/features/AccountManager";
 import { CategoryManager } from "../components/features/CategoryManager";
 import { CreditCardManager } from "../components/features/CreditCardManager";
 import { RecurringBillsManager } from "../components/features/RecurringBillsManager";
@@ -24,8 +25,6 @@ import { TransactionsModal } from "../components/features/TransactionsModal";
 import { CalendarModal } from "../components/features/CalendarModal";
 import { PiggyBankManager } from "../components/features/PiggyBankManager";
 import { PiggyBankProjection } from "../components/features/PiggyBankProjection";
-import { AccountEditForm } from "../components/forms/AccountEditForm";
-import { AccountForm } from "../components/forms/AccountForm";
 import { TransactionForm } from "../components/forms/TransactionForm";
 import { AccountItem } from "../components/ui/AccountItem";
 import { Button } from "../components/ui/Button";
@@ -41,6 +40,7 @@ import { theme } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
 import { useData } from "../hooks/useData";
 import { useAuth } from "../contexts/AuthContext";
+import { useLanguage } from "../contexts/LanguageContext";
 import { formatCurrency } from "../utils/currency";
 
 // Tipos para os callbacks
@@ -65,6 +65,7 @@ interface ConfirmCallbackOptions {
 
 export default function HomeScreen() {
   const { colors, isDark, toggleTheme } = useTheme();
+  const { t, language, toggleLanguage } = useLanguage();
   const styles = getStyles(colors, isDark);
   const {
     accounts,
@@ -92,8 +93,6 @@ export default function HomeScreen() {
   const [showTransactionsModal, setShowTransactionsModal] = useState(false);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
-  const [showAccountEditModal, setShowAccountEditModal] = useState(false);
-  const [selectedAccount, setSelectedAccount] = useState<any>(null);
 
   // Estados para transação
   const [showTransactionModal, setShowTransactionModal] = useState(false);
@@ -237,10 +236,10 @@ export default function HomeScreen() {
 
     showToast(
       data.type === "income"
-        ? "Receita adicionada com sucesso!"
+        ? t.incomeAdded
         : data.type === "expense"
-          ? "Despesa adicionada com sucesso!"
-          : `Transferência de ${formatCurrency(data.amount, "BRL")} realizada com sucesso!`,
+          ? t.expenseAdded
+          : `${t.transferMade} ${formatCurrency(data.amount, "BRL")}`,
       "success",
     );
 
@@ -249,15 +248,6 @@ export default function HomeScreen() {
     }
   };
 
-  // Funções para lidar com contas
-  const handleEditAccount = (account: any) => {
-    setSelectedAccount(account);
-    setShowAccountEditModal(true);
-  };
-
-  const handleDeleteAccount = (accountId: string) => {
-    deleteAccount(accountId);
-  };
 
 
   // Filtrar transações
@@ -325,6 +315,16 @@ export default function HomeScreen() {
                 <Text style={styles.logoText}>FinanceFlex</Text>
               </View>
               <View style={styles.headerActions}>
+                {/* Toggle de Idioma */}
+                <TouchableOpacity
+                  onPress={toggleLanguage}
+                  style={styles.iconButton}
+                >
+                  <Text style={{ fontSize: 14, fontFamily: 'Inter-SemiBold', color: colors.primary }}>
+                    {language === 'pt-BR' ? 'BR' : 'EN'}
+                  </Text>
+                </TouchableOpacity>
+
                 {/* Toggle de Tema Claro/Escuro */}
                 <TouchableOpacity
                   onPress={toggleTheme}
@@ -372,9 +372,9 @@ export default function HomeScreen() {
             ]}
           >
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Contas</Text>
+              <Text style={styles.sectionTitle}>{t.accounts}</Text>
               <Text style={styles.sectionSubtitle}>
-                Total: {formatValue(totalBalance)}
+                {t.total}: {formatValue(totalBalance)}
               </Text>
             </View>
             <Card style={styles.card}>
@@ -385,18 +385,21 @@ export default function HomeScreen() {
                       size={32}
                       color={colors.textDim}
                     />
-                    <Text style={styles.emptyText}>Nenhuma conta cadastrada</Text>
+                    <Text style={styles.emptyText}>{t.noAccounts}</Text>
                   </View>
                 ) : (
                   <>
                     {accounts.slice(0, 3).map((account) => (
-                      <AccountItem
+                      <TouchableOpacity
                         key={account.id}
-                        account={account}
-                        onEdit={() => handleEditAccount(account)}
-                        onDelete={() => handleDeleteAccount(account.id)}
-                        formatValue={formatValue}
-                      />
+                        onPress={() => setShowAccountModal(true)}
+                        activeOpacity={0.7}
+                      >
+                        <AccountItem
+                          account={account}
+                          formatValue={formatValue}
+                        />
+                      </TouchableOpacity>
                     ))}
                     {accounts.length > 3 && (
                       <TouchableOpacity
@@ -404,14 +407,14 @@ export default function HomeScreen() {
                         onPress={() => setShowAccountModal(true)}
                       >
                         <Text style={styles.viewAllText}>
-                          Ver todas ({accounts.length})
+                          {t.viewAll} ({accounts.length})
                         </Text>
                       </TouchableOpacity>
                     )}
                   </>
                 )}
               <Button
-                title="Adicionar Conta"
+                title={t.addAccount}
                 icon="plus"
                 onPress={() => setShowAccountModal(true)}
                 variant="outline"
@@ -423,7 +426,7 @@ export default function HomeScreen() {
           {/* Resumo Mensal */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Resumo Mensal</Text>
+              <Text style={styles.sectionTitle}>{t.monthlySummary}</Text>
             </View>
             <View style={styles.summaryGrid}>
               {/* Receitas */}
@@ -435,7 +438,7 @@ export default function HomeScreen() {
                     color={theme.colors.success}
                   />
                 </View>
-                <Text style={styles.summaryLabel}>Receitas</Text>
+                <Text style={styles.summaryLabel}>{t.income}</Text>
                 <Text
                   style={[styles.summaryValue, { color: theme.colors.success }]}
                 >
@@ -452,7 +455,7 @@ export default function HomeScreen() {
                     color={theme.colors.danger}
                   />
                 </View>
-                <Text style={styles.summaryLabel}>Despesas</Text>
+                <Text style={styles.summaryLabel}>{t.expense}</Text>
                 <Text
                   style={[styles.summaryValue, { color: theme.colors.danger }]}
                 >
@@ -469,7 +472,7 @@ export default function HomeScreen() {
                     color={theme.colors.info}
                   />
                 </View>
-                <Text style={styles.summaryLabel}>Saldo</Text>
+                <Text style={styles.summaryLabel}>{t.balance}</Text>
                 <Text
                   style={[styles.summaryValue, { color: theme.colors.info }]}
                 >
@@ -486,7 +489,7 @@ export default function HomeScreen() {
                     color={theme.colors.warning}
                   />
                 </View>
-                <Text style={styles.summaryLabel}>Percentagem</Text>
+                <Text style={styles.summaryLabel}>{t.percentage}</Text>
                 <Text
                   style={[styles.summaryValue, { color: theme.colors.warning }]}
                 >
@@ -500,7 +503,7 @@ export default function HomeScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, styles.calendarTitle]}>
-                Contas do Mês
+                {t.monthlyBills}
               </Text>
               <TouchableOpacity onPress={() => setShowCalendarModal(true)}>
                 <FontAwesome5
@@ -524,7 +527,7 @@ export default function HomeScreen() {
             return (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Orçamentos do Mês</Text>
+                  <Text style={styles.sectionTitle}>{t.monthlyBudgets}</Text>
                   <TouchableOpacity onPress={() => setShowBudgetsModal(true)}>
                     <FontAwesome5 name="chart-pie" size={16} color={colors.primary} />
                   </TouchableOpacity>
@@ -549,12 +552,12 @@ export default function HomeScreen() {
                             </Text>
                             {percentage >= 100 && (
                               <View style={{ backgroundColor: theme.colors.danger + '25', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 8 }}>
-                                <Text style={{ color: theme.colors.danger, fontSize: 10, fontFamily: 'Inter-SemiBold' }}>Excedido</Text>
+                                <Text style={{ color: theme.colors.danger, fontSize: 10, fontFamily: 'Inter-SemiBold' }}>{t.exceeded}</Text>
                               </View>
                             )}
                             {percentage >= 80 && percentage < 100 && (
                               <View style={{ backgroundColor: theme.colors.warning + '25', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 8 }}>
-                                <Text style={{ color: theme.colors.warning, fontSize: 10, fontFamily: 'Inter-SemiBold' }}>Atenção</Text>
+                                <Text style={{ color: theme.colors.warning, fontSize: 10, fontFamily: 'Inter-SemiBold' }}>{t.attention}</Text>
                               </View>
                             )}
                           </View>
@@ -566,14 +569,14 @@ export default function HomeScreen() {
                           <View style={{ height: '100%', width: `${cappedPct}%` as any, backgroundColor: barColor, borderRadius: 3 }} />
                         </View>
                         <Text style={{ color: colors.text, fontSize: 11, marginTop: 8, fontFamily: 'Inter-Regular' }}>
-                          {valuesHidden ? '• • •' : `${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(spent)} de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(budget.limitAmount)}`}
+                          {valuesHidden ? '• • •' : `${formatCurrency(spent, language === 'pt-BR' ? 'BRL' : 'USD')} ${t.of} ${formatCurrency(budget.limitAmount, language === 'pt-BR' ? 'BRL' : 'USD')}`}
                         </Text>
                       </View>
                     );
                   })}
                   {monthBudgets.length > 4 && (
                     <TouchableOpacity style={styles.viewAllButton} onPress={() => setShowBudgetsModal(true)}>
-                      <Text style={styles.viewAllText}>Ver todos ({monthBudgets.length})</Text>
+                      <Text style={styles.viewAllText}>{t.viewAll} ({monthBudgets.length})</Text>
                     </TouchableOpacity>
                   )}
                 </Card>
@@ -585,7 +588,7 @@ export default function HomeScreen() {
           {piggyBanks.length > 0 && (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Cofrinhos</Text>
+                <Text style={styles.sectionTitle}>{t.piggyBanks}</Text>
                 <TouchableOpacity onPress={() => setShowPiggyBankModal(true)}>
                   <FontAwesome5
                     name="external-link-alt"
@@ -653,7 +656,7 @@ export default function HomeScreen() {
                     onPress={() => setShowPiggyBankModal(true)}
                   >
                     <Text style={styles.viewAllText}>
-                      Ver todos ({piggyBanks.length})
+                      {t.viewAll} ({piggyBanks.length})
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -664,7 +667,7 @@ export default function HomeScreen() {
           {/* Transações Recentes */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Transações Recentes</Text>
+              <Text style={styles.sectionTitle}>{t.recentTransactions}</Text>
               <TouchableOpacity onPress={() => setShowTransactionsModal(true)}>
                 <FontAwesome5
                   name="external-link-alt"
@@ -688,7 +691,7 @@ export default function HomeScreen() {
                       selectedPeriod === "today" && styles.tabTextActive,
                     ]}
                   >
-                    Hoje
+                    {t.today}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -704,7 +707,7 @@ export default function HomeScreen() {
                       selectedPeriod === "week" && styles.tabTextActive,
                     ]}
                   >
-                    Semana
+                    {t.week}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -720,7 +723,7 @@ export default function HomeScreen() {
                       selectedPeriod === "month" && styles.tabTextActive,
                     ]}
                   >
-                    Mês
+                    {t.month}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -736,7 +739,7 @@ export default function HomeScreen() {
                       selectedPeriod === "upcoming" && styles.tabTextActive,
                     ]}
                   >
-                    Futuras
+                    {t.upcoming}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -748,7 +751,7 @@ export default function HomeScreen() {
                     color={colors.textDim}
                   />
                   <Text style={styles.emptyText}>
-                    Nenhuma transação encontrada
+                    {t.noTransactions}
                   </Text>
                 </View>
               ) : (
@@ -780,15 +783,15 @@ export default function HomeScreen() {
                         <Text style={styles.transactionName}>
                           {transaction.description ||
                             (transaction.type === "income"
-                              ? "Receita"
+                              ? t.incomeType
                               : transaction.type === "expense"
-                                ? "Despesa"
-                                : "Transferência")}
+                                ? t.expenseType
+                                : t.transferType)}
                         </Text>
                         <Text style={styles.transactionCategory}>
                           {transaction.category} •{" "}
                           {new Date(transaction.date).toLocaleDateString(
-                            "pt-BR",
+                            language === 'pt-BR' ? "pt-BR" : "en-US"
                           )}
                         </Text>
                       </View>
@@ -805,7 +808,7 @@ export default function HomeScreen() {
                   style={styles.viewAllButton}
                   onPress={() => setShowTransactionsModal(true)}
                 >
-                  <Text style={styles.viewAllText}>Ver todas</Text>
+                  <Text style={styles.viewAllText}>{t.viewAll}</Text>
                   <FontAwesome5
                     name="arrow-right"
                     size={12}
@@ -871,52 +874,11 @@ export default function HomeScreen() {
         }}
       />
 
-      {/* Modal de Conta */}
-      <Modal
+      {/* Modal de Contas */}
+      <AccountManager
         visible={showAccountModal}
         onClose={() => setShowAccountModal(false)}
-        title="Contas"
-      >
-        <ScrollView>
-          {accounts.map((account) => (
-            <AccountItem
-              key={account.id}
-              account={account}
-              onEdit={() => handleEditAccount(account)}
-              onDelete={() => handleDeleteAccount(account.id)}
-              formatValue={formatValue}
-            />
-          ))}
-          <AccountForm
-            onSave={() => setShowAccountModal(false)}
-            onCancel={() => setShowAccountModal(false)}
-          />
-        </ScrollView>
-      </Modal>
-
-      {/* Modal de Editar Conta */}
-      <Modal
-        visible={showAccountEditModal}
-        onClose={() => {
-          setShowAccountEditModal(false);
-          setSelectedAccount(null);
-        }}
-        title="Editar Conta"
-      >
-        {selectedAccount && (
-          <AccountEditForm
-            account={selectedAccount}
-            onSave={() => {
-              setShowAccountEditModal(false);
-              setSelectedAccount(null);
-            }}
-            onCancel={() => {
-              setShowAccountEditModal(false);
-              setSelectedAccount(null);
-            }}
-          />
-        )}
-      </Modal>
+      />
 
       {/* Modal de Transação Unificado */}
       <TransactionForm
@@ -983,8 +945,8 @@ export default function HomeScreen() {
         title={confirmConfig.title}
         message={confirmConfig.message}
         type={confirmConfig.type}
-        confirmText="Confirmar"
-        cancelText="Cancelar"
+        confirmText={t.confirm}
+        cancelText={t.cancel}
         onConfirm={() => {
           confirmConfig.onConfirm();
           setShowConfirmModal(false);

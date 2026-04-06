@@ -11,6 +11,7 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import { createDefaultCategories } from '../../constants/defaultCategories';
 import { createDefaultRecurringBills } from '../../constants/defaultRecurringBills';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface BackupRestoreProps {
   visible: boolean;
@@ -19,6 +20,7 @@ interface BackupRestoreProps {
 
 export function BackupRestore({ visible, onClose }: BackupRestoreProps) {
   const { colors, isDark } = useTheme();
+  const { t } = useLanguage();
   const {
     accounts,
     transactions,
@@ -75,7 +77,7 @@ export function BackupRestore({ visible, onClose }: BackupRestoreProps) {
     setValuesHidden(false);
 
     setShowConfirmClear(false);
-    setSuccessMessage('✅ Todos os dados foram resetados para o padrão!');
+    setSuccessMessage(t.dataReset);
     setShowSuccessModal(true);
     setTimeout(() => {
       setShowSuccessModal(false);
@@ -101,7 +103,7 @@ export function BackupRestore({ visible, onClose }: BackupRestoreProps) {
         <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
           {/* Cabeçalho */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.title, { color: colors.text }]}>Backup e Restauração</Text>
+            <Text style={[styles.title, { color: colors.text }]}>{t.backupRestoreTitle}</Text>
             <TouchableOpacity onPress={onClose}>
               <FontAwesome5 name="times" size={20} color={colors.textDim} />
             </TouchableOpacity>
@@ -115,20 +117,20 @@ export function BackupRestore({ visible, onClose }: BackupRestoreProps) {
 
             <View style={[styles.infoBox, { backgroundColor: isDark ? colors.darkLight : colors.surfaceDark }]}>
               <Text style={[styles.infoText, { color: colors.text }]}>
-                📊 Status Atual:{'\n'}
-                • {accounts.length} contas • {transactions.length} transações{'\n'}
-                • {categories.length} categorias • {recurringBills.length} contas recorrentes
+                📊 {t.monthlySummary}:{'\n'}
+                • {t.accounts}: {accounts.length} • {t.transactions}: {transactions.length}{'\n'}
+                • {t.categories}: {categories.length} • {t.recurringBills}: {recurringBills.length}
               </Text>
               <Text style={[styles.infoSubtext, { color: colors.textDim }]}>
-                Contas padrão: 2 | Suas contas: {userAccounts.length}{'\n'}
-                Categorias padrão: 15 | Suas categorias: {userCategories.length}
+                {t.defaultAccountsInfo.replace('{defaultCount}', '2').replace('{userCount}', String(userAccounts.length))}{'\n'}
+                {t.defaultCategoriesInfo.replace('{defaultCount}', '15').replace('{userCount}', String(userCategories.length))}
               </Text>
             </View>
 
             <View style={[styles.warningBox, { backgroundColor: isDark ? 'rgba(255, 152, 0, 0.15)' : 'rgba(255, 152, 0, 0.12)' }]}>
               <FontAwesome5 name="exclamation-triangle" size={24} color="#FF9800" />
               <Text style={[styles.warningText, { color: colors.text }]}>
-                Ao resetar, todos os seus dados serão apagados e substituídos pelas configurações padrão. Esta ação não pode ser desfeita!
+                {t.resetWarning}
               </Text>
             </View>
 
@@ -152,7 +154,7 @@ export function BackupRestore({ visible, onClose }: BackupRestoreProps) {
 
           {/* Botão Fechar */}
           <Button
-            title="Fechar"
+            title={t.close}
             onPress={onClose}
             style={styles.closeButton}
           />

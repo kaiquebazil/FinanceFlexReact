@@ -3,6 +3,7 @@ import React from 'react';
 import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface FABProps {
   visible: boolean;
@@ -14,6 +15,8 @@ interface FABProps {
 }
 
 export function FAB({ visible, onPressMain, showMenu, onPressIncome, onPressExpense, onPressTransfer }: FABProps) {
+  const { t } = useLanguage();
+
   if (!visible) return null;
 
   return (
@@ -22,15 +25,15 @@ export function FAB({ visible, onPressMain, showMenu, onPressIncome, onPressExpe
         <>
           <TouchableOpacity style={[styles.fab, styles.fabTransfer]} onPress={onPressTransfer}>
             <FontAwesome5 name="exchange-alt" size={18} color="#fff" />
-            <Text style={styles.fabLabel}>Transferir</Text>
+            <Text style={styles.fabLabel}>{t.transfer}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.fab, styles.fabIncome]} onPress={onPressIncome}>
             <FontAwesome5 name="arrow-down" size={18} color="#fff" />
-            <Text style={styles.fabLabel}>Nova Receita</Text>
+            <Text style={styles.fabLabel}>{t.newIncome}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.fab, styles.fabExpense]} onPress={onPressExpense}>
             <FontAwesome5 name="arrow-up" size={18} color="#fff" />
-            <Text style={styles.fabLabel}>Nova Despesa</Text>
+            <Text style={styles.fabLabel}>{t.newExpense}</Text>
           </TouchableOpacity>
         </>
       )}

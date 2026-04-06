@@ -7,8 +7,8 @@ import type { Account } from '../../types';
 
 interface AccountItemProps {
   account: Account;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   formatValue: (value: number) => string;
 }
 
@@ -37,14 +37,20 @@ export const AccountItem = ({ account, onEdit, onDelete, formatValue }: AccountI
       </View>
       <View style={styles.balanceContainer}>
         <Text style={[styles.balance, { color: colors.text }]}>{formatValue(account.balance)}</Text>
-        <View style={styles.actions}>
-          <TouchableOpacity onPress={onEdit} style={styles.actionButton}>
-            <FontAwesome5 name="edit" size={14} color={theme.colors.primary} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={onDelete} style={styles.actionButton}>
-            <FontAwesome5 name="trash" size={14} color={theme.colors.danger} />
-          </TouchableOpacity>
-        </View>
+        {(onEdit || onDelete) && (
+          <View style={styles.actions}>
+            {onEdit && (
+              <TouchableOpacity onPress={onEdit} style={styles.actionButton}>
+                <FontAwesome5 name="edit" size={14} color={theme.colors.primary} />
+              </TouchableOpacity>
+            )}
+            {onDelete && (
+              <TouchableOpacity onPress={onDelete} style={styles.actionButton}>
+                <FontAwesome5 name="trash" size={14} color={theme.colors.danger} />
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
       </View>
     </View>
   );

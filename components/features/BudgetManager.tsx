@@ -14,6 +14,7 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useData } from '../../hooks/useData';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import type { Budget, Category } from '../../types';
@@ -24,13 +25,9 @@ interface BudgetManagerProps {
   onClose: () => void;
 }
 
-const MONTH_NAMES = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
-];
-
 export function BudgetManager({ visible, onClose }: BudgetManagerProps) {
   const { colors, isDark } = useTheme();
+  const { t, language } = useLanguage();
   const {
     budgets,
     categories,
@@ -98,12 +95,12 @@ export function BudgetManager({ visible, onClose }: BudgetManagerProps) {
 
   const handleSave = () => {
     if (!selectedCategoryId) {
-      Alert.alert('Atenção', 'Selecione uma categoria.');
+      Alert.alert(t.attention, t.selectCategoryAlert);
       return;
     }
     const amount = parseFloat(limitAmount.replace(',', '.'));
     if (!amount || amount <= 0) {
-      Alert.alert('Atenção', 'Informe um limite válido maior que zero.');
+      Alert.alert(t.attention, t.enterValidLimit);
       return;
     }
 
@@ -132,12 +129,12 @@ export function BudgetManager({ visible, onClose }: BudgetManagerProps) {
 
   const handleDelete = (budget: Budget) => {
     Alert.alert(
-      'Excluir Orçamento',
-      `Deseja excluir o orçamento de "${budget.categoryName}"?`,
+      t.deleteBudget,
+      `${t.confirmDeleteBudget} "${budget.categoryName}"?`,
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t.cancel, style: 'cancel' },
         {
-          text: 'Excluir',
+          text: t.delete,
           style: 'destructive',
           onPress: () => deleteBudget(budget.id),
         },
@@ -175,8 +172,8 @@ export function BudgetManager({ visible, onClose }: BudgetManagerProps) {
   };
 
   const getAlertBadge = (percentage: number) => {
-    if (percentage >= 100) return { label: 'Excedido', color: colors.danger };
-    if (percentage >= 80) return { label: 'Atenção', color: colors.warning };
+    if (percentage >= 100) return { label: t.exceeded, color: colors.danger };
+    if (percentage >= 80) return { label: t.attention, color: colors.warning };
     return null;
   };
 
@@ -192,7 +189,7 @@ export function BudgetManager({ visible, onClose }: BudgetManagerProps) {
         <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
           {/* Cabeçalho */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.title, { color: colors.text }]}>Orçamentos</Text>
+            <Text style={[styles.title, { color: colors.text }]}>{t.budgets}</Text>
             <TouchableOpacity onPress={onClose}>
               <FontAwesome5 name="times" size={20} color={colors.textDim} />
             </TouchableOpacity>
@@ -205,7 +202,7 @@ export function BudgetManager({ visible, onClose }: BudgetManagerProps) {
                 <FontAwesome5 name="chevron-left" size={16} color={colors.primary} />
               </TouchableOpacity>
               <Text style={[styles.monthLabel, { color: colors.text }]}>
-                {MONTH_NAMES[selectedMonth - 1]} {selectedYear}
+                {t.months[selectedMonth - 1]} {selectedYear}
               </Text>
               <TouchableOpacity onPress={handleNextMonth} style={[styles.monthArrow, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
                 <FontAwesome5 name="chevron-right" size={16} color={colors.primary} />
@@ -216,11 +213,11 @@ export function BudgetManager({ visible, onClose }: BudgetManagerProps) {
             {showForm ? (
               <Card style={styles.formCard}>
                 <Text style={[styles.formTitle, { color: colors.text }]}>
-                  {editingBudget ? 'Editar Orçamento' : 'Novo Orçamento'}
+                  {editingBudget ? t.editBudget : t.newBudget}
                 </Text>
 
                 {/* Seleção de categoria */}
-                <Text style={[styles.fieldLabel, { color: colors.textDim }]}>Categoria de Despesa</Text>
+                <Text style={[styles.fieldLabel, { color: colors.textDim }]}>{t.expenseCategory}</Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -261,7 +258,7 @@ export function BudgetManager({ visible, onClose }: BudgetManagerProps) {
                 </ScrollView>
 
                 {/* Limite */}
-                <Text style={[styles.fieldLabel, { color: colors.textDim }]}>Limite Mensal (R$)</Text>
+                <Text style={[styles.fieldLabel, { color: colors.textDim }]}>{t.monthlyLimit} ({language === 'pt-BR' ? 'R$' : '$'})</Text>
                 <TextInput
                   style={[
                     styles.input,
@@ -273,19 +270,19 @@ export function BudgetManager({ visible, onClose }: BudgetManagerProps) {
                   ]}
                   value={limitAmount}
                   onChangeText={setLimitAmount}
-                  placeholder="0,00"
+                  placeholder={language === 'pt-BR' ? "0,00" : "0.00"}
                   placeholderTextColor={colors.textMuted}
                   keyboardType="numeric"
                 />
 
                 <View style={styles.formButtons}>
-                  <Button title="Cancelar" onPress={resetForm} variant="outline" style={styles.formBtn} />
-                  <Button title="Salvar" onPress={handleSave} style={styles.formBtn} />
+                  <Button title={t.cancel} onPress={resetForm} variant="outline" style={styles.formBtn} />
+                  <Button title={t.save} onPress={handleSave} style={styles.formBtn} />
                 </View>
               </Card>
             ) : (
               <Button
-                title="+ Novo Orçamento"
+                title={t.addBudget}
                 onPress={handleOpenCreate}
                 variant="outline"
                 style={styles.addButton}
@@ -296,9 +293,9 @@ export function BudgetManager({ visible, onClose }: BudgetManagerProps) {
             {monthlyBudgets.length === 0 && !showForm ? (
               <View style={styles.emptyState}>
                 <FontAwesome5 name="chart-pie" size={40} color={colors.textDim} />
-                <Text style={[styles.emptyTitle, { color: colors.text }]}>Nenhum orçamento definido</Text>
+                <Text style={[styles.emptyTitle, { color: colors.text }]}>{t.noBudgetDefined}</Text>
                 <Text style={[styles.emptySubtitle, { color: colors.textDim }]}>
-                  Defina limites de gastos por categoria para controlar suas despesas mensais.
+                  {t.budgetDescription}
                 </Text>
               </View>
             ) : (
@@ -332,7 +329,7 @@ export function BudgetManager({ visible, onClose }: BudgetManagerProps) {
                             )}
                           </View>
                           <Text style={[styles.budgetAmounts, { color: colors.textDim }]}>
-                            {formatValue(spent)} de {formatValue(budget.limitAmount)}
+                            {formatValue(spent)} {t.of} {formatValue(budget.limitAmount)}
                           </Text>
                         </View>
                         <View style={styles.budgetActions}>
@@ -367,7 +364,7 @@ export function BudgetManager({ visible, onClose }: BudgetManagerProps) {
                       {/* Rodapé: percentual e saldo restante */}
                       <View style={styles.budgetFooter}>
                         <Text style={[styles.percentageText, { color: progressColor }]}>
-                          {percentage.toFixed(0)}% utilizado
+                          {percentage.toFixed(0)}% {t.used}
                         </Text>
                         <Text
                           style={[
@@ -376,8 +373,8 @@ export function BudgetManager({ visible, onClose }: BudgetManagerProps) {
                           ]}
                         >
                           {remaining >= 0
-                            ? `Restam ${formatValue(remaining)}`
-                            : `Excedido em ${formatValue(Math.abs(remaining))}`}
+                            ? `${t.remaining} ${formatValue(remaining)}`
+                            : `${t.exceededBy} ${formatValue(Math.abs(remaining))}`}
                         </Text>
                       </View>
                     </Card>
@@ -389,7 +386,7 @@ export function BudgetManager({ visible, onClose }: BudgetManagerProps) {
 
           {/* Botão Fechar */}
           <Button
-            title="Fechar"
+            title={t.close}
             onPress={onClose}
             style={styles.closeButton}
           />

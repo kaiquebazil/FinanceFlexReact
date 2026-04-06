@@ -18,6 +18,7 @@ import {
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth, SyncStatus } from '../../contexts/AuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { Button } from '../ui/Button';
 import { ConfirmModal } from '../ui/ConfirmModal';
 
@@ -28,13 +29,13 @@ interface FirebaseSyncProps {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function statusLabel(status: SyncStatus): string {
+function statusLabel(status: SyncStatus, t: any): string {
   switch (status) {
-    case 'syncing': return 'Sincronizando…';
-    case 'synced':  return 'Sincronizado';
-    case 'error':   return 'Erro na sincronização';
-    case 'offline': return 'Sem conexão';
-    default:        return 'Não sincronizado';
+    case 'syncing': return t.syncInProgress;
+    case 'synced':  return t.synced;
+    case 'error':   return t.syncStatusError;
+    case 'offline': return t.syncStatusOffline;
+    default:        return t.syncStatusNotSynced;
   }
 }
 
@@ -62,6 +63,7 @@ function statusIcon(status: SyncStatus): string {
 
 export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
   const { colors, isDark } = useTheme();
+  const { t, language } = useLanguage();
   const {
     user,
     loading,
@@ -109,27 +111,27 @@ export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
 
   const handleAuth = async () => {
     if (!email.trim() || !password.trim()) {
-      showModalNotif('Preencha e-mail e senha', 'warning');
+      showModalNotif(t.fillEmailPassword, 'warning');
       return;
     }
     if (isSignUp && !displayName.trim()) {
-      showModalNotif('Preencha seu nome', 'warning');
+      showModalNotif(t.fillName, 'warning');
       return;
     }
     setAuthLoading(true);
     try {
       if (isSignUp) {
         await signUp(email.trim(), password, displayName.trim());
-        showModalNotif('Conta criada com sucesso!', 'success');
+        showModalNotif(t.accountCreated, 'success');
       } else {
         await signIn(email.trim(), password);
-        showModalNotif('Login realizado com sucesso!', 'success');
+        showModalNotif(t.loginSuccess, 'success');
       }
       setEmail('');
       setPassword('');
       setDisplayName('');
     } catch (err: any) {
-      showModalNotif('Erro na autenticação. Verifique seus dados.', 'error');
+      showModalNotif(t.authError, 'error');
     } finally {
       setAuthLoading(false);
     }
@@ -138,26 +140,26 @@ export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
   const handleLogout = async () => {
     try {
       await logOut();
-      showModalNotif('Desconectado com sucesso', 'info');
+      showModalNotif(t.loggedOut, 'info');
       setShowLogoutConfirm(false);
     } catch {
-      showModalNotif('Erro ao desconectar', 'error');
+      showModalNotif(t.logoutError, 'error');
     }
   };
 
   const handleForgotPassword = async () => {
     if (!forgotEmail.trim()) {
-      showModalNotif('Digite seu e-mail', 'warning');
+      showModalNotif(t.enterEmailRecovery, 'warning');
       return;
     }
     setForgotLoading(true);
     try {
       await resetPassword(forgotEmail.trim());
-      showModalNotif('E-mail de recuperação enviado!', 'success');
+      showModalNotif(t.recoveryEmailSent, 'success');
       setShowForgotPassword(false);
       setForgotEmail('');
     } catch (err: any) {
-      showModalNotif('Erro ao enviar e-mail de recuperação.', 'error');
+      showModalNotif(t.recoveryEmailError, 'error');
     } finally {
       setForgotLoading(false);
     }
@@ -169,9 +171,9 @@ export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
     setSyncLoading(true);
     try {
       await manualSync();
-      showModalNotif('Dados sincronizados com sucesso!', 'success');
+      showModalNotif(t.dataSynced, 'success');
     } catch {
-      showModalNotif('Erro ao sincronizar.', 'error');
+      showModalNotif(t.errorSync, 'error');
     } finally {
       setSyncLoading(false);
     }
@@ -181,10 +183,10 @@ export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
     setSyncLoading(true);
     try {
       await uploadData();
-      showModalNotif('Dados enviados para a nuvem!', 'success');
+      showModalNotif(t.dataUploaded, 'success');
       setShowUploadConfirm(false);
     } catch {
-      showModalNotif('Erro ao enviar dados.', 'error');
+      showModalNotif(t.errorSync, 'error');
     } finally {
       setSyncLoading(false);
     }
@@ -194,10 +196,10 @@ export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
     setSyncLoading(true);
     try {
       await downloadData();
-      showModalNotif('Dados baixados da nuvem!', 'success');
+      showModalNotif(t.dataDownloaded, 'success');
       setShowDownloadConfirm(false);
     } catch {
-      showModalNotif('Erro ao baixar dados.', 'error');
+      showModalNotif(t.errorSync, 'error');
     } finally {
       setSyncLoading(false);
     }
@@ -221,7 +223,7 @@ export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
         <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
           {/* Cabeçalho */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.title, { color: colors.text }]}>Sincronização</Text>
+            <Text style={[styles.title, { color: colors.text }]}>{t.syncTitle}</Text>
             <TouchableOpacity onPress={onClose}>
               <FontAwesome5 name="times" size={20} color={colors.textDim} />
             </TouchableOpacity>
@@ -233,16 +235,16 @@ export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
               <View style={[styles.headerIconWrap, { backgroundColor: isDark ? 'rgba(124,77,255,0.15)' : 'rgba(108,63,255,0.1)' }]}>
                 <FontAwesome5 name="cloud" size={36} color={colors.primary} />
               </View>
-              <Text style={[styles.mainTitle, { color: colors.text }]}>Sincronização na Nuvem</Text>
+              <Text style={[styles.mainTitle, { color: colors.text }]}>{t.cloudSyncTitle}</Text>
               <Text style={[styles.subtitle, { color: colors.textDim }]}>
-                Mantenha seus dados seguros e sincronizados entre todos os seus dispositivos.
+                {t.cloudSyncDescription}
               </Text>
             </View>
 
             {loading ? (
               <View style={styles.centered}>
                 <ActivityIndicator size="large" color={colors.primary} />
-                <Text style={[styles.loadingText, { color: colors.textDim }]}>Carregando…</Text>
+                <Text style={[styles.loadingText, { color: colors.textDim }]}>{t.loading}</Text>
               </View>
             ) : user ? (
               // ─── Usuário logado ──────────────────────────────────────────────
@@ -257,7 +259,7 @@ export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
                       color={currentStatusColor}
                     />
                     <Text style={[styles.statusText, { color: currentStatusColor }]}>
-                      {statusLabel(syncStatus)}
+                      {statusLabel(syncStatus, t)}
                     </Text>
                     {syncStatus === 'syncing' && (
                       <ActivityIndicator size="small" color={colors.primary} style={{ marginLeft: 6 }} />
@@ -266,15 +268,15 @@ export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
 
                   {lastSyncedAt && (
                     <Text style={[styles.lastSync, { color: colors.textDim }]}>
-                      Última sincronização:{' '}
-                      {lastSyncedAt.toLocaleString('pt-BR')}
+                      {t.lastSync}{' '}
+                      {lastSyncedAt.toLocaleString(language === 'pt-BR' ? 'pt-BR' : 'en-US')}
                     </Text>
                   )}
 
                   <View style={[styles.realtimeBadge, { backgroundColor: isDark ? 'rgba(76, 175, 80, 0.1)' : 'rgba(76, 175, 80, 0.05)' }]}>
                     <FontAwesome5 name="bolt" size={12} color="#4CAF50" />
                     <Text style={styles.realtimeBadgeText}>
-                      Sincronização em tempo real ativa
+                      {t.realtimeSyncActive}
                     </Text>
                   </View>
                 </View>
@@ -285,13 +287,13 @@ export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
                     <FontAwesome5 name="user-circle" size={32} color={colors.primary} />
                   </View>
                   <View style={styles.userInfo}>
-                    <Text style={[styles.userName, { color: colors.text }]}>{user.displayName || 'Usuário'}</Text>
+                    <Text style={[styles.userName, { color: colors.text }]}>{user.displayName || t.user}</Text>
                     <Text style={[styles.userEmail, { color: colors.textDim }]}>{user.email}</Text>
                   </View>
                 </View>
 
                 {/* Opções de Sincronização */}
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Controle de Dados</Text>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>{t.dataControl}</Text>
 
                 <View style={styles.syncOptionsGrid}>
                   <TouchableOpacity
@@ -301,8 +303,8 @@ export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
                     <View style={[styles.syncOptionIcon, { backgroundColor: 'rgba(124, 77, 255, 0.1)' }]}>
                       <FontAwesome5 name="cloud-upload-alt" size={20} color={colors.primary} />
                     </View>
-                    <Text style={[styles.syncOptionTitle, { color: colors.text }]}>Enviar Dados</Text>
-                    <Text style={[styles.syncOptionDesc, { color: colors.textDim }]}>Salva seus dados locais na nuvem</Text>
+                    <Text style={[styles.syncOptionTitle, { color: colors.text }]}>{t.sendData}</Text>
+                    <Text style={[styles.syncOptionDesc, { color: colors.textDim }]}>{t.uploadDataDesc}</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -312,20 +314,20 @@ export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
                     <View style={[styles.syncOptionIcon, { backgroundColor: 'rgba(76, 175, 80, 0.1)' }]}>
                       <FontAwesome5 name="cloud-download-alt" size={20} color="#4CAF50" />
                     </View>
-                    <Text style={[styles.syncOptionTitle, { color: colors.text }]}>Baixar Dados</Text>
-                    <Text style={[styles.syncOptionDesc, { color: colors.textDim }]}>Substitui dados locais pelos da nuvem</Text>
+                    <Text style={[styles.syncOptionTitle, { color: colors.text }]}>{t.downloadData}</Text>
+                    <Text style={[styles.syncOptionDesc, { color: colors.textDim }]}>{t.downloadDataDesc}</Text>
                   </TouchableOpacity>
                 </View>
 
                 <Button
-                  title={syncLoading ? 'Sincronizando…' : '🔄 Sincronização Completa'}
+                  title={syncLoading ? t.syncInProgress : t.syncComplete}
                   onPress={handleManualSync}
                   loading={syncLoading}
                   style={styles.fullSyncButton}
                 />
 
                 <Button
-                  title="🚪 Sair da Conta"
+                  title={`🚪 ${t.logout}`}
                   onPress={() => setShowLogoutConfirm(true)}
                   variant="outline"
                   style={styles.logoutButton}
@@ -334,7 +336,7 @@ export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
                 {/* Nota informativa */}
                 <View style={[styles.infoBox, { backgroundColor: isDark ? 'rgba(124, 77, 255, 0.1)' : 'rgba(124, 77, 255, 0.05)' }]}>
                   <Text style={[styles.infoText, { color: colors.text }]}>
-                    💡 Use o <Text style={{ fontWeight: 'bold' }}>Enviar Dados</Text> para garantir que seu backup está atualizado antes de trocar de aparelho. Use o <Text style={{ fontWeight: 'bold' }}>Baixar Dados</Text> apenas se quiser restaurar um backup antigo.
+                    {t.syncTip.replace('{sendData}', t.sendData).replace('{downloadData}', t.downloadData)}
                   </Text>
                 </View>
               </>
@@ -342,13 +344,13 @@ export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
               // ─── Usuário deslogado ───────────────────────────────────────────
               <View style={[styles.formCard, { backgroundColor: cardBg }]}>
                 <Text style={[styles.formTitle, { color: colors.text }]}>
-                  {isSignUp ? 'Criar Nova Conta' : 'Acesse sua Conta'}
+                  {isSignUp ? t.createAccount : t.accessAccount}
                 </Text>
 
                 {isSignUp && (
                   <TextInput
                     style={[styles.input, { backgroundColor: isDark ? colors.surfaceDark : colors.background, color: colors.text, borderColor: colors.border }]}
-                    placeholder="Seu Nome"
+                    placeholder={t.yourName}
                     placeholderTextColor={colors.textDim}
                     value={displayName}
                     onChangeText={setDisplayName}
@@ -357,7 +359,7 @@ export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
 
                 <TextInput
                   style={[styles.input, { backgroundColor: isDark ? colors.surfaceDark : colors.background, color: colors.text, borderColor: colors.border }]}
-                  placeholder="E-mail"
+                  placeholder={t.email}
                   placeholderTextColor={colors.textDim}
                   value={email}
                   onChangeText={setEmail}
@@ -367,7 +369,7 @@ export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
 
                 <TextInput
                   style={[styles.input, { backgroundColor: isDark ? colors.surfaceDark : colors.background, color: colors.text, borderColor: colors.border }]}
-                  placeholder="Senha"
+                  placeholder={t.password}
                   placeholderTextColor={colors.textDim}
                   value={password}
                   onChangeText={setPassword}
@@ -375,7 +377,7 @@ export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
                 />
 
                 <Button
-                  title={isSignUp ? 'Criar Conta' : 'Entrar'}
+                  title={isSignUp ? t.add : t.login}
                   onPress={handleAuth}
                   loading={authLoading}
                   style={{ marginTop: 8 }}
@@ -387,7 +389,7 @@ export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
                     style={styles.toggleAuth}
                   >
                     <Text style={[styles.toggleAuthText, { color: colors.primary }]}>
-                      {isSignUp ? 'Já tem conta? Faça login' : 'Não tem conta? Cadastre-se'}
+                      {isSignUp ? t.haveAccount : t.noAccount}
                     </Text>
                   </TouchableOpacity>
 
@@ -396,7 +398,7 @@ export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
                       onPress={() => setShowForgotPassword(true)}
                       style={styles.forgotPasswordLink}
                     >
-                      <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>Esqueci minha senha</Text>
+                      <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>{t.forgotPassword}</Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -408,7 +410,7 @@ export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
 
           {/* Botão Fechar */}
           <Button
-            title="Fechar"
+            title={t.close}
             onPress={onClose}
             style={styles.closeButton}
           />
@@ -437,8 +439,8 @@ export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
       {/* Modais de Confirmação */}
       <ConfirmModal
         visible={showLogoutConfirm}
-        title="Sair da Conta"
-        message="Tem certeza que deseja sair? Você precisará fazer login novamente para sincronizar seus dados."
+        title={t.logout}
+        message={t.confirmLogout}
         type="warning"
         onConfirm={handleLogout}
         onCancel={() => setShowLogoutConfirm(false)}
@@ -446,8 +448,8 @@ export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
 
       <ConfirmModal
         visible={showUploadConfirm}
-        title="Enviar Dados para Nuvem"
-        message="Isso irá substituir os dados salvos na nuvem pelos dados atuais deste dispositivo. Deseja continuar?"
+        title={t.uploadDataToCloud}
+        message={t.confirmUpload}
         type="info"
         onConfirm={handleUploadData}
         onCancel={() => setShowUploadConfirm(false)}
@@ -455,8 +457,8 @@ export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
 
       <ConfirmModal
         visible={showDownloadConfirm}
-        title="Baixar Dados da Nuvem"
-        message="ATENÇÃO: Isso irá substituir TODOS os dados locais deste dispositivo pelos dados salvos na nuvem. Esta ação não pode ser desfeita. Deseja continuar?"
+        title={t.downloadDataFromCloud}
+        message={t.confirmDownload}
         type="danger"
         onConfirm={handleDownloadData}
         onCancel={() => setShowDownloadConfirm(false)}
@@ -465,8 +467,8 @@ export function FirebaseSync({ visible, onClose }: FirebaseSyncProps) {
       {/* Esqueci Senha */}
       <ConfirmModal
         visible={showForgotPassword}
-        title="Recuperar Senha"
-        message="Digite seu e-mail para receber o link de recuperação."
+        title={t.recoverPassword}
+        message={t.enterEmailRecovery}
         onConfirm={handleForgotPassword}
         onCancel={() => setShowForgotPassword(false)}
         customContent={

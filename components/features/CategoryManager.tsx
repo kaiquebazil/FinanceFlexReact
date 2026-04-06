@@ -14,6 +14,7 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useData } from '../../hooks/useData';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { AVAILABLE_ICONS } from '../../constants/availableIcons';
 
 interface CategoryManagerProps {
@@ -23,6 +24,7 @@ interface CategoryManagerProps {
 
 export function CategoryManager({ visible, onClose }: CategoryManagerProps) {
   const { colors, isDark } = useTheme();
+  const { t } = useLanguage();
   const { categories, addCategory, updateCategory, deleteCategory } = useData();
   const [selectedType, setSelectedType] = useState<'income' | 'expense'>('expense');
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -34,7 +36,7 @@ export function CategoryManager({ visible, onClose }: CategoryManagerProps) {
 
   const handleAddCategory = () => {
     if (!newCategoryName.trim()) {
-      Alert.alert('Aviso', 'Digite um nome para a categoria');
+      Alert.alert(t.attention, t.fillRequiredFields);
       return;
     }
 
@@ -78,7 +80,7 @@ export function CategoryManager({ visible, onClose }: CategoryManagerProps) {
         <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
           {/* Cabeçalho */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.title, { color: colors.text }]}>Categorias</Text>
+            <Text style={[styles.title, { color: colors.text }]}>{t.categoryManagerTitle}</Text>
             <TouchableOpacity onPress={onClose}>
               <FontAwesome5 name="times" size={20} color={colors.textDim} />
             </TouchableOpacity>
@@ -108,7 +110,7 @@ export function CategoryManager({ visible, onClose }: CategoryManagerProps) {
                   styles.typeText,
                   { color: selectedType === 'income' ? '#fff' : colors.text },
                 ]}>
-                  Receita
+                  {t.incomeType}
                 </Text>
               </TouchableOpacity>
 
@@ -133,13 +135,13 @@ export function CategoryManager({ visible, onClose }: CategoryManagerProps) {
                   styles.typeText,
                   { color: selectedType === 'expense' ? '#fff' : colors.text },
                 ]}>
-                  Despesa
+                  {t.expenseType}
                 </Text>
               </TouchableOpacity>
             </View>
 
             {/* Seletor de ícones */}
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Escolha um ícone</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t.chooseIcon}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -182,7 +184,7 @@ export function CategoryManager({ visible, onClose }: CategoryManagerProps) {
                 ]}
                 value={newCategoryName}
                 onChangeText={setNewCategoryName}
-                placeholder="Nome da categoria"
+                placeholder={t.categoryName}
                 placeholderTextColor={colors.textMuted}
               />
               <TouchableOpacity
@@ -192,7 +194,7 @@ export function CategoryManager({ visible, onClose }: CategoryManagerProps) {
                 ]}
                 onPress={handleAddCategory}
               >
-                <Text style={styles.addButtonText}>{editingId ? 'Salvar' : 'Adicionar'}</Text>
+                <Text style={styles.addButtonText}>{editingId ? t.save : t.add}</Text>
               </TouchableOpacity>
               {editingId && (
                 <TouchableOpacity
@@ -203,7 +205,7 @@ export function CategoryManager({ visible, onClose }: CategoryManagerProps) {
                     setSelectedIcon('tag');
                   }}
                 >
-                  <Text style={styles.addButtonText}>X</Text>
+                  <Text style={styles.addButtonText}>{t.cancel}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -213,7 +215,7 @@ export function CategoryManager({ visible, onClose }: CategoryManagerProps) {
               <View style={styles.emptyState}>
                 <FontAwesome5 name="tag" size={32} color={colors.textDim} />
                 <Text style={[styles.emptyText, { color: colors.textDim }]}>
-                  Nenhuma categoria cadastrada
+                  {t.noCategories}
                 </Text>
               </View>
             ) : (
@@ -255,7 +257,7 @@ export function CategoryManager({ visible, onClose }: CategoryManagerProps) {
             style={[styles.closeButton, { backgroundColor: colors.primary }]}
             onPress={onClose}
           >
-            <Text style={styles.closeButtonText}>Fechar</Text>
+            <Text style={styles.closeButtonText}>{t.close}</Text>
           </TouchableOpacity>
         </View>
       </View>

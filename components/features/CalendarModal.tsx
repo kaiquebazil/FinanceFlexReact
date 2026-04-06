@@ -11,6 +11,7 @@ import {
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import type { Transaction, RecurringBill } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 
@@ -30,6 +31,7 @@ export function CalendarModal({
   accounts,
 }: CalendarModalProps) {
   const { colors, isDark } = useTheme();
+  const { t, language } = useLanguage();
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
@@ -115,25 +117,12 @@ export function CalendarModal({
     }
   };
 
-  const monthNames = [
-    'Janeiro',
-    'Fevereiro',
-    'Março',
-    'Abril',
-    'Maio',
-    'Junho',
-    'Julho',
-    'Agosto',
-    'Setembro',
-    'Outubro',
-    'Novembro',
-    'Dezembro',
-  ];
-  const dayNames = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
+  const monthNames = t.months;
+  const dayNames = t.dayNames;
 
   const getAccountName = (accountId: string) => {
     const account = accounts.find((a) => a.id === accountId);
-    return account?.name || 'Conta desconhecida';
+    return account?.name || t.unknownAccount;
   };
 
   const getIconForType = (type: string) => {
@@ -164,7 +153,7 @@ export function CalendarModal({
 
   const filteredTransactions = getTransactionsForSelectedDate();
   const selectedDateString = selectedDate
-    ? selectedDate.toLocaleDateString('pt-BR', {
+    ? selectedDate.toLocaleDateString(language === 'pt-BR' ? 'pt-BR' : 'en-US', {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
@@ -184,7 +173,7 @@ export function CalendarModal({
         <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
           {/* Cabeçalho */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.title, { color: colors.text }]}>Calendário de Transações</Text>
+            <Text style={[styles.title, { color: colors.text }]}>{t.calendarTitle}</Text>
             <TouchableOpacity onPress={onClose}>
               <FontAwesome5
                 name="times"
@@ -274,7 +263,7 @@ export function CalendarModal({
             {/* Seção de Transações */}
             <View style={styles.transactionsSection}>
               <Text style={[styles.transactionsSectionTitle, { color: colors.text }]}>
-                Transações do dia
+                {t.transactionsOfDay}
               </Text>
               {selectedDate && (
                 <Text style={[styles.selectedDateText, { color: colors.textDim }]}>{selectedDateString}</Text>
@@ -288,7 +277,7 @@ export function CalendarModal({
                     color={colors.textDim}
                   />
                   <Text style={[styles.emptyText, { color: colors.textDim }]}>
-                    Nenhuma transação neste dia
+                    {t.noTransactionsOnDay}
                   </Text>
                 </View>
               ) : (
@@ -314,10 +303,10 @@ export function CalendarModal({
                           <Text style={[styles.transactionName, { color: colors.text }]}>
                             {transaction.description ||
                               (transaction.type === 'income'
-                                ? 'Receita'
+                                ? t.incomeType
                                 : transaction.type === 'expense'
-                                  ? 'Despesa'
-                                  : 'Transferência')}
+                                  ? t.expenseType
+                                  : t.transferType)}
                           </Text>
                           <Text style={[styles.transactionDetails, { color: colors.textDim }]}>
                             {transaction.category} •{' '}

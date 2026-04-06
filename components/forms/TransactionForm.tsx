@@ -19,6 +19,7 @@ import { Button } from "../ui/Button";
 import { theme } from "../../constants/theme";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useData } from "../../hooks/useData";
+import { useLanguage } from "../../contexts/LanguageContext";
 import { formatCurrency } from "../../utils/currency";
 
 type TransactionType = "income" | "expense" | "transfer";
@@ -32,20 +33,6 @@ interface TransactionFormProps {
 
 // Gerar array de anos (2020 até 2030)
 const YEARS = Array.from({ length: 11 }, (_, i) => (2020 + i).toString());
-const MONTHS = [
-  "Janeiro",
-  "Fevereiro",
-  "Março",
-  "Abril",
-  "Maio",
-  "Junho",
-  "Julho",
-  "Agosto",
-  "Setembro",
-  "Outubro",
-  "Novembro",
-  "Dezembro",
-];
 const DAYS = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
 
 export function TransactionForm({
@@ -56,6 +43,7 @@ export function TransactionForm({
 }: TransactionFormProps) {
   const { colors, isDark } = useTheme();
   const { accounts, categories } = useData();
+  const { t, language } = useLanguage();
 
   // Estados do formulário
   const [selectedType, setSelectedType] =
@@ -158,16 +146,16 @@ export function TransactionForm({
     // Validar valor
     const amountValue = parseFloat(amount?.replace(",", ".") || "0");
     if (!amount || amountValue <= 0) {
-      newErrors.amount = "Valor deve ser maior que zero";
+      newErrors.amount = t.amountGreaterThanZero;
     }
 
     if (selectedType !== "transfer") {
       if (!selectedCategory) {
-        newErrors.category = "Selecione uma categoria";
+        newErrors.category = t.selectCategoryError;
       }
 
       if (!selectedAccount) {
-        newErrors.account = "Selecione uma conta";
+        newErrors.account = t.selectAccountError;
       }
 
       if (
@@ -175,25 +163,25 @@ export function TransactionForm({
         selectedAccount &&
         selectedAccount.balance < amountValue
       ) {
-        newErrors.account = `Saldo insuficiente! Saldo: ${formatCurrency(selectedAccount.balance, selectedAccount.currency)}`;
+        newErrors.account = `${t.balance}: ${formatCurrency(selectedAccount.balance, selectedAccount.currency)}`;
       }
     } else {
       if (!selectedAccount) {
-        newErrors.account = "Selecione a conta de origem";
+        newErrors.account = t.selectAccountError;
       }
 
       if (!selectedToAccount) {
-        newErrors.toAccount = "Selecione a conta de destino";
+        newErrors.toAccount = t.selectAccountError;
       } else if (
         selectedAccount &&
         selectedToAccount &&
         selectedAccount.id === selectedToAccount.id
       ) {
-        newErrors.toAccount = "As contas devem ser diferentes";
+        newErrors.toAccount = t.sameAccountError;
       }
 
       if (selectedAccount && selectedAccount.balance < amountValue) {
-        newErrors.account = `Saldo insuficiente! Saldo: ${formatCurrency(selectedAccount.balance, selectedAccount.currency)}`;
+        newErrors.account = `${t.balance}: ${formatCurrency(selectedAccount.balance, selectedAccount.currency)}`;
       }
     }
 
@@ -219,10 +207,10 @@ export function TransactionForm({
       description:
         description.trim() ||
         (selectedType === "income"
-          ? "Receita"
+          ? t.incomeType
           : selectedType === "expense"
-            ? "Despesa"
-            : "Transferência"),
+            ? t.expenseType
+            : t.transferType),
       date: selectedDate.toISOString(),
     };
 
@@ -232,7 +220,7 @@ export function TransactionForm({
       transaction.toAccountId = selectedToAccount.id;
       transaction.toAccountName = selectedToAccount.name;
       transaction.accountId = selectedAccount.id;
-      transaction.category = "Transferência";
+      transaction.category = t.transferType;
     } else {
       transaction.category = selectedCategory.name;
       transaction.categoryId = selectedCategory.id;
@@ -320,9 +308,9 @@ export function TransactionForm({
                 {/* Cabeçalho */}
                 <View style={[styles.header, { borderBottomColor: colors.border }]}>
                   <Text style={[styles.title, { color: colors.text }]}>
-                    {selectedType === "income" && "Nova Receita"}
-                    {selectedType === "expense" && "Nova Despesa"}
-                    {selectedType === "transfer" && "Nova Transferência"}
+                    {selectedType === "income" && t.newIncome}
+                    {selectedType === "expense" && t.newExpense}
+                    {selectedType === "transfer" && t.transfer}
                   </Text>
                   <TouchableOpacity
                     onPress={handleCancel}
@@ -360,7 +348,7 @@ export function TransactionForm({
                         selectedType === "income" && styles.typeButtonTextActive,
                       ]}
                     >
-                      Receita
+                      {t.income}
                     </Text>
                   </TouchableOpacity>
 
@@ -386,7 +374,7 @@ export function TransactionForm({
                         selectedType === "expense" && styles.typeButtonTextActive,
                       ]}
                     >
-                      Despesa
+                      {t.expense}
                     </Text>
                   </TouchableOpacity>
 
@@ -412,7 +400,7 @@ export function TransactionForm({
                         selectedType === "transfer" && styles.typeButtonTextActive,
                       ]}
                     >
-                      Transferir
+                      {t.transfer}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -424,9 +412,9 @@ export function TransactionForm({
                 >
                   {/* Valor */}
                   <View style={styles.field}>
-                    <Text style={[styles.label, { color: colors.textDim }]}>Valor</Text>
+                    <Text style={[styles.label, { color: colors.textDim }]}>{t.amount}</Text>
                     <View style={[styles.amountContainer, { backgroundColor: colors.surfaceDark, borderColor: colors.border }]}>
-                      <Text style={[styles.currencySymbol, { color: colors.text }]}>R$</Text>
+                      <Text style={[styles.currencySymbol, { color: colors.text }]}>{language === 'pt-BR' ? 'R$' : '$'}</Text>
                       <TextInput
                         style={[
                           styles.amountInput,
@@ -435,7 +423,7 @@ export function TransactionForm({
                         ]}
                         value={amount}
                         onChangeText={handleAmountChange}
-                        placeholder="0,00"
+                        placeholder={language === 'pt-BR' ? "0,00" : "0.00"}
                         placeholderTextColor={colors.textMuted}
                         keyboardType="numeric"
                         autoFocus
@@ -448,16 +436,12 @@ export function TransactionForm({
 
                   {/* Descrição */}
                   <View style={styles.field}>
-                    <Text style={[styles.label, { color: colors.textDim }]}>Descrição</Text>
+                    <Text style={[styles.label, { color: colors.textDim }]}>{t.description}</Text>
                     <TextInput
                       style={[styles.input, { backgroundColor: colors.surfaceDark, color: colors.text, borderColor: colors.border }]}
                       value={description}
                       onChangeText={setDescription}
-                      placeholder={
-                        selectedType === "transfer"
-                          ? "Descrição da transferência"
-                          : "Descrição da transação"
-                      }
+                      placeholder={t.enterDescription}
                       placeholderTextColor={colors.textMuted}
                     />
                   </View>
@@ -466,7 +450,7 @@ export function TransactionForm({
                     <>
                       {/* Categoria (para receitas/despesas) */}
                       <View style={styles.field}>
-                        <Text style={[styles.label, { color: colors.textDim }]}>Categoria</Text>
+                        <Text style={[styles.label, { color: colors.textDim }]}>{t.category}</Text>
                         <TouchableOpacity
                           style={[
                             styles.selectButton,
@@ -488,7 +472,7 @@ export function TransactionForm({
                             </View>
                           ) : (
                             <Text style={[styles.placeholderText, { color: colors.textMuted }]}>
-                              Selecione a categoria
+                              {t.selectCategory}
                             </Text>
                           )}
                           <FontAwesome5
@@ -504,7 +488,7 @@ export function TransactionForm({
 
                       {/* Conta (para receitas/despesas) */}
                       <View style={styles.field}>
-                        <Text style={[styles.label, { color: colors.textDim }]}>Conta</Text>
+                        <Text style={[styles.label, { color: colors.textDim }]}>{t.accounts}</Text>
                         <TouchableOpacity
                           style={[
                             styles.selectButton,
@@ -538,7 +522,7 @@ export function TransactionForm({
                             </View>
                           ) : (
                             <Text style={[styles.placeholderText, { color: colors.textMuted }]}>
-                              Selecione a conta
+                              {t.selectAccount}
                             </Text>
                           )}
                           <FontAwesome5
@@ -556,7 +540,7 @@ export function TransactionForm({
                     <>
                       {/* Conta de Origem (para transferência) */}
                       <View style={styles.field}>
-                        <Text style={[styles.label, { color: colors.textDim }]}>Conta de Origem</Text>
+                        <Text style={[styles.label, { color: colors.textDim }]}>{t.accountFrom}</Text>
                         <TouchableOpacity
                           style={[
                             styles.selectButton,
@@ -590,7 +574,7 @@ export function TransactionForm({
                             </View>
                           ) : (
                             <Text style={[styles.placeholderText, { color: colors.textMuted }]}>
-                              Selecione a conta de origem
+                              {t.selectAccount}
                             </Text>
                           )}
                           <FontAwesome5
@@ -606,7 +590,7 @@ export function TransactionForm({
 
                       {/* Conta de Destino (para transferência) */}
                       <View style={styles.field}>
-                        <Text style={[styles.label, { color: colors.textDim }]}>Conta de Destino</Text>
+                        <Text style={[styles.label, { color: colors.textDim }]}>{t.accountTo}</Text>
                         <TouchableOpacity
                           style={[
                             styles.selectButton,
@@ -640,7 +624,7 @@ export function TransactionForm({
                             </View>
                           ) : (
                             <Text style={[styles.placeholderText, { color: colors.textMuted }]}>
-                              Selecione a conta de destino
+                              {t.selectAccount}
                             </Text>
                           )}
                           <FontAwesome5
@@ -658,7 +642,7 @@ export function TransactionForm({
 
                   {/* Data */}
                   <View style={styles.field}>
-                    <Text style={[styles.label, { color: colors.textDim }]}>Data</Text>
+                    <Text style={[styles.label, { color: colors.textDim }]}>{t.date}</Text>
                     <TouchableOpacity
                       style={[styles.dateButton, { backgroundColor: colors.surfaceDark, borderColor: colors.border }]}
                       onPress={() => setShowDateModal(true)}
@@ -680,18 +664,18 @@ export function TransactionForm({
                   {/* Botões */}
                   <View style={styles.footer}>
                     <Button
-                      title="Cancelar"
+                      title={t.cancel}
                       onPress={handleCancel}
                       variant="outline"
                       style={styles.cancelButton}
                     />
                     <Button
-                      title="Salvar"
+                      title={t.save}
                       onPress={() => handleSave(false)}
                       style={styles.saveButton}
                     />
                     <Button
-                      title="Lançar Mais"
+                      title={t.addMore}
                       onPress={() => handleSave(true)}
                       style={styles.saveButton}
                     />
@@ -717,7 +701,7 @@ export function TransactionForm({
               <View style={[styles.selectionModal, { backgroundColor: colors.surface }]}>
                 <View style={[styles.selectionHeader, { borderBottomColor: colors.border }]}>
                   <Text style={[styles.selectionTitle, { color: colors.text }]}>
-                    Selecione uma categoria
+                    {t.selectCategory}
                   </Text>
                   <TouchableOpacity onPress={() => setShowCategoryModal(false)}>
                     <FontAwesome5
@@ -736,7 +720,7 @@ export function TransactionForm({
                       color={colors.textDim}
                     />
                     <Text style={[styles.emptyText, { color: colors.textDim }]}>
-                      Nenhuma categoria encontrada
+                      {t.noResults}
                     </Text>
                   </View>
                 ) : (
@@ -769,8 +753,8 @@ export function TransactionForm({
                 <View style={[styles.selectionHeader, { borderBottomColor: colors.border }]}>
                   <Text style={[styles.selectionTitle, { color: colors.text }]}>
                     {selectedType === "transfer"
-                      ? "Selecione a conta de origem"
-                      : "Selecione uma conta"}
+                      ? t.selectSourceAccount
+                      : t.selectAccount}
                   </Text>
                   <TouchableOpacity onPress={() => setShowAccountModal(false)}>
                     <FontAwesome5
@@ -789,7 +773,7 @@ export function TransactionForm({
                       color={colors.textDim}
                     />
                     <Text style={[styles.emptyText, { color: colors.textDim }]}>
-                      Nenhuma conta encontrada
+                      {t.noAccountsFound}
                     </Text>
                   </View>
                 ) : (
@@ -821,7 +805,7 @@ export function TransactionForm({
               <View style={[styles.selectionModal, { backgroundColor: colors.surface }]}>
                 <View style={[styles.selectionHeader, { borderBottomColor: colors.border }]}>
                   <Text style={[styles.selectionTitle, { color: colors.text }]}>
-                    Selecione a conta de destino
+                    {t.selectDestinationAccount}
                   </Text>
                   <TouchableOpacity
                     onPress={() => setShowToAccountModal(false)}
@@ -842,7 +826,7 @@ export function TransactionForm({
                       color={colors.textDim}
                     />
                     <Text style={[styles.emptyText, { color: colors.textDim }]}>
-                      Nenhuma conta encontrada
+                      {t.noAccountsFound}
                     </Text>
                   </View>
                 ) : (
@@ -873,7 +857,7 @@ export function TransactionForm({
             <TouchableWithoutFeedback onPress={() => {}}>
               <View style={[styles.dateModal, { backgroundColor: colors.surface }]}>
                 <View style={[styles.selectionHeader, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.selectionTitle, { color: colors.text }]}>Selecione a Data</Text>
+                  <Text style={[styles.selectionTitle, { color: colors.text }]}>{t.selectDate}</Text>
                   <TouchableOpacity onPress={() => setShowDateModal(false)}>
                     <FontAwesome5
                       name="times"
@@ -885,7 +869,7 @@ export function TransactionForm({
 
                 {/* Seletor de Ano */}
                 <View style={styles.dateSection}>
-                  <Text style={[styles.dateSectionLabel, { color: colors.textDim }]}>Ano</Text>
+                  <Text style={[styles.dateSectionLabel, { color: colors.textDim }]}>{t.year}</Text>
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
@@ -919,14 +903,14 @@ export function TransactionForm({
 
                 {/* Seletor de Mês */}
                 <View style={styles.dateSection}>
-                  <Text style={[styles.dateSectionLabel, { color: colors.textDim }]}>Mês</Text>
+                  <Text style={[styles.dateSectionLabel, { color: colors.textDim }]}>{t.month}</Text>
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     style={styles.dateScroll}
                     keyboardShouldPersistTaps="handled"
                   >
-                    {MONTHS.map((month, index) => (
+                    {t.months.map((month, index) => (
                       <TouchableOpacity
                         key={month}
                         style={[
@@ -953,7 +937,7 @@ export function TransactionForm({
 
                 {/* Seletor de Dia */}
                 <View style={styles.dateSection}>
-                  <Text style={[styles.dateSectionLabel, { color: colors.textDim }]}>Dia</Text>
+                  <Text style={[styles.dateSectionLabel, { color: colors.textDim }]}>{t.day}</Text>
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
@@ -994,7 +978,7 @@ export function TransactionForm({
 
                 {/* Botão Confirmar */}
                 <Button
-                  title="Confirmar Data"
+                  title={t.confirmDate}
                   onPress={() => setShowDateModal(false)}
                   style={styles.confirmButton}
                 />

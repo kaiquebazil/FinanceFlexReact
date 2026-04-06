@@ -16,6 +16,7 @@ import { theme } from "../../constants/theme";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { useData } from "../../hooks/useData";
+import { useLanguage } from "../../contexts/LanguageContext";
 import { ConfirmModal } from "./ConfirmModal";
 
 interface DrawerProps {
@@ -30,6 +31,7 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
   const { colors, toggleTheme, isDark } = useTheme();
   const { user, syncStatus, logOut } = useAuth();
   const { resetToDefaults } = useData();
+  const { t, language } = useLanguage();
   const isLoggedIn = !!user;
   const slideAnim = useRef(new Animated.Value(-width)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -80,7 +82,7 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
       setShowLogoutConfirm(false);
       onClose();
     } catch (error) {
-      console.error("Erro ao deslogar:", error);
+      console.error("Logout error:", error);
     }
   };
 
@@ -99,16 +101,16 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
   };
 
   const getSyncText = () => {
-    if (!user) return "Não conectado";
+    if (!user) return t.notConnected;
     switch (syncStatus) {
       case "synced":
-        return "Sincronizado";
+        return t.synced;
       case "syncing":
-        return "Sincronizando...";
+        return t.syncing;
       case "error":
-        return "Erro na sincronização";
+        return t.syncError;
       default:
-        return "Aguardando...";
+        return t.waiting;
     }
   };
 
@@ -116,37 +118,37 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
     {
       id: "transactions",
       icon: "exchange-alt",
-      label: "Transações",
+      label: t.transactions,
       iconColor: "#64B5F6",
     },
     {
       id: "budgets",
       icon: "chart-pie",
-      label: "Orçamentos",
+      label: t.budgets,
       iconColor: "#A5D6A7",
     },
     {
       id: "categories",
       icon: "list-ul",
-      label: "Categorias",
+      label: t.categories,
       iconColor: "#81C784",
     },
     {
       id: "recurring",
       icon: "redo",
-      label: "Contas Recorrentes",
+      label: t.recurringBills,
       iconColor: "#FFB74D",
     },
     {
       id: "creditCards",
       icon: "credit-card",
-      label: "Cartões de Crédito",
+      label: t.creditCards,
       iconColor: "#BA68C8",
     },
     {
       id: "piggyBanks",
       icon: "piggy-bank",
-      label: "Cofrinhos",
+      label: t.piggyBanks,
       iconColor: "#FF8A65",
     },
   ];
@@ -155,13 +157,13 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
     {
       id: "sync",
       icon: "cloud",
-      label: "Sincronização em Nuvem",
+      label: t.cloudSync,
       iconColor: "#64B5F6",
     },
     {
       id: "reset",
       icon: "trash-alt",
-      label: "Apagar Todos os Dados",
+      label: t.deleteAllData,
       iconColor: "#fc2020",
       danger: false,
     },
@@ -251,7 +253,7 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
                         style={[styles.userName, { color: colors.text }]}
                         numberOfLines={1}
                       >
-                        {user.displayName || "Usuário"}
+                        {user.displayName || t.user}
                       </Text>
                       <Text
                         style={[styles.userEmail, { color: colors.textDim }]}
@@ -297,7 +299,7 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
                   <Text
                     style={[styles.sectionTitle, { color: colors.textDim }]}
                   >
-                    MENU PRINCIPAL
+                    {t.mainMenu}
                   </Text>
 
                   {menuItems.map((item) => (
@@ -342,7 +344,7 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
                   <Text
                     style={[styles.sectionTitle, { color: colors.textDim }]}
                   >
-                    AÇÕES RÁPIDAS
+                    {t.quickActions}
                   </Text>
                   {actionItems.map((item) => (
                     <TouchableOpacity
@@ -394,7 +396,7 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
                       <Text
                         style={[styles.sectionTitle, { color: colors.primary }]}
                       >
-                        CONTA
+                        {t.account}
                       </Text>
 
                       {/* Botão Sair */}
@@ -416,7 +418,7 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
                               { color: colors.danger },
                             ]}
                           >
-                            Sair da Conta
+                            {t.logout}
                           </Text>
                         </View>
                         <FontAwesome5
@@ -434,7 +436,7 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
                   <Text
                     style={[styles.footerText, { color: colors.textMuted }]}
                   >
-                    © 2026 Finance Flex
+                    {t.copyright}
                   </Text>
                   <TouchableOpacity
                     onPress={() => {
@@ -444,14 +446,14 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
                           "https://kaiquebazil.github.io/portifolio/",
                         );
                       } catch (e) {
-                        console.error("Erro ao abrir portfólio:", e);
+                        console.error("Error opening portfolio:", e);
                       }
                     }}
                   >
                     <Text
                       style={[styles.creatorText, { color: colors.textMuted }]}
                     >
-                      Criador: Kaique Bazil →
+                      {t.creator}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -464,11 +466,11 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
       {/* Modal de confirmação para logout */}
       <ConfirmModal
         visible={showLogoutConfirm}
-        title="Sair da Conta"
-        message="Tem certeza que deseja sair? Seus dados locais serão mantidos."
+        title={t.logout}
+        message={t.logoutConfirm}
         type="warning"
-        confirmText="Sair"
-        cancelText="Cancelar"
+        confirmText={t.logout}
+        cancelText={t.cancel}
         onConfirm={handleLogout}
         onCancel={() => setShowLogoutConfirm(false)}
       />
@@ -476,11 +478,11 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
       {/* Modal de confirmação para apagar dados */}
       <ConfirmModal
         visible={showResetConfirm}
-        title="⚠️ Apagar Todos os Dados?"
-        message="Esta ação é irreversível e apagará TODOS os seus dados, incluindo transações, categorias, contas recorrentes, cartões de crédito e cofrinhos."
+        title={`⚠️ ${t.deleteAllData}`}
+        message={t.deleteAllConfirm}
         type="danger"
-        confirmText="Sim"
-        cancelText="Cancelar"
+        confirmText={t.confirm}
+        cancelText={t.cancel}
         onConfirm={handleResetData}
         onCancel={() => setShowResetConfirm(false)}
       />
