@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -15,9 +15,7 @@ import { FontAwesome5 } from "@expo/vector-icons";
 import { theme } from "../../constants/theme";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAuth } from "../../contexts/AuthContext";
-import { useData } from "../../hooks/useData";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { ConfirmModal } from "./ConfirmModal";
 
 interface DrawerProps {
   visible: boolean;
@@ -28,16 +26,12 @@ interface DrawerProps {
 const { width } = Dimensions.get("window");
 
 export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
-  const { colors, toggleTheme, isDark } = useTheme();
-  const { user, syncStatus, logOut } = useAuth();
-  const { resetToDefaults } = useData();
-  const { t, language } = useLanguage();
+  const { colors, isDark } = useTheme();
+  const { user, syncStatus } = useAuth();
+  const { t } = useLanguage();
   const isLoggedIn = !!user;
   const slideAnim = useRef(new Animated.Value(-width)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -69,22 +63,6 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
       ]).start();
     }
   }, [visible]);
-
-  const handleResetData = () => {
-    resetToDefaults();
-    setShowResetConfirm(false);
-    onClose();
-  };
-
-  const handleLogout = async () => {
-    try {
-      await logOut();
-      setShowLogoutConfirm(false);
-      onClose();
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
-  };
 
   const getSyncColor = () => {
     if (!user) return colors.textDim;
@@ -155,17 +133,10 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
 
   const actionItems = [
     {
-      id: "sync",
-      icon: "cloud",
-      label: t.cloudSync,
-      iconColor: "#64B5F6",
-    },
-    {
-      id: "reset",
-      icon: "trash-alt",
-      label: t.deleteAllData,
-      iconColor: "#fc2020",
-      danger: false,
+      id: "settings",
+      icon: "cog",
+      label: t.settings,
+      iconColor: "#9E9E9E",
     },
   ];
 
@@ -339,24 +310,20 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
                   style={[styles.divider, { backgroundColor: colors.border }]}
                 />
 
-                {/* Ações Rápidas */}
+                {/* Configurações */}
                 <View style={styles.section}>
                   <Text
                     style={[styles.sectionTitle, { color: colors.textDim }]}
                   >
-                    {t.quickActions}
+                    {t.settings}
                   </Text>
                   {actionItems.map((item) => (
                     <TouchableOpacity
                       key={item.id}
                       style={styles.menuItem}
                       onPress={() => {
-                        if (item.id === "reset") {
-                          setShowResetConfirm(true);
-                        } else {
-                          onNavigate(item.id);
-                          onClose();
-                        }
+                        onNavigate(item.id);
+                        onClose();
                       }}
                       activeOpacity={0.4}
                     >
@@ -382,110 +349,13 @@ export function Drawer({ visible, onClose, onNavigate }: DrawerProps) {
                   ))}
                 </View>
 
-                {/* Seção de Usuário - SÓ APARECE QUANDO LOGADO */}
-                {isLoggedIn && (
-                  <>
-                    <View
-                      style={[
-                        styles.divider,
-                        { backgroundColor: colors.border },
-                      ]}
-                    />
-
-                    <View style={styles.section}>
-                      <Text
-                        style={[styles.sectionTitle, { color: colors.primary }]}
-                      >
-                        {t.account}
-                      </Text>
-
-                      {/* Botão Sair */}
-                      <TouchableOpacity
-                        style={[styles.menuItem, styles.logoutItem]}
-                        onPress={() => setShowLogoutConfirm(true)}
-                        activeOpacity={0.7}
-                      >
-                        <View style={styles.menuItemContent}>
-                          <FontAwesome5
-                            name="sign-out-alt"
-                            size={18}
-                            color={colors.danger}
-                            style={styles.menuItemIcon}
-                          />
-                          <Text
-                            style={[
-                              styles.menuItemText,
-                              { color: colors.danger },
-                            ]}
-                          >
-                            {t.logout}
-                          </Text>
-                        </View>
-                        <FontAwesome5
-                          name="chevron-right"
-                          size={16}
-                          color={colors.danger}
-                        />
-                      </TouchableOpacity>
-                    </View>
-                  </>
-                )}
-
-                {/* Rodapé com informações do criador */}
-                <View style={styles.footer}>
-                  <Text
-                    style={[styles.footerText, { color: colors.textMuted }]}
-                  >
-                    {t.copyright}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => {
-                      try {
-                        const Linking = require("react-native").Linking;
-                        Linking.openURL(
-                          "https://kaiquebazil.github.io/portifolio/",
-                        );
-                      } catch (e) {
-                        console.error("Error opening portfolio:", e);
-                      }
-                    }}
-                  >
-                    <Text
-                      style={[styles.creatorText, { color: colors.textMuted }]}
-                    >
-                      {t.creator}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                {/* Espaço no final */}
+                <View style={{ height: 20 }} />
               </ScrollView>
             </View>
           </Animated.View>
         </View>
       </Modal>
-
-      {/* Modal de confirmação para logout */}
-      <ConfirmModal
-        visible={showLogoutConfirm}
-        title={t.logout}
-        message={t.logoutConfirm}
-        type="warning"
-        confirmText={t.logout}
-        cancelText={t.cancel}
-        onConfirm={handleLogout}
-        onCancel={() => setShowLogoutConfirm(false)}
-      />
-
-      {/* Modal de confirmação para apagar dados */}
-      <ConfirmModal
-        visible={showResetConfirm}
-        title={`⚠️ ${t.deleteAllData}`}
-        message={t.deleteAllConfirm}
-        type="danger"
-        confirmText={t.confirm}
-        cancelText={t.cancel}
-        onConfirm={handleResetData}
-        onCancel={() => setShowResetConfirm(false)}
-      />
     </>
   );
 }
@@ -553,12 +423,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
-  portfolioLink: {
-    fontSize: 11,
-    color: theme.colors.primary,
-    fontWeight: "600",
-    marginTop: 4,
-  },
   syncStatusContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -618,28 +482,9 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     flex: 1,
   },
-  logoutText: {
-    color: theme.colors.danger,
-  },
-  logoutItem: {
-    backgroundColor: "rgba(255, 61, 0, 0.05)",
-  },
   divider: {
     height: 1,
     marginVertical: 8,
     marginHorizontal: 16,
-  },
-  footer: {
-    marginTop: 20,
-    alignItems: "center",
-    paddingBottom: 20,
-  },
-  footerText: {
-    fontSize: 11,
-    marginBottom: 4,
-  },
-  creatorText: {
-    fontSize: 11,
-    fontStyle: "italic",
   },
 });

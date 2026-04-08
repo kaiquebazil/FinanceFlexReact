@@ -164,9 +164,6 @@ export const translations = {
     monthlyContributionExample: 'Ex: 200,00',
 
     // Date Picker
-    year: 'Ano',
-    month: 'Mês',
-    day: 'Dia',
     selectDate: 'Selecione a Data',
     confirmDate: 'Confirmar Data',
 
@@ -196,7 +193,7 @@ export const translations = {
     monthlyContributionHint: 'opcional',
     targetDate: 'Data Alvo',
     targetDateHint: 'opcional',
-    targetDatePlaceholder: 'Ex: 31/12/2025',
+    targetDateExample: 'Ex: 31/12/2025',
     linkAccount: 'Vincular a uma conta',
     none: 'Nenhuma',
 
@@ -600,9 +597,6 @@ export const translations = {
     monthlyContributionExample: 'Ex: 200.00',
 
     // Date Picker
-    year: 'Year',
-    month: 'Month',
-    day: 'Day',
     selectDate: 'Select Date',
     confirmDate: 'Confirm Date',
 
@@ -632,7 +626,7 @@ export const translations = {
     monthlyContributionHint: 'optional',
     targetDate: 'Target Date',
     targetDateHint: 'optional',
-    targetDatePlaceholder: 'Ex: 12/31/2025',
+    targetDateExample: 'Ex: 12/31/2025',
     linkAccount: 'Link to an account',
     none: 'None',
 

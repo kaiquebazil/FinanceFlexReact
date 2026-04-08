@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import { BackupRestore } from "../components/features/BackupRestore";
 import { FirebaseSync } from "../components/features/FirebaseSync";
+import { SettingsManager } from "../components/features/SettingsManager";
 import { BudgetManager } from "../components/features/BudgetManager";
 import { AccountManager } from "../components/features/AccountManager";
 import { CategoryManager } from "../components/features/CategoryManager";
@@ -64,8 +65,8 @@ interface ConfirmCallbackOptions {
 }
 
 export default function HomeScreen() {
-  const { colors, isDark, toggleTheme } = useTheme();
-  const { t, language, toggleLanguage } = useLanguage();
+  const { colors, isDark } = useTheme();
+  const { t, language } = useLanguage();
   const styles = getStyles(colors, isDark);
   const {
     accounts,
@@ -110,6 +111,7 @@ export default function HomeScreen() {
   const [showBackupModal, setShowBackupModal] = useState(false);
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [showBudgetsModal, setShowBudgetsModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   // Auth e status de sincronização
   const { user, syncStatus } = useAuth();
@@ -315,28 +317,6 @@ export default function HomeScreen() {
                 <Text style={styles.logoText}>FinanceFlex</Text>
               </View>
               <View style={styles.headerActions}>
-                {/* Toggle de Idioma */}
-                <TouchableOpacity
-                  onPress={toggleLanguage}
-                  style={styles.iconButton}
-                >
-                  <Text style={{ fontSize: 14, fontFamily: 'Inter-SemiBold', color: colors.primary }}>
-                    {language === 'pt-BR' ? 'BR' : 'EN'}
-                  </Text>
-                </TouchableOpacity>
-
-                {/* Toggle de Tema Claro/Escuro */}
-                <TouchableOpacity
-                  onPress={toggleTheme}
-                  style={styles.iconButton}
-                >
-                  <FontAwesome5
-                    name={isDark ? "sun" : "moon"}
-                    size={20}
-                    color={isDark ? "#FFD700" : "#515151"}
-                  />
-                </TouchableOpacity>
-
                 <TouchableOpacity
                   onPress={() => setValuesHidden(!valuesHidden)}
                   style={styles.iconButton}
@@ -870,6 +850,9 @@ export default function HomeScreen() {
             case "sync":
               setShowSyncModal(true);
               break;
+            case "settings":
+              setShowSettingsModal(true);
+              break;
           }
         }}
       />
@@ -937,6 +920,14 @@ export default function HomeScreen() {
         transactions={transactions}
         recurringBills={recurringBills}
         accounts={accounts}
+      />
+
+      {/* Modal de Configurações */}
+      <SettingsManager
+        visible={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        onOpenSync={() => setShowSyncModal(true)}
+        onOpenBackup={() => setShowBackupModal(true)}
       />
 
       {/* Modal de Confirmação Global */}
