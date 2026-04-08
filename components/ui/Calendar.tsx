@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import type { Transaction, RecurringBill } from '../../types';
 
 interface CalendarProps {
@@ -12,6 +13,7 @@ interface CalendarProps {
 
 export function Calendar({ transactions, recurringBills }: CalendarProps) {
   const { colors, isDark } = useTheme();
+  const { t } = useLanguage();
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
@@ -68,8 +70,8 @@ export function Calendar({ transactions, recurringBills }: CalendarProps) {
     }
   };
 
-  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-  const dayNames = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
+  const monthNames = t.months;
+  const dayNames = t.dayNames;
 
   return (
     <View style={styles.container}>

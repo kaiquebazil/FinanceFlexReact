@@ -229,7 +229,7 @@ export const translations = {
     delete: 'Excluir',
 
     // Calendar
-    dayNames: ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'],
+    dayNames: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
     calendarTitle: 'Calendário de Transações',
     transactionsOfDay: 'Transações do dia',
     noTransactionsOnDay: 'Nenhuma transação neste dia',
@@ -400,6 +400,42 @@ export const translations = {
     selectLanguage: 'Selecionar Idioma',
     portuguese: 'Português',
     english: 'Inglês',
+
+    // Account Types
+    accountTypeCash: 'Dinheiro',
+    accountTypeBank: 'Banco',
+    accountTypeCredit: 'Crédito',
+    accountTypeInvestment: 'Investimento',
+    accountTypeDigital: 'Digital',
+    accountTypeOther: 'Outro',
+
+    // Credit Card Manager (additional keys)
+    creditCardTotalLimit: 'Limite total',
+    creditCardUsed: 'Usado',
+    creditCardAvailable: 'Disponível',
+    creditCardClosingDay: 'Fecha dia',
+    creditCardDueDay: 'Vence dia',
+    creditCardDetails: 'Detalhes',
+    creditCardPurchase: 'Compra',
+    creditCardNewCard: 'Novo Cartão',
+    creditCardCardName: 'Nome do Cartão',
+    creditCardLimitLabel: 'Limite (R$)',
+    creditCardClosingLabel: 'Dia do Fechamento',
+    creditCardDueLabel: 'Dia do Vencimento',
+    creditCardNewPurchase: 'Nova Compra',
+    creditCardDescriptionLabel: 'Descrição',
+    creditCardValueLabel: 'Valor (R$)',
+    creditCardInstallmentsLabel: 'Número de Parcelas',
+    creditCardCardDetails: 'Detalhes do Cartão',
+    creditCardTotalLimitLabel: 'Limite Total:',
+    creditCardUsedLabel: 'Valor Utilizado:',
+    creditCardAvailableLabel: 'Disponível:',
+    creditCardClosingLabel2: 'Fechamento:',
+    creditCardDueLabel2: 'Vencimento:',
+    creditCardBack: 'Voltar',
+
+    // Currency
+    currencySymbol: 'R$',
   },
 
   'en': {
@@ -629,7 +665,7 @@ export const translations = {
     delete: 'Delete',
 
     // Calendar
-    dayNames: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
+    dayNames: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
     calendarTitle: 'Transaction Calendar',
     transactionsOfDay: 'Transactions of the day',
     noTransactionsOnDay: 'No transactions on this day',
@@ -800,6 +836,42 @@ export const translations = {
     selectLanguage: 'Select Language',
     portuguese: 'Portuguese',
     english: 'English',
+
+    // Account Types
+    accountTypeCash: 'Cash',
+    accountTypeBank: 'Bank',
+    accountTypeCredit: 'Credit',
+    accountTypeInvestment: 'Investment',
+    accountTypeDigital: 'Digital',
+    accountTypeOther: 'Other',
+
+    // Credit Card Manager (additional keys)
+    creditCardTotalLimit: 'Total Limit',
+    creditCardUsed: 'Used',
+    creditCardAvailable: 'Available',
+    creditCardClosingDay: 'Closes on',
+    creditCardDueDay: 'Due on',
+    creditCardDetails: 'Details',
+    creditCardPurchase: 'Purchase',
+    creditCardNewCard: 'New Card',
+    creditCardCardName: 'Card Name',
+    creditCardLimitLabel: 'Limit ($)',
+    creditCardClosingLabel: 'Closing Day',
+    creditCardDueLabel: 'Due Day',
+    creditCardNewPurchase: 'New Purchase',
+    creditCardDescriptionLabel: 'Description',
+    creditCardValueLabel: 'Amount ($)',
+    creditCardInstallmentsLabel: 'Number of Installments',
+    creditCardCardDetails: 'Card Details',
+    creditCardTotalLimitLabel: 'Total Limit:',
+    creditCardUsedLabel: 'Used Amount:',
+    creditCardAvailableLabel: 'Available:',
+    creditCardClosingLabel2: 'Closing:',
+    creditCardDueLabel2: 'Due:',
+    creditCardBack: 'Back',
+
+    // Currency
+    currencySymbol: '$',
   },
 };
 

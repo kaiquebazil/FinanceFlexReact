@@ -161,7 +161,7 @@ export function CreditCardManager({ visible, onClose }: CreditCardManagerProps) 
 
                     {/* Limite Total */}
                     <Text style={[styles.limitText, { color: colors.textDim }]}>
-                      Limite total {formatCurrency(card.limit, 'BRL')}
+                      {t.creditCardTotalLimit} {formatCurrency(card.limit, 'BRL')}
                     </Text>
 
                     {/* Barras de Progresso */}
@@ -182,13 +182,13 @@ export function CreditCardManager({ visible, onClose }: CreditCardManagerProps) 
                     {/* Usado e Disponível */}
                     <View style={styles.usageContainer}>
                       <View style={styles.usageItem}>
-                        <Text style={[styles.usageLabel, { color: colors.textDim }]}>Usado:</Text>
+                        <Text style={[styles.usageLabel, { color: colors.textDim }]}>{t.creditCardUsed}:</Text>
                         <Text style={[styles.usageValue, { color: colors.danger }]}>
                           {formatCurrency(card.used || 0, 'BRL')}
                         </Text>
                       </View>
                       <View style={styles.usageItem}>
-                        <Text style={[styles.usageLabel, { color: colors.textDim }]}>Disponível:</Text>
+                        <Text style={[styles.usageLabel, { color: colors.textDim }]}>{t.creditCardAvailable}:</Text>
                         <Text style={[styles.usageValue, { color: available > 0 ? colors.success : colors.danger }]}>
                           {formatCurrency(available, 'BRL')}
                         </Text>
@@ -200,13 +200,13 @@ export function CreditCardManager({ visible, onClose }: CreditCardManagerProps) 
                       <View style={styles.dateItem}>
                         <FontAwesome5 name="calendar-times" size={12} color={colors.textDim} />
                         <Text style={[styles.dateText, { color: colors.textDim }]}>
-                          Fecha dia {formatDate(card.closingDay)}
+                          {t.creditCardClosingDay} {formatDate(card.closingDay)}
                         </Text>
                       </View>
                       <View style={styles.dateItem}>
                         <FontAwesome5 name="calendar-check" size={12} color={colors.textDim} />
                         <Text style={[styles.dateText, { color: colors.textDim }]}>
-                          Vence dia {formatDate(card.dueDay)}
+                          {t.creditCardDueDay} {formatDate(card.dueDay)}
                         </Text>
                       </View>
                     </View>
@@ -221,7 +221,7 @@ export function CreditCardManager({ visible, onClose }: CreditCardManagerProps) 
                         }}
                       >
                         <FontAwesome5 name="search" size={14} color={colors.primary} />
-                        <Text style={[styles.actionButtonText, { color: colors.primary }]}>Detalhes</Text>
+                        <Text style={[styles.actionButtonText, { color: colors.primary }]}>{t.creditCardDetails}</Text>
                       </TouchableOpacity>
 
                       <TouchableOpacity
@@ -232,7 +232,7 @@ export function CreditCardManager({ visible, onClose }: CreditCardManagerProps) 
                         }}
                       >
                         <FontAwesome5 name="shopping-cart" size={14} color="#fff" />
-                        <Text style={[styles.actionButtonText, { color: '#fff' }]}>Compra</Text>
+                        <Text style={[styles.actionButtonText, { color: '#fff' }]}>{t.creditCardPurchase}</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -277,7 +277,7 @@ export function CreditCardManager({ visible, onClose }: CreditCardManagerProps) 
               <TouchableWithoutFeedback onPress={() => {}}>
                 <View style={[styles.innerModalContent, { backgroundColor: colors.surface }]}>
                   <View style={[styles.innerModalHeader, { borderBottomColor: colors.border }]}>
-                    <Text style={[styles.innerModalTitle, { color: colors.text }]}>Novo Cartão</Text>
+                    <Text style={[styles.innerModalTitle, { color: colors.text }]}>{t.creditCardNewCard}</Text>
                     <TouchableOpacity onPress={() => setShowAddModal(false)}>
                       <FontAwesome5 name="times" size={20} color={colors.textDim} />
                     </TouchableOpacity>
@@ -289,14 +289,14 @@ export function CreditCardManager({ visible, onClose }: CreditCardManagerProps) 
                     showsVerticalScrollIndicator={false}
                   >
                     <Input
-                      label="Nome do Cartão"
+                      label={t.creditCardCardName}
                       value={newCard.name}
                       onChangeText={(text) => setNewCard({ ...newCard, name: text })}
                       placeholder="Ex: Nubank, PicPay"
                     />
 
                     <Input
-                      label="Limite (R$)"
+                      label={t.creditCardLimitLabel}
                       value={newCard.limit}
                       onChangeText={(text) => setNewCard({ ...newCard, limit: text })}
                       placeholder="5000"
@@ -304,7 +304,7 @@ export function CreditCardManager({ visible, onClose }: CreditCardManagerProps) 
                     />
 
                     <Input
-                      label="Dia do Fechamento"
+                      label={t.creditCardClosingLabel}
                       value={newCard.closingDay}
                       onChangeText={(text) => setNewCard({ ...newCard, closingDay: text })}
                       placeholder="10"
@@ -312,7 +312,7 @@ export function CreditCardManager({ visible, onClose }: CreditCardManagerProps) 
                     />
 
                     <Input
-                      label="Dia do Vencimento"
+                      label={t.creditCardDueLabel}
                       value={newCard.dueDay}
                       onChangeText={(text) => setNewCard({ ...newCard, dueDay: text })}
                       placeholder="15"
@@ -357,7 +357,7 @@ export function CreditCardManager({ visible, onClose }: CreditCardManagerProps) 
               <TouchableWithoutFeedback onPress={() => {}}>
                 <View style={[styles.innerModalContent, { backgroundColor: colors.surface }]}>
                   <View style={[styles.innerModalHeader, { borderBottomColor: colors.border }]}>
-                    <Text style={[styles.innerModalTitle, { color: colors.text }]}>Nova Compra</Text>
+                    <Text style={[styles.innerModalTitle, { color: colors.text }]}>{t.creditCardNewPurchase}</Text>
                     <TouchableOpacity onPress={() => setShowPurchaseModal(false)}>
                       <FontAwesome5 name="times" size={20} color={colors.textDim} />
                     </TouchableOpacity>
@@ -375,14 +375,14 @@ export function CreditCardManager({ visible, onClose }: CreditCardManagerProps) 
                       </View>
 
                       <Input
-                        label="Descrição"
+                        label={t.creditCardDescriptionLabel}
                         value={newPurchase.description}
                         onChangeText={(text) => setNewPurchase({ ...newPurchase, description: text })}
                         placeholder="Ex: TV, Notebook"
                       />
 
                       <Input
-                        label="Valor (R$)"
+                        label={t.creditCardValueLabel}
                         value={newPurchase.amount}
                         onChangeText={(text) => setNewPurchase({ ...newPurchase, amount: text })}
                         placeholder="1500"
@@ -390,7 +390,7 @@ export function CreditCardManager({ visible, onClose }: CreditCardManagerProps) 
                       />
 
                       <Input
-                        label="Número de Parcelas"
+                        label={t.creditCardInstallmentsLabel}
                         value={newPurchase.installments}
                         onChangeText={(text) => setNewPurchase({ ...newPurchase, installments: text })}
                         placeholder="12"
@@ -443,7 +443,7 @@ export function CreditCardManager({ visible, onClose }: CreditCardManagerProps) 
             <TouchableWithoutFeedback onPress={() => {}}>
               <View style={[styles.innerModalContent, { backgroundColor: colors.surface }]}>
                 <View style={[styles.innerModalHeader, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.innerModalTitle, { color: colors.text }]}>Detalhes do Cartão</Text>
+                  <Text style={[styles.innerModalTitle, { color: colors.text }]}>{t.creditCardCardDetails}</Text>
                   <TouchableOpacity onPress={() => setShowDetails(false)}>
                     <FontAwesome5 name="times" size={20} color={colors.textDim} />
                   </TouchableOpacity>
@@ -458,43 +458,43 @@ export function CreditCardManager({ visible, onClose }: CreditCardManagerProps) 
                       </View>
 
                       <View style={[styles.detailRow, { borderBottomColor: colors.border }]}>
-                        <Text style={[styles.detailLabel, { color: colors.textDim }]}>Limite Total:</Text>
+                        <Text style={[styles.detailLabel, { color: colors.textDim }]}>{t.creditCardTotalLimitLabel}</Text>
                         <Text style={[styles.detailValue, { color: colors.text }]}>
                           {formatCurrency(selectedCard.limit, 'BRL')}
                         </Text>
                       </View>
 
                       <View style={[styles.detailRow, { borderBottomColor: colors.border }]}>
-                        <Text style={[styles.detailLabel, { color: colors.textDim }]}>Valor Utilizado:</Text>
+                        <Text style={[styles.detailLabel, { color: colors.textDim }]}>{t.creditCardUsedLabel}</Text>
                         <Text style={[styles.detailValue, { color: colors.danger }]}>
                           {formatCurrency(selectedCard.used || 0, 'BRL')}
                         </Text>
                       </View>
 
                       <View style={[styles.detailRow, { borderBottomColor: colors.border }]}>
-                        <Text style={[styles.detailLabel, { color: colors.textDim }]}>Disponível:</Text>
+                        <Text style={[styles.detailLabel, { color: colors.textDim }]}>{t.creditCardAvailableLabel}</Text>
                         <Text style={[styles.detailValue, { color: colors.success }]}>
                           {formatCurrency(calculateAvailable(selectedCard), 'BRL')}
                         </Text>
                       </View>
 
                       <View style={[styles.detailRow, { borderBottomColor: colors.border }]}>
-                        <Text style={[styles.detailLabel, { color: colors.textDim }]}>Fechamento:</Text>
+                        <Text style={[styles.detailLabel, { color: colors.textDim }]}>{t.creditCardClosingLabel2}</Text>
                         <Text style={[styles.detailValue, { color: colors.text }]}>
-                          Dia {formatDate(selectedCard.closingDay)}
+                          {t.day} {formatDate(selectedCard.closingDay)}
                         </Text>
                       </View>
 
                       <View style={[styles.detailRow, { borderBottomColor: colors.border }]}>
-                        <Text style={[styles.detailLabel, { color: colors.textDim }]}>Vencimento:</Text>
+                        <Text style={[styles.detailLabel, { color: colors.textDim }]}>{t.creditCardDueLabel2}</Text>
                         <Text style={[styles.detailValue, { color: colors.text }]}>
-                          Dia {formatDate(selectedCard.dueDay)}
+                          {t.day} {formatDate(selectedCard.dueDay)}
                         </Text>
                       </View>
                     </View>
 
                     <Button
-                      title="Voltar"
+                      title={t.creditCardBack}
                       onPress={() => setShowDetails(false)}
                       style={styles.backButton}
                     />
@@ -509,7 +509,7 @@ export function CreditCardManager({ visible, onClose }: CreditCardManagerProps) 
       {/* Modal de Erro */}
       <ConfirmModal
         visible={showErrorModal}
-        title="Atenção"
+        title={t.attention}
         message={errorMessage}
         type="warning"
         confirmText="OK"
