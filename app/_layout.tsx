@@ -9,6 +9,7 @@ import { useData } from '../hooks/useData';
 import { theme } from '../constants/theme';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
 import { LanguageProvider } from '../contexts/LanguageContext';
+import { AdProvider } from '../contexts/AdContext';
 
 import type { CloudData } from '../services/syncService';
 
@@ -53,9 +54,11 @@ export default function RootLayout() {
     <LanguageProvider>
       <ThemeProvider>
         <DataProvider>
-          <AppWithSync>
-            <ThemedStack />
-          </AppWithSync>
+          <AdProvider>
+            <AppWithSync>
+              <ThemedStack />
+            </AppWithSync>
+          </AdProvider>
         </DataProvider>
       </ThemeProvider>
     </LanguageProvider>

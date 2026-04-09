@@ -43,6 +43,8 @@ import { useData } from "../hooks/useData";
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { formatCurrency } from "../utils/currency";
+import { AdBanner } from "../components/ui/AdBanner";
+import { useAds } from "../contexts/AdContext";
 
 // Tipos para os callbacks
 type ToastType = "success" | "error" | "info" | "warning";
@@ -67,6 +69,7 @@ interface ConfirmCallbackOptions {
 export default function HomeScreen() {
   const { colors, isDark } = useTheme();
   const { t, language } = useLanguage();
+  const { showInterstitialAd } = useAds();
   const styles = getStyles(colors, isDark);
   const {
     accounts,
@@ -247,6 +250,10 @@ export default function HomeScreen() {
 
     if (!stayOpen) {
       setShowTransactionModal(false);
+      // Mostrar anúncio intersticial após salvar transação (não intrusivo)
+      setTimeout(() => {
+        showInterstitialAd();
+      }, 500);
     }
   };
 
@@ -801,6 +808,9 @@ export default function HomeScreen() {
 
           <View style={{ height: 100 }} />
         </ScrollView>
+        
+        {/* Banner de Anúncios */}
+        <AdBanner />
       </ResponsiveContainer>
 
       {/* FAB - Floating Action Button */}
