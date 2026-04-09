@@ -1,6 +1,23 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Platform } from 'react-native';
-import { mobileAds, BannerAd, BannerAdSize, InterstitialAd, AdEventType } from 'react-native-google-mobile-ads';
+
+// Importação dinâmica segura para evitar quebra no Expo Go
+let mobileAds: any = null;
+let BannerAd: any = null;
+let BannerAdSize: any = null;
+let InterstitialAd: any = null;
+let AdEventType: any = null;
+
+try {
+  const ads = require('react-native-google-mobile-ads');
+  mobileAds = ads.mobileAds;
+  BannerAd = ads.BannerAd;
+  BannerAdSize = ads.BannerAdSize;
+  InterstitialAd = ads.InterstitialAd;
+  AdEventType = ads.AdEventType;
+} catch (e) {
+  console.warn('Google Mobile Ads não está disponível neste ambiente (provavelmente Expo Go).');
+}
 
 // IDs de teste do Google AdMob
 const TEST_BANNER_ID = Platform.OS === 'ios' 
@@ -11,20 +28,12 @@ const TEST_INTERSTITIAL_ID = Platform.OS === 'ios'
   ? 'ca-app-pub-3940256099942544/4411468910'
   : 'ca-app-pub-3940256099942544/1033173712';
 
-// IDs de produção (você substituirá esses pelos seus reais)
-const PROD_BANNER_ID = Platform.OS === 'ios'
-  ? 'ca-app-pub-7467123827432414/BANNER_ID_IOS'
-  : 'ca-app-pub-7467123827432414/BANNER_ID_ANDROID';
-
-const PROD_INTERSTITIAL_ID = Platform.OS === 'ios'
-  ? 'ca-app-pub-7467123827432414/INTERSTITIAL_ID_IOS'
-  : 'ca-app-pub-7467123827432414/INTERSTITIAL_ID_ANDROID';
-
 interface AdContextType {
   showBannerAd: boolean;
   showInterstitialAd: (onAdClosed?: () => void) => void;
   isPremium: boolean;
   setIsPremium: (value: boolean) => void;
+  isAdsAvailable: boolean;
 }
 
 const AdContext = createContext<AdContextType | undefined>(undefined);
@@ -32,10 +41,13 @@ const AdContext = createContext<AdContextType | undefined>(undefined);
 export function AdProvider({ children }: { children: React.ReactNode }) {
   const [showBannerAd, setShowBannerAd] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
-  const [interstitialAd, setInterstitialAd] = useState<InterstitialAd | null>(null);
+  const [interstitialAd, setInterstitialAd] = useState<any>(null);
+  const isAdsAvailable = !!mobileAds;
 
-  // Inicializar Google Mobile Ads
+  // Inicializar Google Mobile Ads de forma segura
   useEffect(() => {
+    if (!isAdsAvailable) return;
+
     const initAds = async () => {
       try {
         await mobileAds().initialize();
@@ -45,11 +57,13 @@ export function AdProvider({ children }: { children: React.ReactNode }) {
     };
 
     initAds();
-  }, []);
+  }, [isAdsAvailable]);
 
-  // Carregar anúncio intersticial
+  // Carregar anúncio intersticial de forma segura
   useEffect(() => {
-    if (isPremium) return; // Não carregar anúncios se for premium
+    if (isPremium || !isAdsAvailable || !InterstitialAd) return;
+
+    let unsubscribe: any;
 
     const loadInterstitial = async () => {
       try {
@@ -57,7 +71,7 @@ export function AdProvider({ children }: { children: React.ReactNode }) {
           requestNonPersonalizedAdsOnly: true,
         });
 
-        const unsubscribe = ad.onAdEvent((type) => {
+        unsubscribe = ad.onAdEvent((type: any) => {
           if (type === AdEventType.CLOSED) {
             loadInterstitial(); // Recarregar após fechar
           }
@@ -65,21 +79,19 @@ export function AdProvider({ children }: { children: React.ReactNode }) {
 
         await ad.load();
         setInterstitialAd(ad);
-
-        return unsubscribe;
       } catch (error) {
-        console.error('Erro ao carregar anúncio intersticial:', error);
+        console.warn('Erro ao carregar anúncio intersticial:', error);
       }
     };
 
-    const unsubscribe = loadInterstitial();
+    loadInterstitial();
     return () => {
-      unsubscribe?.then((unsub) => unsub?.());
+      if (typeof unsubscribe === 'function') unsubscribe();
     };
-  }, [isPremium]);
+  }, [isPremium, isAdsAvailable]);
 
   const showInterstitialAd = async (onAdClosed?: () => void) => {
-    if (isPremium || !interstitialAd) {
+    if (isPremium || !interstitialAd || !isAdsAvailable) {
       onAdClosed?.();
       return;
     }
@@ -88,16 +100,17 @@ export function AdProvider({ children }: { children: React.ReactNode }) {
       await interstitialAd.show();
       onAdClosed?.();
     } catch (error) {
-      console.error('Erro ao exibir anúncio intersticial:', error);
+      console.warn('Erro ao exibir anúncio intersticial:', error);
       onAdClosed?.();
     }
   };
 
   const value: AdContextType = {
-    showBannerAd: showBannerAd && !isPremium,
+    showBannerAd: showBannerAd && !isPremium && isAdsAvailable,
     showInterstitialAd,
     isPremium,
     setIsPremium,
+    isAdsAvailable
   };
 
   return <AdContext.Provider value={value}>{children}</AdContext.Provider>;
@@ -111,4 +124,4 @@ export function useAds() {
   return context;
 }
 
-export { TEST_BANNER_ID, TEST_INTERSTITIAL_ID, PROD_BANNER_ID, PROD_INTERSTITIAL_ID };
+export { TEST_BANNER_ID, TEST_INTERSTITIAL_ID, BannerAd, BannerAdSize };

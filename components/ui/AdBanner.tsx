@@ -1,22 +1,17 @@
 import React from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
-import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import { useAds } from '../../contexts/AdContext';
-import { TEST_BANNER_ID } from '../../contexts/AdContext';
+import { TEST_BANNER_ID, BannerAd, BannerAdSize } from '../../contexts/AdContext';
 
 interface AdBannerProps {
   style?: any;
 }
 
 export function AdBanner({ style }: AdBannerProps) {
-  const { showBannerAd } = useAds();
+  const { showBannerAd, isAdsAvailable } = useAds();
 
-  if (!showBannerAd) {
-    return null;
-  }
-
-  if (Platform.OS === 'web') {
-    // Placeholder para web - Google Mobile Ads não suporta web nativamente
+  // Não renderizar se o anúncio não estiver disponível, o usuário for premium ou for web
+  if (!isAdsAvailable || !showBannerAd || !BannerAd || Platform.OS === 'web') {
     return null;
   }
 
@@ -28,8 +23,8 @@ export function AdBanner({ style }: AdBannerProps) {
         requestOptions={{
           requestNonPersonalizedAdsOnly: true,
         }}
-        onAdFailedToLoad={(error) => {
-          console.log('Erro ao carregar banner:', error);
+        onAdFailedToLoad={(error: any) => {
+          console.warn('Erro ao carregar banner:', error);
         }}
       />
     </View>
