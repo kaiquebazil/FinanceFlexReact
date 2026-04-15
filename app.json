@@ -1,10 +1,6 @@
 {
   "expo": {
     "sdkVersion": "54.0.0",
-    "react-native-google-mobile-ads": {
-      "android_app_id": "ca-app-pub-7467123827432414~5861884734",
-      "ios_app_id": "ca-app-pub-7467123827432414~5861884734"
-    },
     "name": "Finance Flex",
     "slug": "finance-flex",
     "version": "5.1.0",
